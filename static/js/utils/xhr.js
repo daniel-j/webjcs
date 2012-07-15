@@ -15,10 +15,19 @@ utils.xhr = (function (global) {
 
 		x.open(params.method || 'get', params.uri, true);
 
+		if (typeof params.responseType === 'string') {
+			x.responseType = params.responseType;
+		}
+		
 		x.addEventListener('load', function (e) {
-			params.successCallback(x.response);
+			params.successCallback(x);
 		}, false);
-
+		x.addEventListener('progress', function (e) {
+			if (typeof params.progressCallback === 'function') {
+				params.progressCallback(e.loaded, e.total);
+			}
+		}, false);
+		
 		x.send(params.data);
 		return x;
 	};

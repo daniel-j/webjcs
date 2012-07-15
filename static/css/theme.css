@@ -1,0 +1,72 @@
+::-webkit-scrollbar {
+	height: 12px;
+	overflow: visible;
+	width: 12px;
+}
+::-webkit-scrollbar-thumb {
+	background-color: rgba(0, 0, 0, .2);
+	background-clip: padding-box;
+	border: solid transparent;
+	border-width: 1px 1px 1px 1px;
+	min-height: 28px;
+	padding: 100px 0 0;
+	box-shadow: inset 1px 1px 0 rgba(0, 0, 0, .1), inset -1px -1px 0 rgba(0, 0, 0, .05);
+}
+::-webkit-scrollbar-button {
+	height: 0;
+	width: 0;
+}
+::-webkit-scrollbar-track {
+	background-color: white;
+
+}
+::-webkit-scrollbar-corner {
+	background: transparent;
+}
+body::-webkit-scrollbar-track-piece {
+	background-clip: padding-box;
+	background-color: whiteSmoke;
+	border: solid transparent;
+	border-width: 0 0 0 3px;
+	box-shadow: inset 1px 0 0 rgba(0, 0, 0, .14),inset -1px 0 0 rgba(0, 0, 0, .07);
+}
+body::-webkit-scrollbar-corner {
+	background-clip: padding-box;
+	background-color: whiteSmoke;
+	border: solid white;
+	border-width: 3px 0 0 3px;
+	box-shadow: inset 1px 1px 0 rgba(0, 0, 0, .14);
+}
+
+body {
+	font-family: Ubuntu, Arial, sans-serif;
+	font-size: 75%;
+}
+
+select.tileset {
+	width: 200px;
+}
+select.tileset option.warning {
+	background-color: #FDD;
+	color: red;
+}
+
+#tilesetContainer {
+	
+}
+#tilesetImageContainer {
+	background-color: rgb(32, 24, 80);
+}
+#tilesetImageContainer canvas {
+	background-color: #4830A8;
+}
+#tilesetContainer progress {
+	border: 5px solid rgba(0, 0, 0, 0.4);
+}
+#tilesetContainer progress::-webkit-progress-bar {
+	background-color: rgba(0, 0, 0, 0.4);
+}
+#tilesetContainer progress::-webkit-progress-value {
+	background-color: #09F;
+	background-color: #4830A8;
+}

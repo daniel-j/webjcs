@@ -1,18 +1,18 @@
 {
 	"server": {
-		"port": 8000,
+		"port": 9000,
 		"collaboration": false,
 		"password": ""
 	},
 	"paths": {
-		"merge_folders": true,
+		"merge_folders": false,
 		"folders": [
 			"C:\\Games\\Jazz2\\",
 			"C:\\Games\\Jazz2\\Cache\\",
 			"/host/Games/Jazz2/",
 			"/host/Games/Jazz2/Cache/",
 			"/host/Games/Jazz2tsf/",
-			"/host/Games/Jazz2tsf/Cache/"
+			"/host/Games/Jazz2tsf/cache/"
 		],
 		"run": "\"C:\\Games\\Jazz2\\Jazz2+.exe\" %1"
 	}

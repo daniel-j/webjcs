@@ -5,33 +5,47 @@
 
 var utils = utils || {};
 
-utils.Struct = (function (global) {
+utils.Struct = (function () {
 	'use strict';
 	
 	// Requirements
 	
 	// Helpers
-	function insertData(dv, pos, type, size, data) {
-		//console.log(pos, type, data);
-		if (type === 'c') {
+	function insertData(dv, pos, type, data) {
+		
+
+		var size = 0;
+
+		if (typeof type === 'string') {
+			size = +type;
 			for (var i = 0; i < size; i++) {
 				dv.setUint8(pos + i, data.charCodeAt(i) || 0);
 			}
-		} else if (type === '-') {
-			dv['setInt'+size](pos, data, true);
-		} else if (type === '+') {
-			dv['setUint'+size](pos, data, true);
-		} else if (type === 'f') {
-			dv['setFloat'+size](pos, data, true);
+		} else {
+			size = type.byteLength;
+			var partSize = size/type.length;
+			var cmd = type.toString();
+			cmd = cmd.substring(8, cmd.length-6);
+			
+			for (var i = 0; i < type.length; i++) {
+				dv['set'+cmd](pos + partSize*i, data[i] || data, true);
+			}
+
 		}
+
+		//console.log(pos, size, type, data);
+
+		return size;
 	};
 	
-	function readData(dv, pos, type, size) {
+	function readData(dv, pos, type) {
 		
+		var size = 0;
 		var value = null;
-		
-		if (type === 'c') {
-			var str = "";
+
+		if (typeof type === 'string') {
+			size = +type;
+			var str = '';
 			for (var i = 0; i < size; i++) {
 				var byte = dv.getUint8(pos + i);
 				if (byte === 0) {
@@ -40,15 +54,29 @@ utils.Struct = (function (global) {
 				str += String.fromCharCode(byte);
 			}
 			value = str;
-		} else if (type === '-') {
-			value = dv['getInt'+size](pos, true);
-		} else if (type === '+') {
-			value = dv['getUint'+size](pos, true);
-		} else if (type === 'f') {
-			value = dv['getFloat'+size](pos, true);
+		} else {
+			size = type.byteLength;
+			var partSize = size/type.length;
+			var cmd = type.toString();
+			cmd = cmd.substring(8, cmd.length-6);
+			
+
+			for (var i = 0; i < type.length; i++) {
+				type[i] = dv['get'+cmd](pos + partSize*i, true);
+			}
+
+			if (type.length === 1) {
+				value = type[0];
+			} else {
+				value = type;
+			}
+			
+
 		}
 		
-		return value;
+		//console.log(pos, size, cmd, value);
+
+		return {data: value, size: size};
 	};
 	
 	
@@ -58,27 +86,21 @@ utils.Struct = (function (global) {
 		
 		this.size = 0;
 		this.struct = struct;
-		this.rawStruct = [];
+		
 		
 		function recursive(key, subStruct) {
-			if (typeof subStruct === 'object' && subStruct.length >= 0) {
+			if (Array.isArray(subStruct)) {
 				for(var i = 0; i < subStruct.length; i++) {
 					recursive(key, subStruct[i]);
 				}
 			} else {
-				var type = subStruct.charAt(0);
-				var size = +subStruct.substr(1);
 				
-				self.rawStruct.push({type: type, size: size});
-				
-				if (type === 'c') {
-					self.size += size;
-				} else if (type === '+' || type === '-' || type === 'f') {
-					self.size += size/8;
-					
+				if (typeof subStruct === 'string') {
+					self.size += +subStruct;
 				} else {
-					
+					self.size += subStruct.byteLength;
 				}
+
 			}
 		};
 		
@@ -86,25 +108,18 @@ utils.Struct = (function (global) {
 		for (var i = 0; i < struct.length; i++) {
 			var key = Object.keys(struct[i])[0];
 			
-			if (typeof struct[i][key] !== 'object') {
-				
-				var type = struct[i][key].charAt(0);
-				var size = +struct[i][key].substr(1);
-				
-				self.rawStruct.push({type: type, size: size});
-				
-				if (type === 'c') {
-					self.size += size;
-				} else if (type === '+' || type === '-' || type === 'f') {
-					self.size += size/8;
+			if (!Array.isArray(struct[i][key])) {
+
+				if (typeof struct[i][key] === 'string') {
+					self.size += +struct[i][key];
 				} else {
-					
+					self.size += struct[i][key].byteLength;
 				}
+
 			} else {
 				recursive(key, struct[i][key]);
 			}
 		}
-		
 	};
 
 	// Methods
@@ -118,43 +133,20 @@ utils.Struct = (function (global) {
 		var writePosition = 0;
 		
 		function recursive(key, subStruct, subData) {
-			if (typeof subStruct === 'object' && subStruct.length >= 0) {
+			if (Array.isArray(subStruct)) {
 				for(var i = 0; i < subStruct.length; i++) {
 					recursive(key, subStruct[i], subData[i]);
 				}
 			} else {
-				var type = subStruct.charAt(0);
-				var size = +subStruct.substr(1);
-				
-				if (type === 'c') {
-					insertData(dv, writePosition, type, size, subData);
-					writePosition += size;
-				} else if (type === '+' || type === '-' || type === 'f') {
-					insertData(dv, writePosition, type, size, subData);
-					writePosition += size/8;
-				} else {
-					
-				}
-				
+				writePosition += insertData(dv, writePosition, subStruct, subData);
 			}
 		};
 		
 		for (var i = 0; i < struct.length; i++) {
 			var key = Object.keys(struct[i])[0];
 			
-			if (typeof struct[i][key] !== 'object') {
-				var type = struct[i][key].charAt(0);
-				var size = +struct[i][key].substr(1);
-				
-				if (type === 'c') {
-					insertData(dv, writePosition, type, size, data[key]);
-					writePosition += size;
-				} else if (type === '+' || type === '-' || type === 'f') {
-					insertData(dv, writePosition, type, size, data[key]);
-					writePosition += size/8;
-				} else {
-					
-				}
+			if (!Array.isArray(struct[i][key])) {
+				writePosition += insertData(dv, writePosition, struct[i][key], data[key]);
 			} else {
 				recursive(key, struct[i][key], data[key]);
 			}
@@ -175,24 +167,17 @@ utils.Struct = (function (global) {
 		var readPosition = 0;
 		
 		function recursive(key, subStruct, subData, parentData, index) {
-			if (typeof subStruct === 'object' && subStruct.length >= 0) {
+			if (Array.isArray(subStruct)) {
 				for(var i = 0; i < subStruct.length; i++) {
 					subData[i] = [];
 					recursive(key, subStruct[i], subData[i], subData, i);
 				}
 			} else {
-				var type = subStruct.charAt(0);
-				var size = +subStruct.substr(1);
-				
-				if (type === 'c') {
-					parentData[index] = readData(dv, readPosition, type, size);
-					readPosition += size;
-				} else if (type === '+' || type === '-' || type === 'f') {
-					parentData[index] = readData(dv, readPosition, type, size);
-					readPosition += size/8;
-				} else {
-					
-				}
+
+				var result = readData(dv, readPosition, subStruct);
+
+				parentData[index] = result.data;
+				readPosition += result.size;
 				
 			}
 		};
@@ -200,20 +185,15 @@ utils.Struct = (function (global) {
 		for (var i = 0; i < struct.length; i++) {
 			var key = Object.keys(struct[i])[0];
 			
-			if (typeof struct[i][key] !== 'object') {
-				var type = struct[i][key].charAt(0);
-				var size = +struct[i][key].substr(1);
+			if (!Array.isArray(struct[i][key])) {
+				//var type = struct[i][key].charAt(0);
+				//var size = +struct[i][key].substr(1);
 				
-				if (type === 'c') {
-					data[key] = readData(dv, readPosition, type, size);
-					readPosition += size;
-				} else if (type === '+' || type === '-' || type === 'f') {
-					data[key] = readData(dv, readPosition, type, size);
-					
-					readPosition += size/8;
-				} else {
-					
-				}
+				var result = readData(dv, readPosition, struct[i][key]);
+
+				data[key] = result.data;
+				readPosition += result.size;
+
 			} else {
 				data[key] = [];
 				recursive(key, struct[i][key], data[key], data, 0);
@@ -226,10 +206,29 @@ utils.Struct = (function (global) {
 	
 	
 	return Struct;
-}(window));
+}());
 
+if (typeof exports !== 'undefined') {
+	exports.Struct = utils.Struct;
+}
 
-/*var packed = j2tHeader.pack({
+/*var headerStruct = new utils.Struct([
+	{copyright: '180'},
+	{magic:     '4'},
+	{signature: new Uint32Array(1)},
+	{levelName: '32'},
+	{version:   new Uint16Array(1)},
+	{fileSize:  new Uint32Array(1)},
+	{checksum:  new Int32Array(1)},
+	{streamSize: [
+		new Uint32Array(2),
+		new Uint32Array(2),
+		new Uint32Array(2),
+		new Uint32Array(2)
+	]}
+]);
+
+var packed = headerStruct.pack({
 	copyright: 'blahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblah',
 	magic:     'TILE',
 	signature: 0xAFBEADDE, // DEAD BEAF
@@ -243,5 +242,8 @@ utils.Struct = (function (global) {
 		[5, 6],
 		[7, 8],
 	]
-});*/
+});
 
+console.log(new Uint16Array(packed));
+
+console.log(headerStruct.unpack(packed));*/
