@@ -24,7 +24,7 @@ utils.xhr = (function (global) {
 		}, false);
 		x.addEventListener('progress', function (e) {
 			if (typeof params.progressCallback === 'function') {
-				params.progressCallback(e.loaded, e.total);
+				params.progressCallback.call(x, e.loaded, e.total);
 			}
 		}, false);
 		

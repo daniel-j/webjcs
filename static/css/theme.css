@@ -61,7 +61,14 @@ select.tileset option.warning {
 	background-color: #4830A8;
 }
 #tilesetContainer progress {
-	border: 5px solid rgba(0, 0, 0, 0.4);
+	-webkit-appearance: none;
+	width: 288px;
+	position: absolute;
+	left: 16px;
+	top: 50%;
+	height: 48px;
+	margin-top: -24px;
+	border: 8px solid rgba(0, 0, 0, 0.4);
 }
 #tilesetContainer progress::-webkit-progress-bar {
 	background-color: rgba(0, 0, 0, 0.4);

@@ -128,7 +128,12 @@ function startServer() {
 					if (typeof uri.query.f !== 'undefined') {
 						var filename = path.join(settings.paths.folders[+uri.query.f || 0], uri.query.n);
 						console.log('GET:', filename);
-						httpGetFile(filename, req, res);
+						if (uri.query.parse && uri.query.parse.length > 0) {
+							httpGetParsedFile(filename, req, res, true, uri.query.parse);
+						} else {
+							httpGetFile(filename, req, res, true);
+						}
+						
 						
 					} /*else if (settings.paths.merge_folders) {
 						getFileList(false, function (list) {
@@ -150,7 +155,7 @@ function startServer() {
 							}
 							
 							if (filename.length > 0) {
-								httpGetFile(filename, req, res);
+								httpGetFile(filename, req, res, true);
 							} else {
 								notFound(res);
 							}
@@ -233,7 +238,9 @@ function notFound(res) {
 	res.end('404 Not found');
 };
 
-function httpGetFile(filename, req, res) {
+
+
+function httpGetFile(filename, req, res, skipCache) {
 	fs.stat(filename, function (err, stats) {
 		
 		if (err) {
@@ -244,7 +251,7 @@ function httpGetFile(filename, req, res) {
 		
 		var isCached = false;
 
-		if (req.headers['if-modified-since']) {
+		if (req.headers['if-modified-since'] && !skipCache) {
 			var req_date = new Date(req.headers['if-modified-since']);
 			if (stats.mtime <= req_date && req_date <= Date.now()) {
 				res.writeHead(304, {
@@ -262,13 +269,118 @@ function httpGetFile(filename, req, res) {
 					res.end('404 Not found\r\n'+err);*/
 					notFound(res);
 				} else {
-					res.writeHead(200, {
+					var headers = {
 						'Content-Type': type,
-						'Content-Length': stats.size,
-						'Last-Modified': stats.mtime
-					});
+						'Content-Length': stats.size
+					};
+					if (!skipCache) {
+						headers['Last-Modified'] = stats.mtime;
+					}
+					res.writeHead(200, headers);
 					res.end(data);
 				}
+			});
+		}
+	});
+};
+
+function httpGetParsedFile(filename, req, res, skipCache, type) {
+	fs.stat(filename, function (err, stats) {
+		
+		if (err) {
+			notFound(res);
+			return;
+		}
+		
+		var isCached = false;
+
+		if (req.headers['if-modified-since'] && !skipCache) {
+			var req_date = new Date(req.headers['if-modified-since']);
+			if (stats.mtime <= req_date && req_date <= Date.now()) {
+				res.writeHead(304, {
+					'Last-Modified': stats.mtime
+				});
+				res.end();
+				isCached = true;
+			}
+		}
+
+		if (!isCached) {
+			
+			fs.readFile(filename, function (err, file) {
+
+				if (err) {
+					notFound(res);
+					return;
+				}
+				
+				var headers = {
+					//'content-type': 'application/octet-stream'
+				};
+
+				var streams = new Array(4);
+				var loaded = 0;
+				var totalSize = 262;
+				var offset = 262;
+				for (var i = 0; i < 4; i++) {
+					var size = file.readUInt32LE(230+i*8);
+					zlib.inflate(file.slice(offset, offset+size), inflateCallback(i));
+					offset += size;
+				}
+
+				function inflateCallback(i) {
+					return function (err, data) {
+						streams[i] = data;
+						totalSize += data.length;
+						loaded++;
+						if (loaded === 4) {
+							
+							var outputBuffer = new Buffer(totalSize);
+							
+							file.copy(outputBuffer, 0, 0, 262);
+							var offset = 262;
+							for (var j = 0; j < 4; j++) {
+								streams[j].copy(outputBuffer, offset);
+								offset += streams[j].length;
+							}
+							var acceptEncoding = req.headers['accept-encoding'];
+							if (!acceptEncoding) {
+								acceptEncoding = [];
+							} else {
+								acceptEncoding = acceptEncoding.split(",");
+							}
+
+							headers['X-Total-Content-Length'] = outputBuffer.length;
+
+							if (acceptEncoding.indexOf('deflate')) {
+								 headers['Content-Encoding'] = 'deflate';
+								 zlib.deflate(outputBuffer, compressCallback);
+							} else if (acceptEncoding.indexOf('gzip')) {
+								 headers['Content-Encoding'] = 'gzip';
+								 zlib.gzip(outputBuffer, compressCallback);
+							} else {
+								compressCallback(null, outputBuffer);
+							}
+
+							
+						}
+					};
+				};
+				
+				function compressCallback(err, data) {
+					if (err) {
+						notFound(res);
+						return;
+					}
+					headers['Content-Length'] = data.length;
+					if (!skipCache) {
+						headers['Last-Modified'] = stats.mtime;
+					}
+					
+					res.writeHead(200, headers);
+					res.end(data);
+				};
+
 			});
 		}
 	});

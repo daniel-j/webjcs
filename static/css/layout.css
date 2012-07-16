@@ -34,12 +34,3 @@ body {
 #tilesetImageContainer canvas.mask {
 	
 }
-#tilesetContainer progress {
-	-webkit-appearance: none;
-	width: 300px;
-	position: absolute;
-	left: 10px;
-	top: 50%;
-	height: 42px;
-	margin-top: -21px;
-}

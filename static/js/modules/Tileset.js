@@ -43,10 +43,13 @@ modules.Tileset = (function (global) {
 		this.image.classList.add('hide');
 		this.mask.classList.add('hide');
 
-		this.j2t.filepath = '/node/files/get?n='+encodeURIComponent(filename)+(folderIndex!==false?'&f='+folderIndex:'')+'';
+		this.j2t.filepath = '/node/files/get?n='+encodeURIComponent(filename)+(folderIndex!==false?'&f='+folderIndex:'')+'&parse=j2t';
 		this.j2t.parse(function (data) {
-			self.emit('progress', 1);
+			
 			console.log('tileset download time:', (Date.now() - st)/1000+'s');
+		
+			self.emit('progress', 1);
+
 			st = Date.now();
 			var height = Math.ceil(data.info.tileCount/10);
 			self.image.height = self.mask.height = height*32;
@@ -89,6 +92,7 @@ modules.Tileset = (function (global) {
 			self.image.classList.remove('hide');
 			self.mask.classList.remove('hide');
 			console.log('tileset render time:', (Date.now() - st)/1000+'s');
+
 		});
 	};
 

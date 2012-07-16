@@ -28,6 +28,7 @@
 
 	tilesetProgress.css({visibility: 'hidden'});
 	tileset.on('progress', function (p) {
+		p = isFinite(p) ? p : 0;
 		tilesetProgress.val(p);
 		if (p === 0) {
 			tilesetProgress.css({visibility: 'visible'});
