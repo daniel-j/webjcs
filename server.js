@@ -123,8 +123,14 @@ function startServer() {
 				break;
 
 				case 'files/get':
-				if (typeof uri.query.n !== 'undefined' && uri.query.n.length > 0) {
-					if (settings.paths.merge_folders) {
+				if (typeof uri.query.n !== 'undefined' && uri.query.n.length > 0 && typeof uri.query.f !== 'undefined') {
+
+					if (typeof uri.query.f !== 'undefined') {
+						var filename = path.join(settings.paths.folders[+uri.query.f || 0], uri.query.n);
+						console.log('GET:', filename);
+						httpGetFile(filename, req, res);
+						
+					} /*else if (settings.paths.merge_folders) {
 						getFileList(false, function (list) {
 							
 							var filename = "";
@@ -135,24 +141,21 @@ function startServer() {
 										filename = path.join(settings.paths.folders[f], uri.query.n);
 										break;
 									}
-									if (filename.length > 0) {
-										break;
-									}
+									
+								}
+								if (filename.length > 0) {
+									break;
 								}
 								
 							}
-
+							
 							if (filename.length > 0) {
 								httpGetFile(filename, req, res);
 							} else {
 								notFound(res);
 							}
 						});
-					} else if (typeof uri.query.f !== 'undefined') {
-						var filename = path.join(settings.paths.folders[+uri.query.f || 0], uri.query.n);
-
-						httpGetFile(filename, req, res);
-					} else {
+					}*/ else {
 						notFound(res);
 					}
 
@@ -296,7 +299,7 @@ function getFileList(merge_folders, callback) {
 	if (folders.length === 0) {
 		callback(filelist);
 	}
-
+	var addedFiles = [];
 	var counter = 0;
 	var total = 0;
 
@@ -307,8 +310,16 @@ function getFileList(merge_folders, callback) {
 			if (err) {
 				//console.log(err);
 			} else {
+				
+				if ((merge_folders && addedFiles.indexOf(filename) === -1) || !merge_folders) {
+					arr.push([filename, data.title, data.version, folderIndex]);
+					if (merge_folders) {
+						addedFiles.push(filename);
+					}
+				}
+				
 
-				arr.push([filename, data.title, data.version, folderIndex]);
+				
 			}
 			counter++;
 			if (counter === total) { // All loaded
@@ -336,9 +347,10 @@ function getFileList(merge_folders, callback) {
 				
 				for (var i = 0; i < files.length; i++) {
 					if (validFileExtRegExp.test(files[i])) {
-						if (merge_folders && filelist.indexOf(files[i]) === -1) {
+
+						if (merge_folders) {
 							getFileHeader(path.join(folder, files[i]), getFileHeaderCallback(filelist, files[i], folderIndex));
-						} else if (!merge_folders) {
+						} else {
 							getFileHeader(path.join(folder, files[i]), getFileHeaderCallback(filelist[folder], files[i], folderIndex));
 						}
 						

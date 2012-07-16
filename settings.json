@@ -5,7 +5,7 @@
 		"password": ""
 	},
 	"paths": {
-		"merge_folders": false,
+		"merge_folders": true,
 		"folders": [
 			"C:\\Games\\Jazz2\\",
 			"C:\\Games\\Jazz2\\Cache\\",
