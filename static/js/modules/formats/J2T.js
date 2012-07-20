@@ -81,6 +81,7 @@ modules.formats.J2T = (function (global) {
 			}
 
 			var ab = x.response;
+			
 			var header = structs.header.unpack(ab.slice(0, 262));
 			var isTSF = header.version === 0x201;
 			

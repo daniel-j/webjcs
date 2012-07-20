@@ -7,6 +7,7 @@
 	'use strict';
 
 	var Tileset = modules.Tileset;
+	var Render  = modules.Render;
 	var xhr = utils.xhr;
 
 	var app = $('#app');
@@ -116,6 +117,13 @@
 		}});
 	};
 	
+	var levelRenderer = new Render({
+		texture: tileset.image
+	});
+
+	document.body.appendChild(levelRenderer.canvas);
+
+
 	xhr({uri: '/node/info', successCallback: function (x) {
 		serverInfo = JSON.parse(x.response);
 		

@@ -43,6 +43,8 @@ utils.Struct = (function () {
 		var size = 0;
 		var value = null;
 
+		
+
 		if (typeof type === 'string') {
 			size = +type;
 			var str = '';
@@ -54,6 +56,7 @@ utils.Struct = (function () {
 				str += String.fromCharCode(byte);
 			}
 			value = str;
+			
 		} else {
 			size = type.byteLength;
 			var partSize = size/type.length;
@@ -63,6 +66,7 @@ utils.Struct = (function () {
 
 			for (var i = 0; i < type.length; i++) {
 				type[i] = dv['get'+cmd](pos + partSize*i, true);
+
 			}
 
 			if (type.length === 1) {
@@ -120,6 +124,7 @@ utils.Struct = (function () {
 				recursive(key, struct[i][key]);
 			}
 		}
+
 	};
 
 	// Methods

@@ -21,6 +21,7 @@ modules.Tileset = (function (global) {
 		this.maskc  = this.image.getContext('2d');
 
 		this.image.width = 320;
+		this.image.height = 32;
 		this.mask.width  = 320;
 		this.image.classList.add('image');
 		this.mask.classList.add('mask');

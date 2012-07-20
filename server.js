@@ -59,6 +59,7 @@ function getRelativePath(filepath) {
 fs.readFile(getRelativePath('settings.json'), 'utf8', function (err, data) {
 	if (err) {
 		console.error('Unable to load settings: '+err);
+		return;
 	}
 	settings = JSON.parse(data);
 
