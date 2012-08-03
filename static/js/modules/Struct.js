@@ -3,12 +3,8 @@
      djazz
 */
 
-var utils = utils || {};
-
-utils.Struct = (function () {
+var StructConstructor = function () {
 	'use strict';
-	
-	// Requirements
 	
 	// Helpers
 	function insertData(dv, pos, type, data) {
@@ -60,8 +56,8 @@ utils.Struct = (function () {
 		} else {
 			size = type.byteLength;
 			var partSize = size/type.length;
-			var cmd = type.toString();
-			cmd = cmd.substring(8, cmd.length-6);
+			var cmd = type.constructor.toString();
+			cmd = cmd.substring(9, cmd.indexOf("() ")-5);
 			
 
 			for (var i = 0; i < type.length; i++) {
@@ -211,10 +207,12 @@ utils.Struct = (function () {
 	
 	
 	return Struct;
-}());
+};
 
 if (typeof exports !== 'undefined') {
-	exports.Struct = utils.Struct;
+	exports.Struct = StructConstructor();
+} else {
+	define(StructConstructor);
 }
 
 /*var headerStruct = new utils.Struct([

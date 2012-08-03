@@ -72,7 +72,7 @@ function startServer() {
 		
 		var username = "";
 
-		var isLoggedIn = false;
+		var isLoggedIn = true;
 
 		if (req.headers.authorization) {
 			var details = new Buffer(req.headers.authorization.split(" ")[1], 'base64').toString('utf8').split(':');

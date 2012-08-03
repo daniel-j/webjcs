@@ -3,11 +3,8 @@
      djazz
 */
 
-var utils = utils || {};
-
-utils.xhr = (function (global) {
+define(function () {
 	'use strict';
-	
 	
 	var xhr = function (params) {
 		
@@ -34,5 +31,5 @@ utils.xhr = (function (global) {
 	
 	
 	return xhr;
-}(window));
+});
 

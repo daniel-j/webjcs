@@ -3,20 +3,16 @@
      djazz
 */
 
-var modules = modules || {};
-modules.formats = modules.formats || {};
-
-modules.formats.J2T = (function (global) {
+define([
+	"modules/Struct",
+	"utils/xhr"
+], function (Struct, xhr) {
 	'use strict';
 
-	// Requirements
-	var zlib   = utils.zlib;
-	var Struct = utils.Struct;
-	var xhr    = utils.xhr;
 	
 	// Private variables
 	var structs = {
-		header: new utils.Struct([
+		header: new Struct([
 			{copyright: '180'},
 			{magic:     '4'},
 			{signature: new Uint32Array(1)},
@@ -33,7 +29,7 @@ modules.formats.J2T = (function (global) {
 		]),
 
 		// 1.20/1.21/1.23
-		info1024: new utils.Struct([
+		info1024: new Struct([
 			{palette: 			new Uint32Array(256)},		// RGBA, RGBA, RGBA...
 			{tileCount: 		new Uint32Array(1)},		// Number of tiles, always a multiple of 10
 			{fullyOpaque: 		new Uint8Array(1024)},		// 1 if no transparency at all, otherwise 0
@@ -47,7 +43,7 @@ modules.formats.J2T = (function (global) {
 		]),
 
 		// 1.24/TSF
-		info4096: new utils.Struct([
+		info4096: new Struct([
 			{palette: 			new Uint32Array(256)},		// RGBA, RGBA, RGBA...
 			{tileCount: 		new Uint32Array(1)},		// Number of tiles, always a multiple of 10
 			{fullyOpaque: 		new Uint8Array(4096)},		// 1 if no transparency at all, otherwise 0
@@ -67,6 +63,7 @@ modules.formats.J2T = (function (global) {
 		this.filepath = filepath;
 
 		this.requests = [];
+		this.info = null;
 
 		this.events = {};
 	};
@@ -112,14 +109,15 @@ modules.formats.J2T = (function (global) {
 				masks[i] = new Uint32Array(streams[3].slice(i*128, i*128+128));
 			}
 			
-			
-			parseCallback({
+			self.info = {
 				header: header,
 				info: info,
 				images: images,
 				masks: masks,
 				maxTiles: !isTSF? 1024 : 4096
-			});
+			};
+
+			parseCallback();
 
 			
 		}, progressCallback: function (loaded, total) {
@@ -166,4 +164,4 @@ modules.formats.J2T = (function (global) {
 
 
 	return J2T;
-}(window));
+});
