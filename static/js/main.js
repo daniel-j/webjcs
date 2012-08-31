@@ -17,8 +17,10 @@ var requestAnimFrame = (function(){
 require([
 	"modules/Tileset",
 	"modules/Renderer",
+	"modules/Scrollbars",
+	"lib/Stats",
 	"utils/xhr"
-], function (Tileset, Renderer, xhr) {
+], function (Tileset, Renderer, Scrollbars, Stats, xhr) {
 	'use strict';
 
 	var app = document.getElementById('app');
@@ -80,14 +82,25 @@ require([
 	tilesetContainer.appendChild(reloadTilesetListBtn);
 	tilesetContainer.appendChild(tilesetImageContainer);
 
+	var tilesetScroll = new Scrollbars({
+		element: tileset.image,
+		revealDistance: 130
+	});
+	tilesetScroll.on('scroll', function () {
+		tileset.image.style.top = -tilesetScroll.scrollPosition[1]+'px';
+	});
+	tilesetScroll.contentWidth = 320;
+
 	app.appendChild(tilesetContainer);
 	
 	function tilesetSelectChange() {
 		var info = JSON.parse(tilesetSelect.value);
 		
 		if (info[0].length > 0) {
-			tileset.load(info[0], info[3], function () {
-				layerRenderer.setSpriteSheet(tileset.raw, tileset.j2t.info.images.length);
+			tileset.load(info[0] /* filename */, info[3] /* folderIndex */, function () {
+				layerRenderer.setTileset(tileset.raw, tileset.j2t.info.images.length);
+				tilesetScroll.contentHeight = tileset.image.height;
+				tilesetScroll.update();
 
 			});
 		} else {
@@ -153,15 +166,8 @@ require([
 		}});
 	};
 	
-	/*var levelRenderer = new Render({
-		texture: tileset.image
-	});
+	var stats = new Stats();
 
-	$(levelRenderer.canvas).css({position: "absolute", left: "340px"});
-
-	document.body.appendChild(levelRenderer.canvas);
-
-	*/
 	var n = 0;
 	
 	
@@ -170,32 +176,105 @@ require([
 
 	var layerRenderer = new Renderer(layerGL);
 
-	layerRenderer.setTileLayer(0, 50, 50);
+	layerRenderer.setTileLayer(0, 256, 64, 1, 1, false);
+	var layer = layerRenderer.layers[0];
+
+
+	var layerContainer = document.createElement('div');
+
+	layerContainer.appendChild(layerCanvas);
+
+	var layerScroll = new Scrollbars({
+		element: layerCanvas
+	});
+	layerScroll.contentWidth = layer.width*32;
+	layerScroll.contentHeight = layer.height*32;
+	
+
 	var render = function () {
 		requestAnimFrame(render, layerCanvas);
 		/*levelRenderer.setOffset(-20+2*Math.cos(n), -20+2*Math.sin(n));
 		//levelRenderer.setScale(Math.sin(n)/3+2);
 		levelRenderer.update();*/
+
+		/*layerCanvas.style.left = Math.min(layerContainer.scrollLeft) + 'px';
+		layerCanvas.style.top = Math.min(layerContainer.scrollTop) + 'px';
+		console.log(layerCanvas.style.left, layerCanvas.style.top);*/
+
 		var gl = layerRenderer.gl;
-		gl.bindTexture(gl.TEXTURE_2D, layerRenderer.layers[0].tileTexture);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+		
+		/*var layer = layerRenderer.layers[0];
 		var tileId = tileset.j2t.info? Math.floor(Math.random()*tileset.j2t.info.images.length) : 0;
-		gl.texSubImage2D(gl.TEXTURE_2D, 0, Math.floor(Math.random()*50), Math.floor(Math.random()*50), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([tileId % 256, Math.floor(tileId / 256), 0, 255]));
-		layerRenderer.setTileScale(Math.sin(n)/5+1.5);
-		layerRenderer.draw(25+Math.cos(n*1.5)*5, 25+Math.sin(n)*5);
+		gl.bindTexture(gl.TEXTURE_2D, layer.tileTexture);
+		gl.texSubImage2D(gl.TEXTURE_2D, 0, Math.floor(Math.random()*layer.width), Math.floor(Math.random()*layer.height), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([tileId % 256, Math.floor(tileId / 256), 0, 255]));*/
+		
+		
+
+
+		//layerRenderer.setTileScale(Math.sin(n)/5+1.5);
+		layerRenderer.draw(layerCanvas.width/64 + layerScroll.scrollPosition[0]/32, layerCanvas.height/64 + layerScroll.scrollPosition[1]/32);
 		n+=0.02;
+		stats.update();
 	};
 	render();
 	
 	
 
 	layerCanvas.style.position = 'absolute';
-	layerCanvas.style.left = '337px';
+	layerCanvas.style.left = '0px';
+	layerCanvas.style.top = '0px';
+	layerCanvas.style.cursor = 'crosshair';
+	layerCanvas.style.backgroundColor = '#4830A8';
+
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.right = '10px';
+	stats.domElement.style.bottom = '10px';
+
 	
-
-
-	document.body.appendChild(layerCanvas);
+	layerContainer.style.overflow = "hidden";
+	layerContainer.style.position = 'absolute';
+	layerContainer.style.left = '320px';
+	layerContainer.style.right = '0px';
+	layerContainer.style.top = '26px';
+	layerContainer.style.bottom = '0px';
+	layerContainer.style.backgroundColor = 'rgb(32, 24, 80)';
 
 	
+	document.body.appendChild(layerContainer);
+	layerContainer.appendChild(stats.domElement);
+	var mdown = false;
+
+
+	function layerCanvasMouseDown(e) {
+		e.preventDefault();
+		mdown = true;
+		layerCanvasMouseMove(e);
+
+	};
+	function layerCanvasMouseMove(e) {
+		if (mdown) {
+			var x = Math.floor((e.pageX - layerContainer.offsetLeft + layerScroll.scrollPosition[0])/32);
+			var y = Math.floor((e.pageY - layerContainer.offsetTop + layerScroll.scrollPosition[1])/32);
+
+			
+			var layer = layerRenderer.layers[0];
+
+			if (x >= 0 && x < layer.width && y >= 0 && y < layer.height) {
+				var gl = layerRenderer.gl;
+				
+				var tileId = tileset.j2t.info? Math.floor(Math.random()*tileset.j2t.info.images.length) : 0;
+				gl.bindTexture(gl.TEXTURE_2D, layer.tileTexture);
+				gl.texSubImage2D(gl.TEXTURE_2D, 0, Math.floor(x), Math.floor(y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([tileId % 256, Math.floor(tileId / 256), 0, 255]));
+			}
+			
+			
+		}
+	};
+	function layerCanvasMouseUp(e) {
+		mdown = false;
+	};
 
 
 
@@ -209,12 +288,27 @@ require([
 	//var tileset = new Tileset();
 
 	function winResize() {
-		layerCanvas.width = window.innerWidth - 337;
-		layerCanvas.height = window.innerHeight;
+		layerCanvas.width = Math.min(layerContainer.offsetWidth, layer.width*32);
+		layerCanvas.height = Math.min(layerContainer.offsetHeight, layer.height*32);
 		layerRenderer.resizeViewport(layerCanvas.width, layerCanvas.height);
+
+		tilesetScroll.update();
+		layerScroll.update();
+
+		var lw = layerRenderer.layers[0].width*32;
+		var lh = layerRenderer.layers[0].height*32;
+		/*layerBg.style.width = lw+'px';
+		layerBg.style.height = lh+'px';
+		layerBg.style.borderRight = layerCanvas.width-Math.min(lw, layerCanvas.width)+'px solid rgb(32, 24, 80)';
+		layerBg.style.borderBottom = layerCanvas.height-Math.min(lh, layerCanvas.height)+'px solid rgb(32, 24, 80)';*/
 	};
 	winResize();
+
 	window.addEventListener('resize', winResize);
+
+	layerCanvas.addEventListener('mousedown', layerCanvasMouseDown);
+	window.addEventListener('mousemove', layerCanvasMouseMove);
+	window.addEventListener('mouseup', layerCanvasMouseUp);
 
 	
 	

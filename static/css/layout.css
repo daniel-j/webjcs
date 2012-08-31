@@ -7,8 +7,7 @@ body {
 	top: 0px;
 	left: 0px;
 	bottom: 0px;
-	width: 330px;
-	padding: 1px;
+	width: 320px;
 }
 #tilesetImageContainer {
 	position: absolute;
@@ -16,10 +15,10 @@ body {
 	top: 26px;
 	left: 0px;
 	right: 0px;
+	/*overflow: hidden;
+	overflow-y: scroll;*/
 	overflow: hidden;
-	overflow-y: scroll;
 }
-
 #tilesetImageContainer canvas {
 	visibility: visible;
 	display: block;
@@ -33,4 +32,36 @@ body {
 }
 #tilesetImageContainer canvas.mask {
 	
+}
+
+.scrollbars.horizontal.track {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	height: 10px;
+}
+.scrollbars.vertical.track {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	width: 10px;
+}
+.scrollbars.horizontal.track.hidden {
+	height: 2px;
+}
+.scrollbars.vertical.track.hidden {
+	width: 2px;
+}
+
+.scrollbars.horizontal .thumb {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+}
+.scrollbars.vertical .thumb {
+	position: absolute;
+	left: 0px;
+	right: 0px;
 }

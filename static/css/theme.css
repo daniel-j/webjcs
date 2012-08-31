@@ -55,6 +55,7 @@ select.tileset option.warning {
 	
 }
 #tilesetImageContainer {
+	border-right: 1px solid black;
 	background-color: rgb(32, 24, 80);
 }
 #tilesetImageContainer canvas {
@@ -63,7 +64,7 @@ select.tileset option.warning {
 #tilesetContainer progress {
 	-webkit-appearance: none;
 	width: 288px;
-	position: absolute;
+	position: fixed;
 	left: 16px;
 	top: 50%;
 	height: 48px;
@@ -77,3 +78,31 @@ select.tileset option.warning {
 	background-color: #09F;
 	background-color: #4830A8;
 }
+
+.scrollbars.horizontal {
+	-webkit-transition: height .2s ease-in-out, background-color .2s ease-in-out;
+}
+.scrollbars.vertical {
+	-webkit-transition: width .2s ease-in-out, background-color .2s ease-in-out;
+}
+.scrollbars.horizontal .thumb {
+	-webkit-transition: background-color .2s ease-in-out;
+}
+.scrollbars.vertical .thumb {
+	-webkit-transition: background-color .2s ease-in-out;
+}
+
+.scrollbars.track {
+	background-color: rgba(0, 0, 0, 0.3);
+}
+.scrollbars .thumb {
+	background-color: rgba(0, 187, 255, 0.7);
+}
+
+.scrollbars.track.hidden {
+	background-color: transparent;
+}
+.scrollbars.track.hidden .thumb {
+	background-color: #0bf;
+}
+
