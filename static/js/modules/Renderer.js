@@ -29,6 +29,10 @@ define([
 	'utils/webgl/gl-util',
 	'utils/webgl/gl-matrix-min'
 ], function (GLUtil) {
+
+	var hasWebGL = !!window.WebGLRenderingContext && (!!window.document.createElement('canvas').getContext('experimental-webgl') || !!window.document.createElement('canvas').getContext('webgl'));
+	console.log(hasWebGL);
+	//hasWebGL = false;
 	
 	// Shader
 	var tilemapVS = [
@@ -85,20 +89,32 @@ define([
 		"		discard;", // Tile id out of bounds
 		"	}",
 		//"	gl_FragColor = tile;",
+		//"	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);",
 		"}"
 	].join("\n");
 
 
 	var TileMapLayer = function (gl, w, h) {
-		this.gl = gl;
+		if (hasWebGL) {
+			this.gl = gl;
+			this.tileTexture = gl.createTexture();
+			this.textureSize = vec2.create();
+			this.inverseTextureSize = vec2.create();
+			this.setTexture(w, h);
+		} else {
+			this.tiles = [];
+			for (var x = 0; x < w; x++) {
+				this.tiles[x] = [];
+				for (var y = 0; y < h; y++) {
+					this.tiles[x][y] = 0;
+				}
+
+			}
+		}
+		
 		this.scrollScaleX = 1;
 		this.scrollScaleY = 1;
-		this.tileTexture = gl.createTexture();
-		this.textureSize = vec2.create();
-		this.inverseTextureSize = vec2.create();
 		this.repeat = false;
-
-		this.setTexture(w, h);
 
 		this.width = w;
 		this.height = h;
@@ -128,38 +144,69 @@ define([
 		this.inverseTextureSize[1] = 1/h;
 	};
 
+	TileMapLayer.prototype.setTiles = function (x, y, selection, selectionBuf) {
+		x = Math.floor(x);
+		y = Math.floor(y);
+		var sw = selection.length;
+		var sh = selection[0].length;
 
-	var Renderer = function (gl) {
-		this.gl = gl;
-		this.viewportSize = vec2.create();
-		this.scaledViewportSize = vec2.create();
-		this.inverseTileTextureSize = vec2.create();
-		this.inverseSpriteTextureSize = vec2.create();
+		if (hasWebGL) {
+			var gl = this.gl;
+			gl.bindTexture(gl.TEXTURE_2D, this.tileTexture);
+			//gl.texSubImage2D(gl.TEXTURE_2D, 0, Math.floor(x), Math.floor(y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([tileId % 256, Math.floor(tileId / 256), 0, 255]));
+			gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, selection.length, selection[0].length, gl.RGBA, gl.UNSIGNED_BYTE, selectionBuf);
+
+		} else {
+			
+			for (var sx = 0; sx < sw; sx++) {
+				for (var sy = 0; sy < sh; sy++) {
+					this.tiles[x+sx][y+sy] = selection[sx][sy];
+				}
+			}
+		}
+	};
+
+
+	var Renderer = function (ctx) {
+		if (hasWebGL) {
+			var gl = ctx;
+			this.gl = gl;
+			this.viewportSize = vec2.create();
+			this.scaledViewportSize = vec2.create();
+			this.inverseTileTextureSize = vec2.create();
+			this.inverseSpriteTextureSize = vec2.create();
+			this.tileset = gl.createTexture();
+
+			var quadVerts = new Float32Array([
+				//x  y  u  v
+				-1, -1, 0, 1,
+				1, -1, 1, 1,
+				1,  1, 1, 0,
+
+				-1, -1, 0, 1,
+				1,  1, 1, 0,
+				-1,  1, 0, 0
+			]);
+
+			this.quadVertBuffer = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVertBuffer);
+			gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
+
+			this.tilemapShader = GLUtil.createProgram(gl, tilemapVS, tilemapFS);
+
+		} else {
+			this.viewportSize = [0, 0];
+			this.ctx = ctx;
+			this.tileset = new Image();
+		}
 
 		this.tileScale = 1.0;
 		this.tileSize = 32;
 
 		this.filtered = false;
-
-		this.tileset = gl.createTexture();
 		this.layers = [];
 
-		var quadVerts = new Float32Array([
-			//x  y  u  v
-			-1, -1, 0, 1,
-			1, -1, 1, 1,
-			1,  1, 1, 0,
-
-			-1, -1, 0, 1,
-			1,  1, 1, 0,
-			-1,  1, 0, 0
-		]);
-
-		this.quadVertBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVertBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
-
-		this.tilemapShader = GLUtil.createProgram(gl, tilemapVS, tilemapFS);
+		
 
 		this.tileCount = 0;
 
@@ -173,25 +220,30 @@ define([
 	};
 
 	Renderer.prototype.setTileset = function (img, tileCount) {
+		
 		var self = this;
-		var gl = this.gl;
+		if (hasWebGL) {
+			var gl = this.gl;
 
-		gl.bindTexture(gl.TEXTURE_2D, self.tileset);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+			gl.bindTexture(gl.TEXTURE_2D, self.tileset);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
 
-		if(!self.filtered) {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			if(!self.filtered) {
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			} else {
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // Worth it to mipmap here?
+			}
+
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+			self.inverseSpriteTextureSize[0] = 1/img.width;
+			self.inverseSpriteTextureSize[1] = 1/img.height;
 		} else {
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // Worth it to mipmap here?
+			self.tileset = img;
 		}
-
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-		self.inverseSpriteTextureSize[0] = 1/img.width;
-		self.inverseSpriteTextureSize[1] = 1/img.height;
 
 		self.tileCount = tileCount;
 	};
@@ -211,59 +263,90 @@ define([
     };
 
     Renderer.prototype.resizeViewport = function (width, height) {
-    	this.gl.viewport(0, 0, width, height);
 
-		this.viewportSize[0] = width;
+    	this.viewportSize[0] = width;
 		this.viewportSize[1] = height;
 
-		this.scaledViewportSize[0] = width / this.tileScale;
-		this.scaledViewportSize[1] = height / this.tileScale;
+    	if (hasWebGL) {
+    		this.gl.viewport(0, 0, width, height);
+
+			this.scaledViewportSize[0] = width / this.tileScale;
+			this.scaledViewportSize[1] = height / this.tileScale;
+    	}
 	};
 
 	Renderer.prototype.draw = function (x, y) {
-		var gl = this.gl;
-
+		
 		x = x*32 - (this.viewportSize[0]/2)/this.tileScale;
 		y = y*32 - (this.viewportSize[1]/2)/this.tileScale;
 		
+		if (hasWebGL) {
 
-		var shader = this.tilemapShader;
-		gl.useProgram(shader.program);
+			var gl = this.gl;
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVertBuffer);
+			var shader = this.tilemapShader;
+			gl.useProgram(shader.program);
 
-		gl.enableVertexAttribArray(shader.attribute.position);
-		gl.enableVertexAttribArray(shader.attribute.texture);
-		gl.vertexAttribPointer(shader.attribute.position, 2, gl.FLOAT, false, 16, 0);
-		gl.vertexAttribPointer(shader.attribute.texture, 2, gl.FLOAT, false, 16, 8);
+			gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVertBuffer);
 
-		gl.uniform2fv(shader.uniform.viewportSize, this.scaledViewportSize);
-		gl.uniform2fv(shader.uniform.inverseSpriteTextureSize, this.inverseSpriteTextureSize);
-		gl.uniform1f(shader.uniform.tileSize, this.tileSize);
-		gl.uniform1f(shader.uniform.inverseTileSize, 1/this.tileSize);
+			gl.enableVertexAttribArray(shader.attribute.position);
+			gl.enableVertexAttribArray(shader.attribute.texture);
+			gl.vertexAttribPointer(shader.attribute.position, 2, gl.FLOAT, false, 16, 0);
+			gl.vertexAttribPointer(shader.attribute.texture, 2, gl.FLOAT, false, 16, 8);
 
-		gl.activeTexture(gl.TEXTURE0);
-		gl.uniform1i(shader.uniform.tileset, 0);
-		gl.bindTexture(gl.TEXTURE_2D, this.tileset);
+			gl.uniform2fv(shader.uniform.viewportSize, this.scaledViewportSize);
+			gl.uniform2fv(shader.uniform.inverseSpriteTextureSize, this.inverseSpriteTextureSize);
+			gl.uniform1f(shader.uniform.tileSize, this.tileSize);
+			gl.uniform1f(shader.uniform.inverseTileSize, 1/this.tileSize);
 
-		gl.activeTexture(gl.TEXTURE1);
-		gl.uniform1i(shader.uniform.map, 1);
-		
-		gl.uniform1i(shader.uniform.tileCount, this.tileCount)
+			gl.activeTexture(gl.TEXTURE0);
+			gl.uniform1i(shader.uniform.tileset, 0);
+			gl.bindTexture(gl.TEXTURE_2D, this.tileset);
+
+			gl.activeTexture(gl.TEXTURE1);
+			gl.uniform1i(shader.uniform.map, 1);
+			
+			gl.uniform1i(shader.uniform.tileCount, this.tileCount);
+
+		} else {
+
+		}
 
 		// Draw each layer of the map
 		var i, layer;
 		for (i = 0; i < this.layers.length; i++) {
 			layer = this.layers[i];
 			if (layer) {
-				gl.uniform2f(shader.uniform.viewOffset, Math.floor(x * layer.scrollScaleX), Math.floor(y * layer.scrollScaleY));
-				gl.uniform2fv(shader.uniform.inverseTileTextureSize, layer.inverseTextureSize);
+				if (hasWebGL) {
+					gl.uniform2f(shader.uniform.viewOffset, Math.floor(x * layer.scrollScaleX), Math.floor(y * layer.scrollScaleY));
+					gl.uniform2fv(shader.uniform.inverseTileTextureSize, layer.inverseTextureSize);
 
-				gl.uniform1i(shader.uniform.repeatTiles, layer.repeat ? 1 : 0);
+					gl.uniform1i(shader.uniform.repeatTiles, layer.repeat ? 1 : 0);
 
-				gl.bindTexture(gl.TEXTURE_2D, layer.tileTexture);
+					gl.bindTexture(gl.TEXTURE_2D, layer.tileTexture);
 
-				gl.drawArrays(gl.TRIANGLES, 0, 6);
+					gl.drawArrays(gl.TRIANGLES, 0, 6);
+				} else {
+
+					var w = this.ctx.canvas.width;
+					var h = this.ctx.canvas.height;
+
+					this.ctx.clearRect(0, 0, w, h);
+
+					for (var dx = Math.floor(x/32); dx-Math.floor(x/32) < Math.ceil(w/32); dx++) {
+						for (var dy = Math.floor(y/32); dy-Math.floor(y/32) < Math.ceil(h/32); dy++) {
+							if (this.tileset) {
+								var tileId = layer.tiles[dx][dy];
+								if (tileId > 0) {
+									this.ctx.drawImage(this.tileset, 32*(tileId % 10), 32*Math.floor(tileId / 10), 32, 32, dx*32-x, dy*32-y, 32, 32);
+								}
+								
+							}
+						}
+					}
+
+				}
+				
 
 			}
 		}

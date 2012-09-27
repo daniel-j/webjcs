@@ -5,6 +5,8 @@
 
 define(function () {
 
+	var isHoldingScrollbar = false;
+
 	function Scrollbars (params) {
 
 		var self = this;
@@ -52,24 +54,29 @@ define(function () {
 			gripPositionY: 0
 
 		};
+		var lastMouseEvent = {pageX: 0, pageY: 0};
 
 		function fixScrollbarVisibility (e) {
 			if (self.state.isMouseOver && !self.state.isMouseDown) {
+				if (!e) {
+					e = lastMouseEvent;
+				}
 				var box = self.parent.getBoundingClientRect();
 
-				if(self.state.holdingWhich !== self.vThumb && (self.state.holdingWhich === self.hThumb || box.height - (e.pageY-box.top) < self.revealDistance)) {
+				if((isHoldingScrollbar === false || isHoldingScrollbar === self) && self.state.holdingWhich !== self.vThumb && (self.state.holdingWhich === self.hThumb || box.height - (e.pageY-box.top) < self.revealDistance) && !self.hTrack.classList.contains('disabled')) {
 					self.hTrack.classList.remove('hidden');
 				} else {
 					self.hTrack.classList.add('hidden');
 				}
 
-				if(self.state.holdingWhich !== self.hThumb && (self.state.holdingWhich === self.vThumb || box.width - (e.pageX-box.left) < self.revealDistance)) {
+				if((isHoldingScrollbar === false || isHoldingScrollbar === self) && self.state.holdingWhich !== self.hThumb && (self.state.holdingWhich === self.vThumb || box.width - (e.pageX-box.left) < self.revealDistance) && !self.vTrack.classList.contains('disabled')) {
 					self.vTrack.classList.remove('hidden');
 				} else {
 					self.vTrack.classList.add('hidden');
 				}
 			}
 		}
+		this.fixScrollbarVisibility = fixScrollbarVisibility;
 
 		// Event listeners
 
@@ -80,6 +87,8 @@ define(function () {
 			self.state.holdingWhich = self.hThumb;
 			self.state.mouseDownPosition = e.pageX - self.state.gripPositionX;
 
+			isHoldingScrollbar = self;
+
 		}, false);
 		this.vThumb.addEventListener('mousedown', function (e) {
 			e.preventDefault();
@@ -89,7 +98,7 @@ define(function () {
 			self.state.holdingWhich = self.vThumb;
 			self.state.mouseDownPosition = e.pageY - self.state.gripPositionY;
 			
-			
+			isHoldingScrollbar = self;
 
 			
 
@@ -101,6 +110,7 @@ define(function () {
 			self.state.isMouseDown = true;
 		}, false)
 		window.addEventListener('mousemove', function (e) {
+			lastMouseEvent = e;
 			if (self.state.holdingWhich !== null) {
 
 				var mouseDownPosition = self.state.mouseDownPosition;
@@ -150,8 +160,7 @@ define(function () {
 			
 
 		}, false);
-		window.addEventListener('mouseup', function (e) {
-
+		function releaseScrollBar (e) {
 			self.state.holdingWhich = null;
 			self.state.isMouseDown = false;
 
@@ -160,9 +169,12 @@ define(function () {
 				self.vTrack.classList.add('hidden');
 			}
 
-			fixScrollbarVisibility(e);
+			isHoldingScrollbar = false;
 
-		}, false);
+			fixScrollbarVisibility(e);
+		};
+		window.addEventListener('mouseup', releaseScrollBar, false);
+		window.addEventListener('blur', releaseScrollBar, false);
 		this.parent.addEventListener('mousewheel', function (e) {
 			var deltaX = (e.wheelDeltaX > 0 ? 1 : (e.wheelDeltaX < 0 ? -1 : 0));
 			var deltaY = (e.wheelDeltaY > 0 ? 1 : (e.wheelDeltaY < 0 ? -1 : 0));
@@ -196,6 +208,7 @@ define(function () {
 	};
 
 	Scrollbars.prototype.update = function () {
+
 		var containerWidth = this.parent.offsetWidth;
 		var containerHeight = this.parent.offsetHeight;
 
@@ -209,8 +222,8 @@ define(function () {
 		var maxGripWidth = trackWidth;
 		var maxGripHeight = trackHeight;
 
-		var scrollX = this.scrollPosition[0];
-		var scrollY = this.scrollPosition[1];
+		var scrollX = Math.max(Math.min(this.scrollPosition[0], this.contentWidth - containerWidth), 0);
+		var scrollY = Math.max(Math.min(this.scrollPosition[1], this.contentHeight - containerHeight), 0);
 
 		var gripWidth = Math.max(Math.min(trackWidth * gripRatioX, maxGripWidth), minGripSize);
 		var gripHeight = Math.max(Math.min(trackHeight * gripRatioY, maxGripHeight), minGripSize);
@@ -241,27 +254,27 @@ define(function () {
 		this.vThumb.style.height = gripHeight+'px';
 
 		if (gripRatioX >= 1) {
-			this.hTrack.style.visibility = 'hidden';
+			this.hTrack.classList.add('disabled');
 		} else {
-			this.hTrack.style.visibility = 'visible';
+			this.hTrack.classList.remove('disabled');
 		}
 
 		if (gripRatioY >= 1) {
-			this.vTrack.style.visibility = 'hidden';
+			this.vTrack.classList.add('disabled');
 		} else {
-			this.vTrack.style.visibility = 'visible';
+			this.vTrack.classList.remove('disabled');
 		}
 
 		this.hThumb.style.left = gripPositionX+'px';
 		this.vThumb.style.top = gripPositionY+'px';
 
-		var newScrollX = Math.max(Math.min(this.scrollPosition[0], this.contentWidth - this.parent.offsetWidth), 0);
-		var newScrollY = Math.max(Math.min(this.scrollPosition[1], this.contentHeight - this.parent.offsetHeight), 0);
-		if (newScrollX !== this.scrollPosition[0] || newScrollY !== this.scrollPosition[1]) {
-			this.scrollPosition[0] = newScrollX;
-			this.scrollPosition[1] = newScrollY;
+		if (scrollX !== this.scrollPosition[0] || scrollY !== this.scrollPosition[1]) {
+			this.scrollPosition[0] = scrollX;
+			this.scrollPosition[1] = scrollY;
 			this.emit('scroll');
 		}
+
+		this.fixScrollbarVisibility();
 
 	};
 

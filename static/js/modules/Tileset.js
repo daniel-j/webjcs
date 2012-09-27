@@ -19,14 +19,18 @@ define([
 		this.image  = document.createElement('canvas');
 		this.mask   = document.createElement('canvas');
 		this.raw    = document.createElement('canvas');
+		this.glImg 	= document.createElement('canvas');
 		this.imgc   = this.image.getContext('2d');
 		this.maskc  = this.mask.getContext('2d');
 		this.rawc   = this.raw.getContext('2d');
+		this.glic   = this.glImg.getContext('2d');
 
 		this.image.width = 320;
 		this.image.height = 32;
 		this.mask.width  = 320;
 		this.mask.height = 32;
+		this.glImg.width = 32;
+		this.glImg.height = 32;
 		this.image.classList.add('image');
 		this.mask.classList.add('mask');
 		this.image.classList.add('hide');
@@ -60,6 +64,8 @@ define([
 			self.image.height = self.mask.height = height*32;
 			self.raw.width = 32*Math.min(data.images.length, 256);
 			self.raw.height = 32*Math.ceil(data.images.length / 256);
+			self.glImg.width = 32*Math.min(data.info.tileCount, 256);
+			self.glImg.height = Math.ceil(data.info.tileCount / 256)*32;
 
 			var tileCount = data.info.tileCount;
 
@@ -90,11 +96,14 @@ define([
 			var imgd = imgdata.data;
 			var tilecache = [];
 
+
+
 			for (i = 0; i < tileCount; i++) {
 				tile = data.info.imageAddress[i]/1024;
 				if (tile === 0) {
 					continue;
 				}
+				self.glic.drawImage(self.raw, (tile % 256)*32, Math.floor(tile / 256)*32, 32, 32, (i % 256)*32, Math.floor(i / 256)*32, 32, 32);
 				self.imgc.drawImage(self.raw, (tile % 256)*32, Math.floor(tile / 256)*32, 32, 32, (i % 10)*32, Math.floor(i / 10)*32, 32, 32);
 			}
 			self.image.classList.remove('hide');

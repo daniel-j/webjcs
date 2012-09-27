@@ -51,6 +51,35 @@ select.tileset option.warning {
 	color: red;
 }
 
+.scrollbars.horizontal {
+	-webkit-transition: height .2s ease-in-out, background-color .2s ease-in-out;
+}
+.scrollbars.vertical {
+	-webkit-transition: width .2s ease-in-out, background-color .2s ease-in-out;
+}
+.scrollbars.horizontal .thumb {
+	-webkit-transition: background-color .2s ease-in-out;
+}
+.scrollbars.vertical .thumb {
+	-webkit-transition: background-color .2s ease-in-out;
+}
+
+.scrollbars.track {
+	background-color: rgba(0, 0, 0, 0.3);
+}
+.scrollbars .thumb {
+	background-color: rgba(0, 187, 255, 0.9);
+}
+
+.scrollbars.track.hidden {
+	background-color: transparent;
+}
+.scrollbars.track.hidden .thumb {
+	background-color: #0bf;
+}
+
+
+
 #tilesetContainer {
 	
 }
@@ -58,7 +87,7 @@ select.tileset option.warning {
 	border-right: 1px solid black;
 	background-color: rgb(32, 24, 80);
 }
-#tilesetImageContainer canvas {
+#tilesetImageContainer .image {
 	background-color: #4830A8;
 }
 #tilesetContainer progress {
@@ -78,31 +107,19 @@ select.tileset option.warning {
 	background-color: #09F;
 	background-color: #4830A8;
 }
-
-.scrollbars.horizontal {
-	-webkit-transition: height .2s ease-in-out, background-color .2s ease-in-out;
+#tilesetImageContainer .scrollbars.vertical.track.hidden {
+	background-color: black;
 }
-.scrollbars.vertical {
-	-webkit-transition: width .2s ease-in-out, background-color .2s ease-in-out;
+#tilesetImageContainer .scrollbars.vertical.track.disabled {
+	visibility: visible;
 }
-.scrollbars.horizontal .thumb {
-	-webkit-transition: background-color .2s ease-in-out;
-}
-.scrollbars.vertical .thumb {
-	-webkit-transition: background-color .2s ease-in-out;
+#tilesetImageContainer .scrollbars.vertical.track.disabled .thumb {
+	visibility: hidden;
 }
 
-.scrollbars.track {
-	background-color: rgba(0, 0, 0, 0.3);
+.tileSelection {
+	outline: 2px solid rgba(0, 187, 255, 1.0);
+	background-color: rgba(0, 187, 255, 0.15);
+	box-shadow: inset 0px 0px 64px rgba(0, 187, 255, 0.5), 0px 0px 24px black, 0px 0px 24px black;
+	-webkit-transition: opacity .1s ease-in-out, visibility .1s ease-in-out;
 }
-.scrollbars .thumb {
-	background-color: rgba(0, 187, 255, 0.7);
-}
-
-.scrollbars.track.hidden {
-	background-color: transparent;
-}
-.scrollbars.track.hidden .thumb {
-	background-color: #0bf;
-}
-

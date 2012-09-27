@@ -52,6 +52,7 @@ require([
 
 	var tilesetImage = new Image();
 	tilesetImage.id = "tilesetImage";
+	tilesetImage.classList.add('image');
 
 	var tilesetProgress   = document.createElement('progress');
 	tilesetProgress.value = 0;
@@ -74,20 +75,95 @@ require([
 	tilesetSelect.addEventListener('change', tilesetSelectChange);
 	reloadTilesetListBtn.addEventListener('click', reloadTilesetList);
 
-	tilesetImageContainer.appendChild(tileset.mask);
-	tilesetImageContainer.appendChild(tileset.image);
+	var tilesetSelection = document.createElement('div');
+	tilesetSelection.classList.add('tileSelection');
+
+	//tilesetImageContainer.appendChild(tileset.mask);
+	tilesetImageContainer.appendChild(tilesetImage);
+	tilesetImageContainer.appendChild(tilesetSelection);
 	tilesetImageContainer.appendChild(tilesetProgress);
 	
 	tilesetContainer.appendChild(tilesetSelect);
 	tilesetContainer.appendChild(reloadTilesetListBtn);
 	tilesetContainer.appendChild(tilesetImageContainer);
 
+	var tilesetSelectionPos = {x: 0, y: 0, w: 0, h: 0, active: false};
+	var selectedTiles = [[0]];
+	var selectedTilesBuf = new Uint8Array([0, 0, 0, 0]);
+
+	function updateTilesetSelection () {
+		var startx = Math.min(tilesetSelectionPos.x, tilesetSelectionPos.x+tilesetSelectionPos.w);
+		var starty = Math.min(tilesetSelectionPos.y, tilesetSelectionPos.y+tilesetSelectionPos.h);
+		tilesetSelection.style.left = (startx*32)+'px';
+		tilesetSelection.style.top = (starty*32-tilesetScroll.scrollPosition[1])+'px';
+		tilesetSelection.style.width = (tilesetSelectionPos.w > 0? tilesetSelectionPos.w+1 : -tilesetSelectionPos.w+1)*32+'px';
+		tilesetSelection.style.height = (tilesetSelectionPos.h > 0? tilesetSelectionPos.h+1 : -tilesetSelectionPos.h+1)*32+'px';
+	};
+	tilesetImageContainer.addEventListener('mousedown', function (e) {
+
+		e.preventDefault();
+		if (e.target === tilesetImage || e.target === tilesetSelection) {
+			var box = tilesetImageContainer.getBoundingClientRect();
+			tilesetSelectionPos.x = Math.floor(e.pageX/32);
+			tilesetSelectionPos.y = Math.floor((e.pageY-box.top+tilesetScroll.scrollPosition[1])/32);
+			tilesetSelectionPos.w = 0;
+			tilesetSelectionPos.h = 0;
+			tilesetSelectionPos.active = true;
+			tilesetSelection.classList.add('active');
+			updateTilesetSelection();
+		}
+	}, false);
+	window.addEventListener('mousemove', function (e) {
+		if (!tilesetSelectionPos.active) {
+			return;
+		}
+		var box = tilesetImageContainer.getBoundingClientRect();
+		var x = Math.max(Math.floor(e.pageX/32), 0);
+		var y = Math.max(Math.floor((e.pageY-box.top+tilesetScroll.scrollPosition[1])/32), 0);
+
+		tilesetSelectionPos.w = Math.min(x-tilesetSelectionPos.x, 10-tilesetSelectionPos.x-1);
+		tilesetSelectionPos.h = Math.min(y-tilesetSelectionPos.y, tileset.image.height/32-tilesetSelectionPos.y-1);
+		updateTilesetSelection();
+	}, false);
+	window.addEventListener('mouseup', function () {
+		if (tilesetSelectionPos.active) {
+			tilesetSelectionPos.active = false;
+			tilesetSelection.classList.remove('active');
+
+			var startx = Math.min(tilesetSelectionPos.x, tilesetSelectionPos.x+tilesetSelectionPos.w);
+			var starty = Math.min(tilesetSelectionPos.y, tilesetSelectionPos.y+tilesetSelectionPos.h);
+			var w = tilesetSelectionPos.w > 0? tilesetSelectionPos.w+1 : -tilesetSelectionPos.w+1;
+			var h = tilesetSelectionPos.h > 0? tilesetSelectionPos.h+1 : -tilesetSelectionPos.h+1;
+			selectedTiles = [];
+			selectedTilesBuf = new Uint8Array(w*h*4);
+			
+			for (var x = 0; x < w; x++) {
+				selectedTiles[x] = [];
+				for (var y = 0; y < h; y++) {
+					selectedTiles[x][y] = (startx+x)+10*(starty+y);
+					var tileId = selectedTiles[x][y];
+					
+					var i = (y*w+x)*4;
+					selectedTilesBuf[i] = tileId % 256;
+					selectedTilesBuf[i+1] = Math.floor(tileId / 256);
+					selectedTilesBuf[i+2] = 0;
+					selectedTilesBuf[i+3] = 255;
+					
+				}
+			}
+			//console.log(selectedTiles, selectedTilesBuf);
+		}
+		
+	}, false);
+
 	var tilesetScroll = new Scrollbars({
-		element: tileset.image,
+		element: tilesetImage,
 		revealDistance: 130
 	});
 	tilesetScroll.on('scroll', function () {
-		tileset.image.style.top = -tilesetScroll.scrollPosition[1]+'px';
+		tilesetImage.style.top = -tilesetScroll.scrollPosition[1]+'px';
+		updateTilesetSelection();
+		
 	});
 	tilesetScroll.contentWidth = 320;
 
@@ -97,10 +173,23 @@ require([
 		var info = JSON.parse(tilesetSelect.value);
 		
 		if (info[0].length > 0) {
+			tilesetImage.classList.add('hide');
 			tileset.load(info[0] /* filename */, info[3] /* folderIndex */, function () {
-				layerRenderer.setTileset(tileset.raw, tileset.j2t.info.images.length);
+				tilesetImage.classList.remove('hide');
+				
+				//layerRenderer.setTileset(tileset.raw, tileset.j2t.info.images.length);
+				
+				if (layerRenderer.gl) {
+					layerRenderer.setTileset(tileset.glImg, tileset.j2t.info.info.tileCount);
+				} else {
+					layerRenderer.setTileset(tileset.image, tileset.j2t.info.info.tileCount);
+				}
+				
 				tilesetScroll.contentHeight = tileset.image.height;
 				tilesetScroll.update();
+				tilesetImage.src = tileset.image.toDataURL();
+
+				requestAnimFrame(render, layerCanvas);
 
 			});
 		} else {
@@ -108,7 +197,7 @@ require([
 		}
 	};
 
-	function reloadTilesetList() {
+	function reloadTilesetList () {
 		
 		tilesetSelect.disabled = true;
 		reloadTilesetListBtn.disabled = true;
@@ -172,10 +261,10 @@ require([
 	
 	
 	var layerCanvas = document.createElement('canvas');
-	var layerGL = layerCanvas.getContext('webgl') || layerCanvas.getContext('experimental-webgl');
+	var layerGL = layerCanvas.getContext('webgl') || layerCanvas.getContext('experimental-webgl') || layerCanvas.getContext('2d');
 
 	var layerRenderer = new Renderer(layerGL);
-
+	layerRenderer.setTileset(tileset.glImg);
 	layerRenderer.setTileLayer(0, 256, 64, 1, 1, false);
 	var layer = layerRenderer.layers[0];
 
@@ -189,10 +278,14 @@ require([
 	});
 	layerScroll.contentWidth = layer.width*32;
 	layerScroll.contentHeight = layer.height*32;
+
+	layerScroll.on('scroll', function () {
+		requestAnimFrame(render, layerCanvas);
+	});
 	
 
 	var render = function () {
-		requestAnimFrame(render, layerCanvas);
+		
 		/*levelRenderer.setOffset(-20+2*Math.cos(n), -20+2*Math.sin(n));
 		//levelRenderer.setScale(Math.sin(n)/3+2);
 		levelRenderer.update();*/
@@ -202,7 +295,10 @@ require([
 		console.log(layerCanvas.style.left, layerCanvas.style.top);*/
 
 		var gl = layerRenderer.gl;
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		if (gl) {
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		}
+		
 
 		
 		/*var layer = layerRenderer.layers[0];
@@ -235,7 +331,7 @@ require([
 	
 	layerContainer.style.overflow = "hidden";
 	layerContainer.style.position = 'absolute';
-	layerContainer.style.left = '320px';
+	layerContainer.style.left = '323px';
 	layerContainer.style.right = '0px';
 	layerContainer.style.top = '26px';
 	layerContainer.style.bottom = '0px';
@@ -264,9 +360,10 @@ require([
 			if (x >= 0 && x < layer.width && y >= 0 && y < layer.height) {
 				var gl = layerRenderer.gl;
 				
-				var tileId = tileset.j2t.info? Math.floor(Math.random()*tileset.j2t.info.images.length) : 0;
-				gl.bindTexture(gl.TEXTURE_2D, layer.tileTexture);
-				gl.texSubImage2D(gl.TEXTURE_2D, 0, Math.floor(x), Math.floor(y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([tileId % 256, Math.floor(tileId / 256), 0, 255]));
+				//var tileId = tileset.j2t.info? Math.floor(Math.random()*tileset.j2t.info.images.length) : 0;
+				
+				layer.setTiles(x, y, selectedTiles, selectedTilesBuf);
+				requestAnimFrame(render, layerCanvas);
 			}
 			
 			
@@ -297,6 +394,9 @@ require([
 
 		var lw = layerRenderer.layers[0].width*32;
 		var lh = layerRenderer.layers[0].height*32;
+
+		requestAnimFrame(render, layerCanvas);
+
 		/*layerBg.style.width = lw+'px';
 		layerBg.style.height = lh+'px';
 		layerBg.style.borderRight = layerCanvas.width-Math.min(lw, layerCanvas.width)+'px solid rgb(32, 24, 80)';
