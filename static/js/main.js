@@ -38,7 +38,7 @@ require([
 	tilesetSelect.className = "tileset";
 	tilesetSelect.disabled  = true;
 
-	var noTilesetOption             = document.createElement('option');
+	var noTilesetOption         = document.createElement('option');
 	noTilesetOption.selected    = true;
 	noTilesetOption.value       = JSON.stringify(["", "", 0, -1]);
 	noTilesetOption.textContent = "« No tileset »";
@@ -123,6 +123,11 @@ require([
 
 		tilesetSelectionPos.w = Math.min(x-tilesetSelectionPos.x, 10-tilesetSelectionPos.x-1);
 		tilesetSelectionPos.h = Math.min(y-tilesetSelectionPos.y, tileset.image.height/32-tilesetSelectionPos.y-1);
+
+		tilesetSelectionPos.w = x-tilesetSelectionPos.x;
+		tilesetSelectionPos.h = y-tilesetSelectionPos.y;
+
+		console.log(y, tilesetSelectionPos.y, tileset.image.height/32);
 		updateTilesetSelection();
 	}, false);
 	window.addEventListener('mouseup', function () {
@@ -189,11 +194,23 @@ require([
 				tilesetScroll.update();
 				tilesetImage.src = tileset.image.toDataURL();
 
-				requestAnimFrame(render, layerCanvas);
+				if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 
 			});
 		} else {
 			tileset.unload();
+			tilesetImage.classList.add('hide');
+			
+			if (layerRenderer.gl) {
+				layerRenderer.setTileset(tileset.glImg, 1);
+			} else {
+				layerRenderer.setTileset(tileset.image, 1);
+			}
+			
+			tilesetScroll.contentHeight = 0;
+			tilesetScroll.update();
+			
+			if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 		}
 	};
 
@@ -261,12 +278,12 @@ require([
 	
 	
 	var layerCanvas = document.createElement('canvas');
-	var layerGL = layerCanvas.getContext('webgl') || layerCanvas.getContext('experimental-webgl') || layerCanvas.getContext('2d');
 
-	var layerRenderer = new Renderer(layerGL);
+	var layerRenderer = new Renderer(layerCanvas, true);
 	layerRenderer.setTileset(tileset.glImg);
 	layerRenderer.setTileLayer(0, 256, 64, 1, 1, false);
 	var layer = layerRenderer.layers[0];
+	var didRender = false;
 
 
 	var layerContainer = document.createElement('div');
@@ -280,11 +297,14 @@ require([
 	layerScroll.contentHeight = layer.height*32;
 
 	layerScroll.on('scroll', function () {
-		requestAnimFrame(render, layerCanvas);
+		if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 	});
 	
 
 	var render = function () {
+		//console.log("render");
+		
+		didRender = false;
 		
 		/*levelRenderer.setOffset(-20+2*Math.cos(n), -20+2*Math.sin(n));
 		//levelRenderer.setScale(Math.sin(n)/3+2);
@@ -313,8 +333,10 @@ require([
 		layerRenderer.draw(layerCanvas.width/64 + layerScroll.scrollPosition[0]/32, layerCanvas.height/64 + layerScroll.scrollPosition[1]/32);
 		n+=0.02;
 		stats.update();
+		requestAnimFrame(render, layerCanvas);
+		didRender = true;
 	};
-	render();
+	if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 	
 	
 
@@ -363,7 +385,8 @@ require([
 				//var tileId = tileset.j2t.info? Math.floor(Math.random()*tileset.j2t.info.images.length) : 0;
 				
 				layer.setTiles(x, y, selectedTiles, selectedTilesBuf);
-				requestAnimFrame(render, layerCanvas);
+
+				if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 			}
 			
 			
@@ -395,7 +418,7 @@ require([
 		var lw = layerRenderer.layers[0].width*32;
 		var lh = layerRenderer.layers[0].height*32;
 
-		requestAnimFrame(render, layerCanvas);
+		if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 
 		/*layerBg.style.width = lw+'px';
 		layerBg.style.height = lh+'px';

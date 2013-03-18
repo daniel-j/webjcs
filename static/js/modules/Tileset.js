@@ -69,6 +69,16 @@ define([
 
 			var tileCount = data.info.tileCount;
 
+			var pal = [];
+
+			for (var i = 0; i < 256; i++) {
+				var color = data.info.palette[i];
+				var r = color & 0xFF;
+				var g = (color >> 8) & 0xFF;
+				var b = (color >> 16) & 0xFF;
+				pal.push(r+" "+g+" "+b);
+			}
+			console.log(pal.join("\n"));
 			
 			
 			var i, j, x, y, tile, index, color, pos, cachepos, masked, mbyte, pixpos;
@@ -117,6 +127,10 @@ define([
 		this.j2t.abort();
 		this.image.classList.add('hide');
 		this.mask.classList.add('hide');
+		this.image.height = 32;
+		this.mask.height = 32;
+		this.glImg.width = 32;
+		this.glImg.height = 32;
 	};
 
 	Tileset.prototype.emit = function (name, value) {

@@ -8,9 +8,11 @@ var mime = require('mime');
 var zlib = require('zlib');
 var formidable = require('formidable');
 var Struct = require(getRelativePath('static/js/modules/Struct.js')).Struct;
+var settings = require('./settings.json');
 
 var validFileExt = ['j2l', 'j2t'];
-var settings = {};
+
+var filelist = [];
 
 var structs = {
 	j2t: {
@@ -56,7 +58,7 @@ function getRelativePath(filepath) {
 	return path.join(__dirname, filepath)
 };
 
-fs.readFile(getRelativePath('settings.json'), 'utf8', function (err, data) {
+/*fs.readFile(getRelativePath('settings.json'), 'utf8', function (err, data) {
 	if (err) {
 		console.error('Unable to load settings: '+err);
 		return;
@@ -64,7 +66,19 @@ fs.readFile(getRelativePath('settings.json'), 'utf8', function (err, data) {
 	settings = JSON.parse(data);
 
 	startServer();
+});*/
+
+getFileList(settings.paths.merge_folders, function (list) {
+	filelist = list;
+	startServer();
 });
+
+// Update the filelist every 10 min
+setInterval(function () {
+	getFileList(settings.paths.merge_folders, function (list) {
+		filelist = list;
+	});
+}, 10*1000);
 
 function startServer() {
 
@@ -114,13 +128,13 @@ function startServer() {
 
 
 				case 'files/list':
-				getFileList(settings.paths.merge_folders, function (list) {
-					var data = JSON.stringify(list);
-					res.writeHead(200, {
-						'Content-Type': 'text/plain'
-					});
-					res.end(data);
+				
+				var data = JSON.stringify(filelist);
+				res.writeHead(200, {
+					'Content-Type': 'text/plain'
 				});
+				res.end(data);
+				
 				break;
 
 				case 'files/get':

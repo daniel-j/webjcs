@@ -85,8 +85,8 @@ define([
 		"		if(outColor.a < 0.5) {discard;}",
 		"		gl_FragColor = outColor;",
 		"	} else {",
-		//"		gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);", // Render magneta color
-		"		discard;", // Tile id out of bounds
+		"		gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);", // Render magneta color
+		//"		discard;", // Tile id out of bounds
 		"	}",
 		//"	gl_FragColor = tile;",
 		//"	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);",
@@ -94,8 +94,9 @@ define([
 	].join("\n");
 
 
-	var TileMapLayer = function (gl, w, h) {
-		if (hasWebGL) {
+	var TileMapLayer = function (gl, w, h, useWebGL) {
+		this.useWebGL = useWebGL;
+		if (this.useWebGL) {
 			this.gl = gl;
 			this.tileTexture = gl.createTexture();
 			this.textureSize = vec2.create();
@@ -150,7 +151,7 @@ define([
 		var sw = selection.length;
 		var sh = selection[0].length;
 
-		if (hasWebGL) {
+		if (this.useWebGL) {
 			var gl = this.gl;
 			gl.bindTexture(gl.TEXTURE_2D, this.tileTexture);
 			//gl.texSubImage2D(gl.TEXTURE_2D, 0, Math.floor(x), Math.floor(y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([tileId % 256, Math.floor(tileId / 256), 0, 255]));
@@ -167,9 +168,13 @@ define([
 	};
 
 
-	var Renderer = function (ctx) {
-		if (hasWebGL) {
-			var gl = ctx;
+	var Renderer = function (canvas, attemptWebGL) {
+		this.canvas = canvas;
+		
+		this.useWebGL = attemptWebGL && hasWebGL;
+		
+		if (this.useWebGL) {
+			var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 			this.gl = gl;
 			this.viewportSize = vec2.create();
 			this.scaledViewportSize = vec2.create();
@@ -196,7 +201,7 @@ define([
 
 		} else {
 			this.viewportSize = [0, 0];
-			this.ctx = ctx;
+			this.ctx = canvas.getContext('2d');
 			this.tileset = new Image();
 		}
 
@@ -205,9 +210,7 @@ define([
 
 		this.filtered = false;
 		this.layers = [];
-
 		
-
 		this.tileCount = 0;
 
 	};
@@ -222,7 +225,7 @@ define([
 	Renderer.prototype.setTileset = function (img, tileCount) {
 		
 		var self = this;
-		if (hasWebGL) {
+		if (this.useWebGL) {
 			var gl = this.gl;
 
 			gl.bindTexture(gl.TEXTURE_2D, self.tileset);
@@ -249,7 +252,7 @@ define([
 	};
 
 	Renderer.prototype.setTileLayer = function (layerId, w, h, scrollScaleX, scrollScaleY, repeat) {
-        var layer = new TileMapLayer(this.gl, w, h);
+        var layer = new TileMapLayer(this.gl, w, h, this.useWebGL);
         layer.repeat = !!repeat;
 
         if(scrollScaleX) {
@@ -267,7 +270,7 @@ define([
     	this.viewportSize[0] = width;
 		this.viewportSize[1] = height;
 
-    	if (hasWebGL) {
+    	if (this.useWebGL) {
     		this.gl.viewport(0, 0, width, height);
 
 			this.scaledViewportSize[0] = width / this.tileScale;
@@ -280,7 +283,7 @@ define([
 		x = x*32 - (this.viewportSize[0]/2)/this.tileScale;
 		y = y*32 - (this.viewportSize[1]/2)/this.tileScale;
 		
-		if (hasWebGL) {
+		if (this.useWebGL) {
 
 			var gl = this.gl;
 
@@ -317,7 +320,7 @@ define([
 		for (i = 0; i < this.layers.length; i++) {
 			layer = this.layers[i];
 			if (layer) {
-				if (hasWebGL) {
+				if (this.useWebGL) {
 					gl.uniform2f(shader.uniform.viewOffset, Math.floor(x * layer.scrollScaleX), Math.floor(y * layer.scrollScaleY));
 					gl.uniform2fv(shader.uniform.inverseTileTextureSize, layer.inverseTextureSize);
 
@@ -327,23 +330,27 @@ define([
 
 					gl.drawArrays(gl.TRIANGLES, 0, 6);
 				} else {
-
+					this.ctx.save();
 					var w = this.ctx.canvas.width;
 					var h = this.ctx.canvas.height;
 
 					this.ctx.clearRect(0, 0, w, h);
+					this.ctx.fillStyle = '#f0f';
 
 					for (var dx = Math.floor(x/32); dx-Math.floor(x/32) < Math.ceil(w/32); dx++) {
 						for (var dy = Math.floor(y/32); dy-Math.floor(y/32) < Math.ceil(h/32); dy++) {
 							if (this.tileset) {
 								var tileId = layer.tiles[dx][dy];
-								if (tileId > 0) {
+								if (tileId > 0 && tileId < this.tileCount) {
 									this.ctx.drawImage(this.tileset, 32*(tileId % 10), 32*Math.floor(tileId / 10), 32, 32, dx*32-x, dy*32-y, 32, 32);
+								} else if (tileId >= this.tileCount) {
+									this.ctx.fillRect(dx*32-x, dy*32-y, 32, 32);
 								}
 								
 							}
 						}
 					}
+					this.ctx.restore();
 
 				}
 				
