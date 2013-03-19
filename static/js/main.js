@@ -50,10 +50,6 @@ require([
 	var tilesetImageContainer = document.createElement('div');
 	tilesetImageContainer.id  = "tilesetImageContainer";
 
-	var tilesetImage = new Image();
-	tilesetImage.id = "tilesetImage";
-	tilesetImage.classList.add('image');
-
 	var tilesetProgress   = document.createElement('progress');
 	tilesetProgress.value = 0;
 	tilesetProgress.min   = 0;
@@ -69,108 +65,29 @@ require([
 			tilesetProgress.style.visibility = 'hidden';
 		}
 	});
+	tileset.on('selection', function () {
+		selectedTiles = tileset.selectedTiles;
+		selectedTilesBuf = tileset.selectedTilesBuf;
+	});
 
 	tilesetSelect.appendChild(noTilesetOption);
 
 	tilesetSelect.addEventListener('change', tilesetSelectChange);
 	reloadTilesetListBtn.addEventListener('click', reloadTilesetList);
 
-	var tilesetSelection = document.createElement('div');
-	tilesetSelection.classList.add('tileSelection');
+	
 
 	//tilesetImageContainer.appendChild(tileset.mask);
-	tilesetImageContainer.appendChild(tilesetImage);
-	tilesetImageContainer.appendChild(tilesetSelection);
 	tilesetImageContainer.appendChild(tilesetProgress);
+	tilesetImageContainer.appendChild(tileset.node);
 	
 	tilesetContainer.appendChild(tilesetSelect);
 	tilesetContainer.appendChild(reloadTilesetListBtn);
 	tilesetContainer.appendChild(tilesetImageContainer);
 
-	var tilesetSelectionPos = {x: 0, y: 0, w: 0, h: 0, active: false};
+	
 	var selectedTiles = [[0]];
 	var selectedTilesBuf = new Uint8Array([0, 0, 0, 0]);
-
-	function updateTilesetSelection () {
-		var startx = Math.min(tilesetSelectionPos.x, tilesetSelectionPos.x+tilesetSelectionPos.w);
-		var starty = Math.min(tilesetSelectionPos.y, tilesetSelectionPos.y+tilesetSelectionPos.h);
-		tilesetSelection.style.left = (startx*32)+'px';
-		tilesetSelection.style.top = (starty*32-tilesetScroll.scrollPosition[1])+'px';
-		tilesetSelection.style.width = (tilesetSelectionPos.w > 0? tilesetSelectionPos.w+1 : -tilesetSelectionPos.w+1)*32+'px';
-		tilesetSelection.style.height = (tilesetSelectionPos.h > 0? tilesetSelectionPos.h+1 : -tilesetSelectionPos.h+1)*32+'px';
-	};
-	tilesetImageContainer.addEventListener('mousedown', function (e) {
-
-		e.preventDefault();
-		if (e.target === tilesetImage || e.target === tilesetSelection) {
-			var box = tilesetImageContainer.getBoundingClientRect();
-			tilesetSelectionPos.x = Math.floor(e.pageX/32);
-			tilesetSelectionPos.y = Math.floor((e.pageY-box.top+tilesetScroll.scrollPosition[1])/32);
-			tilesetSelectionPos.w = 0;
-			tilesetSelectionPos.h = 0;
-			tilesetSelectionPos.active = true;
-			tilesetSelection.classList.add('active');
-			updateTilesetSelection();
-		}
-	}, false);
-	window.addEventListener('mousemove', function (e) {
-		if (!tilesetSelectionPos.active) {
-			return;
-		}
-		var box = tilesetImageContainer.getBoundingClientRect();
-		var x = Math.max(Math.floor(e.pageX/32), 0);
-		var y = Math.max(Math.floor((e.pageY-box.top+tilesetScroll.scrollPosition[1])/32), 0);
-
-		tilesetSelectionPos.w = Math.min(x-tilesetSelectionPos.x, 10-tilesetSelectionPos.x-1);
-		tilesetSelectionPos.h = Math.min(y-tilesetSelectionPos.y, tileset.image.height/32-tilesetSelectionPos.y-1);
-
-		tilesetSelectionPos.w = x-tilesetSelectionPos.x;
-		tilesetSelectionPos.h = y-tilesetSelectionPos.y;
-
-		console.log(y, tilesetSelectionPos.y, tileset.image.height/32);
-		updateTilesetSelection();
-	}, false);
-	window.addEventListener('mouseup', function () {
-		if (tilesetSelectionPos.active) {
-			tilesetSelectionPos.active = false;
-			tilesetSelection.classList.remove('active');
-
-			var startx = Math.min(tilesetSelectionPos.x, tilesetSelectionPos.x+tilesetSelectionPos.w);
-			var starty = Math.min(tilesetSelectionPos.y, tilesetSelectionPos.y+tilesetSelectionPos.h);
-			var w = tilesetSelectionPos.w > 0? tilesetSelectionPos.w+1 : -tilesetSelectionPos.w+1;
-			var h = tilesetSelectionPos.h > 0? tilesetSelectionPos.h+1 : -tilesetSelectionPos.h+1;
-			selectedTiles = [];
-			selectedTilesBuf = new Uint8Array(w*h*4);
-			
-			for (var x = 0; x < w; x++) {
-				selectedTiles[x] = [];
-				for (var y = 0; y < h; y++) {
-					selectedTiles[x][y] = (startx+x)+10*(starty+y);
-					var tileId = selectedTiles[x][y];
-					
-					var i = (y*w+x)*4;
-					selectedTilesBuf[i] = tileId % 256;
-					selectedTilesBuf[i+1] = Math.floor(tileId / 256);
-					selectedTilesBuf[i+2] = 0;
-					selectedTilesBuf[i+3] = 255;
-					
-				}
-			}
-			//console.log(selectedTiles, selectedTilesBuf);
-		}
-		
-	}, false);
-
-	var tilesetScroll = new Scrollbars({
-		element: tilesetImage,
-		revealDistance: 130
-	});
-	tilesetScroll.on('scroll', function () {
-		tilesetImage.style.top = -tilesetScroll.scrollPosition[1]+'px';
-		updateTilesetSelection();
-		
-	});
-	tilesetScroll.contentWidth = 320;
 
 	app.appendChild(tilesetContainer);
 	
@@ -178,39 +95,28 @@ require([
 		var info = JSON.parse(tilesetSelect.value);
 		
 		if (info[0].length > 0) {
-			tilesetImage.classList.add('hide');
+			
 			tileset.load(info[0] /* filename */, info[3] /* folderIndex */, function () {
-				tilesetImage.classList.remove('hide');
 				
-				//layerRenderer.setTileset(tileset.raw, tileset.j2t.info.images.length);
-				
-				if (layerRenderer.gl) {
+				if (layerRenderer.useWebGL) {
 					layerRenderer.setTileset(tileset.glImg, tileset.j2t.info.info.tileCount);
 				} else {
 					layerRenderer.setTileset(tileset.image, tileset.j2t.info.info.tileCount);
 				}
-				
-				tilesetScroll.contentHeight = tileset.image.height;
-				tilesetScroll.update();
-				tilesetImage.src = tileset.image.toDataURL();
-
-				if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 
 			});
 		} else {
 			tileset.unload();
-			tilesetImage.classList.add('hide');
 			
-			if (layerRenderer.gl) {
+			
+			if (layerRenderer.useWebGL) {
 				layerRenderer.setTileset(tileset.glImg, 1);
 			} else {
 				layerRenderer.setTileset(tileset.image, 1);
 			}
 			
-			tilesetScroll.contentHeight = 0;
-			tilesetScroll.update();
 			
-			if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
+			
 		}
 	};
 
@@ -273,14 +179,11 @@ require([
 	};
 	
 	var stats = new Stats();
-
-	var n = 0;
-	
 	
 	var layerCanvas = document.createElement('canvas');
 
 	var layerRenderer = new Renderer(layerCanvas, true);
-	layerRenderer.setTileset(tileset.glImg);
+	//layerRenderer.setTileset(tileset.glImg);
 	layerRenderer.setTileLayer(0, 256, 64, 1, 1, false);
 	var layer = layerRenderer.layers[0];
 	var didRender = false;
@@ -297,12 +200,13 @@ require([
 	layerScroll.contentHeight = layer.height*32;
 
 	layerScroll.on('scroll', function () {
-		if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
+		//if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 	});
 	
 
-	var render = function () {
+	function render() {
 		//console.log("render");
+		stats.update();
 		
 		didRender = false;
 		
@@ -313,12 +217,6 @@ require([
 		/*layerCanvas.style.left = Math.min(layerContainer.scrollLeft) + 'px';
 		layerCanvas.style.top = Math.min(layerContainer.scrollTop) + 'px';
 		console.log(layerCanvas.style.left, layerCanvas.style.top);*/
-
-		var gl = layerRenderer.gl;
-		if (gl) {
-			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-		}
-		
 
 		
 		/*var layer = layerRenderer.layers[0];
@@ -331,8 +229,8 @@ require([
 
 		//layerRenderer.setTileScale(Math.sin(n)/5+1.5);
 		layerRenderer.draw(layerCanvas.width/64 + layerScroll.scrollPosition[0]/32, layerCanvas.height/64 + layerScroll.scrollPosition[1]/32);
-		n+=0.02;
-		stats.update();
+		
+		
 		requestAnimFrame(render, layerCanvas);
 		didRender = true;
 	};
@@ -380,13 +278,12 @@ require([
 			var layer = layerRenderer.layers[0];
 
 			if (x >= 0 && x < layer.width && y >= 0 && y < layer.height) {
-				var gl = layerRenderer.gl;
 				
 				//var tileId = tileset.j2t.info? Math.floor(Math.random()*tileset.j2t.info.images.length) : 0;
 				
 				layer.setTiles(x, y, selectedTiles, selectedTilesBuf);
 
-				if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
+				//if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 			}
 			
 			
@@ -412,13 +309,13 @@ require([
 		layerCanvas.height = Math.min(layerContainer.offsetHeight, layer.height*32);
 		layerRenderer.resizeViewport(layerCanvas.width, layerCanvas.height);
 
-		tilesetScroll.update();
+		tileset.scrollbars.update();
 		layerScroll.update();
 
 		var lw = layerRenderer.layers[0].width*32;
 		var lh = layerRenderer.layers[0].height*32;
 
-		if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
+		//if (!didRender) {requestAnimFrame(render, layerCanvas); didRender = true;}
 
 		/*layerBg.style.width = lw+'px';
 		layerBg.style.height = lh+'px';

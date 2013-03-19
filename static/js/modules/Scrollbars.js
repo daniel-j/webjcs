@@ -16,13 +16,16 @@ define(function () {
 		this.element = params.element;
 		this.revealDistance = params.revealDistance || 250;
 		this.minimumSize = params.minimumSize || 16;
-		this.contentWidth = 0;
-		this.contentHeight = 0;
+		this.contentWidth = params.contentWidth || 0;
+		this.contentHeight = params.contentHeight || 0;
 		this.scrollPosition = [0, 0];
 
 		// Build the scrollbar DOM
 
 		this.parent = this.element.parentNode;
+
+		this.element.classList.add('scrollNode');
+		this.parent.classList.add('scrollParent');
 
 		this.hTrack = document.createElement('div');
 		this.hTrack.className = 'scrollbars horizontal track hidden';

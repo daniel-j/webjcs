@@ -84,8 +84,8 @@ define([
 		"		vec4 outColor = texture2D(tileset, (spriteOffset*tileSize + spriteCoord) * inverseSpriteTextureSize);",
 		"		if(outColor.a < 0.5) {discard;}",
 		"		gl_FragColor = outColor;",
-		"	} else {",
-		"		gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);", // Render magneta color
+		"	} else if (tileId > 0) {",
+		"		gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0);", // Render magenta color
 		//"		discard;", // Tile id out of bounds
 		"	}",
 		//"	gl_FragColor = tile;",
@@ -94,7 +94,7 @@ define([
 	].join("\n");
 
 
-	var TileMapLayer = function (gl, w, h, useWebGL) {
+	function TileMapLayer(gl, w, h, useWebGL) {
 		this.useWebGL = useWebGL;
 		if (this.useWebGL) {
 			this.gl = gl;
@@ -103,6 +103,7 @@ define([
 			this.inverseTextureSize = vec2.create();
 			this.setTexture(w, h);
 		} else {
+			this.textureSize = [w, h];
 			this.tiles = [];
 			for (var x = 0; x < w; x++) {
 				this.tiles[x] = [];
@@ -148,14 +149,34 @@ define([
 	TileMapLayer.prototype.setTiles = function (x, y, selection, selectionBuf) {
 		x = Math.floor(x);
 		y = Math.floor(y);
+		
 		var sw = selection.length;
 		var sh = selection[0].length;
+		var oldwidth = sw;
+		
+
+		if (x+sw > this.textureSize[0] || y+sh > this.textureSize[1]) {
+			sw = Math.min(this.textureSize[0] - x, sw);
+			sh = Math.min(this.textureSize[1] - y, sh);
+			var newbuf = new Uint8Array(sw*sh*4);
+			for (var sx = 0; sx < sw; sx++) {
+				for (var sy = 0; sy < sh; sy++) {
+					var i = (sy*sw+sx)*4;
+					var j = (sy*oldwidth+sx)*4;
+					newbuf[i] = selectionBuf[j];
+					newbuf[i+1] = selectionBuf[j+1];
+					newbuf[i+2] = selectionBuf[j+2];
+					newbuf[i+3] = selectionBuf[j+3];
+				}
+			}
+		}
 
 		if (this.useWebGL) {
 			var gl = this.gl;
 			gl.bindTexture(gl.TEXTURE_2D, this.tileTexture);
 			//gl.texSubImage2D(gl.TEXTURE_2D, 0, Math.floor(x), Math.floor(y), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([tileId % 256, Math.floor(tileId / 256), 0, 255]));
-			gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, selection.length, selection[0].length, gl.RGBA, gl.UNSIGNED_BYTE, selectionBuf);
+			
+			gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, sw, sh, gl.RGBA, gl.UNSIGNED_BYTE, newbuf || selectionBuf);
 
 		} else {
 			
@@ -280,14 +301,18 @@ define([
 
 	Renderer.prototype.draw = function (x, y) {
 		
-		x = x*32 - (this.viewportSize[0]/2)/this.tileScale;
-		y = y*32 - (this.viewportSize[1]/2)/this.tileScale;
+		x = Math.floor(x*32 - (this.viewportSize[0]/2)/this.tileScale);
+		y = Math.floor(y*32 - (this.viewportSize[1]/2)/this.tileScale);
+
 		
 		if (this.useWebGL) {
 
 			var gl = this.gl;
 
 			var shader = this.tilemapShader;
+
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
 			gl.useProgram(shader.program);
 
 			gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVertBuffer);
@@ -335,7 +360,7 @@ define([
 					var h = this.ctx.canvas.height;
 
 					this.ctx.clearRect(0, 0, w, h);
-					this.ctx.fillStyle = '#f0f';
+					this.ctx.fillStyle = '#f0f'; // magenta
 
 					for (var dx = Math.floor(x/32); dx-Math.floor(x/32) < Math.ceil(w/32); dx++) {
 						for (var dy = Math.floor(y/32); dy-Math.floor(y/32) < Math.ceil(h/32); dy++) {
@@ -343,7 +368,7 @@ define([
 								var tileId = layer.tiles[dx][dy];
 								if (tileId > 0 && tileId < this.tileCount) {
 									this.ctx.drawImage(this.tileset, 32*(tileId % 10), 32*Math.floor(tileId / 10), 32, 32, dx*32-x, dy*32-y, 32, 32);
-								} else if (tileId >= this.tileCount) {
+								} else if (tileId > 0 && tileId >= this.tileCount) {
 									this.ctx.fillRect(dx*32-x, dy*32-y, 32, 32);
 								}
 								

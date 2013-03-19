@@ -67,7 +67,10 @@ body {
 	overflow-y: scroll;*/
 	overflow: hidden;
 }
-#tilesetImageContainer img {
+#tilesetImageContainer .scrollParent {
+	height: 100%;
+}
+#tilesetImageContainer .scrollNode {
 	visibility: visible;
 	display: block;
 	position: absolute;
@@ -76,7 +79,7 @@ body {
 	visibility: hidden;
 }
 #tilesetImageContainer .image {
-	position: absolute;
+	
 }
 #tilesetImageContainer .mask {
 	

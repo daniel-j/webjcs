@@ -1,12 +1,13 @@
 'use strict';
 
-var http = require('http');
-var url  = require('url');
+//var http = require('http');
+//var url  = require('url');
 var path = require('path');
 var fs   = require('fs');
-var mime = require('mime');
+//var mime = require('mime');
 var zlib = require('zlib');
-var formidable = require('formidable');
+//var formidable = require('formidable');
+var express = require('express');
 var Struct = require(getRelativePath('static/js/modules/Struct.js')).Struct;
 var settings = require('./settings.json');
 
@@ -37,7 +38,7 @@ var structs = {
 			{copyright: '180'},
 			{magic:     '4'},
 			{passwordHash: '3'},
-			{hommecooked: new Uint8Array(1)},
+			{homecooked: new Uint8Array(1)},
 			{levelName: '32'},
 			{version:   new Uint16Array(1)},
 			{fileSize:  new Uint32Array(1)},
@@ -52,11 +53,39 @@ var structs = {
 	}
 };
 
+/*var structs = {
+	j2t: {
+		header: Struct.create(
+			Struct.string('copyright', 180),
+			Struct.string('magic', 4),
+			Struct.uint32('signature'),
+			Struct.string('title', 32),
+			Struct.uint16('version'),
+			Struct.uint32('fileSize'),
+			Struct.int32('checksum'),
+			Struct.array('streamSize', Struct.uint32(), 8)
+		)
+	},
+	j2l: {
+		header: Struct.create(
+			Struct.string('copyright', 180),
+			Struct.string('magic', 4),
+			Struct.string('passwordHash', 3),
+			Struct.uint8('homecooked'),
+			Struct.string('levelName', 32),
+			Struct.uint16('version'),
+			Struct.uint32('fileSize'),
+			Struct.int32('checksum'),
+			Struct.array('streamSize', Struct.uint32(), 8)
+		)
+	}
+}*/
+
 var validFileExtRegExp = new RegExp("^.*\.?("+validFileExt.join("|")+")$", "i");
 
 function getRelativePath(filepath) {
 	return path.join(__dirname, filepath)
-};
+}
 
 /*fs.readFile(getRelativePath('settings.json'), 'utf8', function (err, data) {
 	if (err) {
@@ -71,18 +100,69 @@ function getRelativePath(filepath) {
 getFileList(settings.paths.merge_folders, function (list) {
 	filelist = list;
 	startServer();
-});
 
-// Update the filelist every 10 min
-setInterval(function () {
-	getFileList(settings.paths.merge_folders, function (list) {
-		filelist = list;
-	});
-}, 10*1000);
+	// Update the filelist every hour
+	setInterval(function () {
+		getFileList(settings.paths.merge_folders, function (list) {
+			filelist = list;
+		});
+	}, 1*60*60*1000);
+});
 
 function startServer() {
 
-	var httpServer = http.createServer(function (req, res) {
+	var app = express();
+
+	app.get('/node/info', function (req, res) {
+		var data = JSON.stringify({
+			server: {
+				collaboration: settings.server.collaboration
+			},
+			paths: {
+				merge_folders: settings.paths.merge_folders
+			}
+		});
+		res.writeHead(200, {
+			'Content-Type': 'text/plain'
+		});
+		res.end(data);
+	});
+	app.get('/node/files/list', function (req, res) {
+		var data = JSON.stringify(filelist);
+		res.writeHead(200, {
+			'Content-Type': 'text/plain'
+		});
+		res.end(data);
+	});
+
+	app.get('/node/files/get', function (req, res) {
+		if (typeof req.query.n !== 'undefined' && req.query.n.length > 0 && typeof req.query.f !== 'undefined') {
+
+			if (typeof req.query.f !== 'undefined') {
+				var filename = path.join(settings.paths.folders[+req.query.f || 0], req.query.n);
+				console.log('GET:', filename);
+				if (req.query.parse && req.query.parse.length > 0) {
+					httpGetParsedFile(filename, req, res, true, req.query.parse);
+				} else {
+					httpGetFile(filename, req, res, true);
+				}
+				
+				
+			} else {
+				notFound(res);
+			}
+		} else {
+			notFound(res);
+		}
+	});
+
+	app.use(express.static(__dirname + '/static'));
+
+	app.listen(settings.server.port, function () {
+		console.log("Express webserver listening on port "+settings.server.port);
+	});
+
+	/*var httpServer = http.createServer(function (req, res) {
 		
 		var username = "";
 
@@ -175,7 +255,7 @@ function startServer() {
 								notFound(res);
 							}
 						});
-					}*/ else {
+					}* else {
 						notFound(res);
 					}
 
@@ -245,17 +325,17 @@ function startServer() {
 		
 	}).listen(settings.server.port, function () {
 		console.log('WebJCS server started on port '+settings.server.port);
-	});
-};
+	});*/
+}
 
 function notFound(res) {
 	res.writeHead(404, {'Content-Type': 'text/plain'});
 	res.end('404 Not found');
-};
+}
 
 
 
-function httpGetFile(filename, req, res, skipCache) {
+/*function httpGetFile(filename, req, res, skipCache) {
 	fs.stat(filename, function (err, stats) {
 		
 		if (err) {
@@ -280,8 +360,6 @@ function httpGetFile(filename, req, res, skipCache) {
 			
 			fs.readFile(filename, function (err, data) {
 				if (err) {
-					/*res.writeHead(404, {'Content-Type': 'text/plain'});
-					res.end('404 Not found\r\n'+err);*/
 					notFound(res);
 				} else {
 					var headers = {
@@ -297,7 +375,7 @@ function httpGetFile(filename, req, res, skipCache) {
 			});
 		}
 	});
-};
+};*/
 
 function httpGetParsedFile(filename, req, res, skipCache, type) {
 	fs.stat(filename, function (err, stats) {
@@ -399,7 +477,7 @@ function httpGetParsedFile(filename, req, res, skipCache, type) {
 			});
 		}
 	});
-};
+}
 
 function alphabeticSort(a, b) {
 	a = a[1].toLowerCase();
@@ -412,19 +490,20 @@ function alphabeticSort(a, b) {
 	} else {
 		return 0;
 	}
-};
+}
 
 function getFileList(merge_folders, callback) {
 	var folders = settings.paths.folders;
+	console.log("Updating filelist...");
 	
 	if (merge_folders) {
-		var filelist = [];
+		var list = [];
 	} else {
-		var filelist = {};
+		var list = {};
 	}
 	
 	if (folders.length === 0) {
-		callback(filelist);
+		callback(list);
 	}
 	var addedFiles = [];
 	var counter = 0;
@@ -454,16 +533,16 @@ function getFileList(merge_folders, callback) {
 				if (merge_folders) {
 					filelist.sort(alphabeticSort);
 				} else {
-					for (var f in filelist) {
-						filelist[f].sort(alphabeticSort);
+					for (var f in list) {
+						list[f].sort(alphabeticSort);
 					}
 				}
 
-				callback(filelist);
+				callback(list);
 			}
-		};
+		}
 
-	};
+	}
 
 	function readdirCallback(folder, folderIndex) {
 		return function (err, files) {
@@ -476,9 +555,9 @@ function getFileList(merge_folders, callback) {
 					if (validFileExtRegExp.test(files[i])) {
 
 						if (merge_folders) {
-							getFileHeader(path.join(folder, files[i]), getFileHeaderCallback(filelist, files[i], folderIndex));
+							getFileHeader(path.join(folder, files[i]), getFileHeaderCallback(list, files[i], folderIndex));
 						} else {
-							getFileHeader(path.join(folder, files[i]), getFileHeaderCallback(filelist[folder], files[i], folderIndex));
+							getFileHeader(path.join(folder, files[i]), getFileHeaderCallback(list[folder], files[i], folderIndex));
 						}
 						
 						
@@ -487,17 +566,17 @@ function getFileList(merge_folders, callback) {
 				}
 			}
 			
-		};
-	};
+		}
+	}
 
 	for(var i = 0; i < folders.length; i++) {
 		if (!merge_folders) {
-			filelist[folders[i]] = [];
+			list[folders[i]] = [];
 		}
 		
 		fs.readdir(folders[i], readdirCallback(folders[i], i));
 	}
-};
+}
 
 function getFileHeader(filename, callback) {
 	
@@ -510,12 +589,11 @@ function getFileHeader(filename, callback) {
 					callback(err);
 				} else {
 					fs.close(fd);
+					//callback(null, structs.j2t.header.readStructs(new Uint8Array(buffer).buffer, 0, 1));
 					callback(null, structs.j2t.header.unpack(new Uint8Array(buffer).buffer));
 				}
 			});
 		}
 	});
 	
-};
-
-
+}
