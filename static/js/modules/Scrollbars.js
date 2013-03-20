@@ -179,8 +179,8 @@ define(function () {
 		window.addEventListener('mouseup', releaseScrollBar, false);
 		window.addEventListener('blur', releaseScrollBar, false);
 		this.parent.addEventListener('mousewheel', function (e) {
-			var deltaX = (e.wheelDeltaX > 0 ? 1 : (e.wheelDeltaX < 0 ? -1 : 0));
-			var deltaY = (e.wheelDeltaY > 0 ? 1 : (e.wheelDeltaY < 0 ? -1 : 0));
+			var deltaX = e.wheelDeltaX/120;//(e.wheelDeltaX > 0 ? 1 : (e.wheelDeltaX < 0 ? -1 : 0));
+			var deltaY = e.wheelDeltaY/120;//(e.wheelDeltaY > 0 ? 1 : (e.wheelDeltaY < 0 ? -1 : 0));
 			var newScrollX = Math.max(Math.min(self.scrollPosition[0] - deltaX*32, self.contentWidth - self.parent.offsetWidth), 0);
 			var newScrollY = Math.max(Math.min(self.scrollPosition[1] - deltaY*32, self.contentHeight - self.parent.offsetHeight), 0);
 

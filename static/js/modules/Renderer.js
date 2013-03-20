@@ -284,6 +284,7 @@ define([
         }
 
         this.layers[layerId] = layer;
+        return layer;
     };
 
     Renderer.prototype.resizeViewport = function (width, height) {

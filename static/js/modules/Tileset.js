@@ -15,16 +15,26 @@ define([
 	function Tileset() {
 		var self = this;
 
-		this.j2t    = new J2T();
+		this.j2t = new J2T();
 
 		this.node = document.createElement('div');
-
 		this.canvasContainer = document.createElement('div');
+
 		this.node.appendChild(this.canvasContainer);
-		this.node.classList.add('tilesetImage');
+		this.node.classList.add('tilesetImage', 'hide');
+		this.canvasContainer.classList.add('canvasContainer');
+		
+
+		this.selectionNode = document.createElement('div');
+		this.selectionNode.classList.add('tileSelection');
+		this.selectionPos = {x: 0, y: 0, w: 0, h: 0, active: false};
+		this.selectedTiles = [[0]];
+		this.selectedTilesBuf = new Uint8Array([0, 0, 0, 0]);
+		this.node.appendChild(this.selectionNode);
+
 		this.scrollbars = new Scrollbars({
 			element: self.canvasContainer,
-			revealDistance: 130,
+			revealDistance: 48,
 			contentWidth: 320
 		});
 		this.scrollbars.on('scroll', function () {
@@ -32,40 +42,40 @@ define([
 			self.updateSelection();
 		});
 
-		this.selectionNode = document.createElement('div');
-		this.selectionNode.classList.add('tileSelection');
-		this.node.appendChild(this.selectionNode);
-		this.selectionPos = {x: 0, y: 0, w: 0, h: 0, active: false};
-		this.selectedTiles = [[0]];
-		this.selectedTilesBuf = new Uint8Array([0, 0, 0, 0]);
-
-
 		this.image  = document.createElement('canvas');
 		this.mask   = document.createElement('canvas');
+		this.imageMask = document.createElement('canvas');
 		this.raw    = document.createElement('canvas');
+		this.rawMask = document.createElement('canvas');
 		this.glImg 	= document.createElement('canvas');
 		this.imgc   = this.image.getContext('2d');
 		this.maskc  = this.mask.getContext('2d');
+		this.imgmaskc = this.imageMask.getContext('2d');
 		this.rawc   = this.raw.getContext('2d');
+		this.rawmaskc = this.rawMask.getContext('2d');
 		this.glic   = this.glImg.getContext('2d');
 
 		this.image.width = 320;
 		this.image.height = 32;
 		this.mask.width  = 320;
 		this.mask.height = 32;
+		this.imageMask.width  = 320;
+		this.imageMask.height = 32;
 		this.glImg.width = 32;
 		this.glImg.height = 32;
 		this.image.classList.add('image');
 		this.mask.classList.add('mask');
-		this.image.classList.add('hide');
-		this.mask.classList.add('hide');
+		this.imageMask.classList.add('imageMask');
 
+		this.canvasContainer.appendChild(this.mask);
 		this.canvasContainer.appendChild(this.image);
+		this.canvasContainer.appendChild(this.imageMask);
 
-		this.node.addEventListener('mousedown', function (e) {
+		this.canvasContainer.addEventListener('mousedown', function (e) {
+			if (e.which !== 1) return;
 			e.preventDefault();
 			if (e.target.parentNode === self.canvasContainer || e.target === self.selectionNode) {
-				var box = tilesetImageContainer.getBoundingClientRect();
+				var box = self.node.getBoundingClientRect();
 				self.selectionPos.x = Math.floor(e.pageX/32);
 				self.selectionPos.y = Math.floor((e.pageY-box.top+self.scrollbars.scrollPosition[1])/32);
 				self.selectionPos.w = 0;
@@ -137,8 +147,6 @@ define([
 		var st = Date.now();
 		this.j2t.abort();
 		this.emit('progress', 0);
-		this.image.classList.add('hide');
-		this.mask.classList.add('hide');
 		this.node.classList.add('hide');
 
 		this.j2t.filepath = '/node/files/get?n='+encodeURIComponent(filename)+(folderIndex!==false?'&f='+folderIndex:'')+'&parse=j2t';
@@ -150,9 +158,11 @@ define([
 
 			st = Date.now();
 			var height = Math.ceil(data.info.tileCount/10);
-			self.image.height = self.mask.height = height*32;
+			self.image.height = self.mask.height = self.imageMask.height = height*32;
 			self.raw.width = 32*Math.min(data.images.length, 256);
 			self.raw.height = 32*Math.ceil(data.images.length / 256);
+			self.rawMask.width = 32*Math.min(data.masks.length, 256);
+			self.rawMask.height = 32*Math.ceil(data.masks.length / 256);
 			self.glImg.width = 32*Math.min(data.info.tileCount, 256);
 			self.glImg.height = Math.ceil(data.info.tileCount / 256)*32;
 
@@ -191,22 +201,63 @@ define([
 				self.rawc.putImageData(imgdata, (i % 256)*32, Math.floor(i / 256)*32);
 			}
 
-			var imgdata = self.imgc.createImageData(32, 32);
-			var imgd = imgdata.data;
-			var tilecache = [];
+			var maskdata = self.rawmaskc.createImageData(32, 32);
+			var maskd = maskdata.data;
 
+			for (var i = 0; i < data.masks.length; i++) {
+				for (var x = 0; x < 32; x++) {
+					var mbyte = data.masks[i][x];
+					for (var y = 0; y < 32; y++) {
+						var color = 0;
+						if (i > 0) {
+							var masked = Math.abs(mbyte & Math.pow(2, y)); //bit value
+							//masked = mbyte >>> y;
+							if (masked > 0) {
+								color = 255;
+							}
+						}
+						
+						pixpos = ((x * 32) + y)*4; //bit index, for position
+						maskd[pixpos + 0] = 0;
+						maskd[pixpos + 1] = 0;
+						maskd[pixpos + 2] = 0;
+						maskd[pixpos + 3] = color;
+					}
+				}
 
+				self.rawmaskc.putImageData(maskdata, (i % 256)*32, Math.floor(i / 256)*32);
+			}
 
-			for (i = 0; i < tileCount; i++) {
-				tile = data.info.imageAddress[i]/1024;
+			//var imgdata = self.imgc.createImageData(32, 32);
+			//var imgd = imgdata.data;
+
+			for (var i = 0; i < tileCount; i++) {
+				var tile = data.info.imageAddress[i]/1024;
 				if (tile === 0) {
 					continue;
 				}
 				self.glic.drawImage(self.raw, (tile % 256)*32, Math.floor(tile / 256)*32, 32, 32, (i % 256)*32, Math.floor(i / 256)*32, 32, 32);
 				self.imgc.drawImage(self.raw, (tile % 256)*32, Math.floor(tile / 256)*32, 32, 32, (i % 10)*32, Math.floor(i / 10)*32, 32, 32);
+				var mask = data.info.maskAddress[i]/128;
+				if (mask === 0) {
+					continue;
+				}
+				self.maskc.drawImage(self.rawMask, (mask % 256)*32, Math.floor(mask / 256)*32, 32, 32, (i % 10)*32, Math.floor(i / 10)*32, 32, 32);
 			}
-			self.image.classList.remove('hide');
-			self.mask.classList.remove('hide');
+
+			self.imgmaskc.save();
+			self.imgmaskc.drawImage(self.image, 0, 0);
+			self.imgmaskc.globalCompositeOperation = 'destination-in';
+			self.imgmaskc.drawImage(self.mask, 0, 0);
+			self.imgmaskc.globalCompositeOperation = 'destination-over';
+			self.imgmaskc.drawImage(self.mask, 0, 0);
+			self.imgmaskc.restore();
+
+			self.raw.width = 32;
+			self.raw.height = 32;
+			self.rawMask.width = 32;
+			self.rawMask.height = 32;
+
 			self.node.classList.remove('hide');
 			self.scrollbars.contentHeight = height*32;
 			self.scrollbars.update();
@@ -236,6 +287,19 @@ define([
 		this.selectionNode.style.top = (starty*32-this.scrollbars.scrollPosition[1])+'px';
 		this.selectionNode.style.width = (this.selectionPos.w > 0? this.selectionPos.w+1 : -this.selectionPos.w+1)*32+'px';
 		this.selectionNode.style.height = (this.selectionPos.h > 0? this.selectionPos.h+1 : -this.selectionPos.h+1)*32+'px';
+	};
+
+	Tileset.prototype.setMaskMode = function (maskMode) {
+		if (maskMode === 0) {
+			this.node.classList.remove('showMask');
+			this.node.classList.remove('showImageMask');
+		} else if (maskMode === 1) {
+			this.node.classList.add('showMask');
+			this.node.classList.remove('showImageMask');
+		} else if (maskMode === 2) {
+			this.node.classList.remove('showMask');
+			this.node.classList.add('showImageMask');
+		}
 	};
 
 	Tileset.prototype.emit = function (name, value) {
