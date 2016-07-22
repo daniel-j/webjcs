@@ -1,4 +1,4 @@
 WebJCS
 ======
 
-A level editor for Jazz Jackrabbit 2 created with the latest HTML5 technologies
+A level editor for Jazz Jackrabbit 2 created with JavaScript and HTML5 technologies, running in [Electron](http://electron.atom.io).

@@ -1,0 +1,79 @@
+.scrollbars.horizontal.track {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	height: 10px;
+}
+.scrollbars.vertical.track {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	width: 10px;
+}
+.scrollbars.horizontal.track.hidden {
+	height: 2px;
+}
+.scrollbars.vertical.track.hidden {
+	width: 2px;
+}
+.scrollbars.track.disabled {
+	visibility: hidden;
+}
+
+.scrollbars.horizontal .thumb {
+	position: absolute;
+	top: 0px;
+	bottom: 0px;
+}
+.scrollbars.vertical .thumb {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+}
+
+.scrollNode {
+	position: absolute;
+	display: block;
+	overflow: hidden;
+}
+
+
+/* THEME */
+.scrollbars.horizontal {
+	transition: height .2s ease-in-out, background-color .2s ease-in-out;
+}
+.scrollbars.vertical {
+	transition: width .2s ease-in-out, background-color .2s ease-in-out;
+}
+.scrollbars.horizontal .thumb {
+	transition: background-color .2s ease-in-out, left .15s ease-out;
+}
+.scrollbars.vertical .thumb {
+	transition: background-color .2s ease-in-out, top .15s ease-out;
+}
+
+.scrollbars.track {
+	background-color: rgba(0, 0, 0, 0.3);
+}
+.scrollbars .thumb {
+	background-color: rgba(50, 200, 255, 0.9);
+}
+
+.scrollbars.track.hidden {
+	background-color: transparent;
+}
+.scrollbars.track.hidden .thumb {
+	background-color: #0bf;
+}
+
+.scrollbars.smooth {
+	transition: left .15s ease-out, top .15s ease-out;
+	width: 0;
+	height: 0;
+	position: absolute;
+	left: 0;
+	top: 0;
+	visibility: hidden;
+}

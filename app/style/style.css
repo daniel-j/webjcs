@@ -1,0 +1,137 @@
+
+@import url('scrollbars.css');
+
+html, body {
+	height: 100%;
+	margin: 0px;
+	padding: 0px;
+	overflow: hidden;
+
+	font-family: sans-serif;
+	font-size: 13px;
+
+	background-color: rgb(32, 24, 80);
+
+	-webkit-user-select: none;
+	cursor: default;
+}
+
+#app {
+	height: 100%;
+	overflow: hidden;
+}
+
+.right {
+	float: right;
+}
+
+.fullheight {
+	height: 100%;
+}
+
+.flexwrapper {
+	display: flex;
+}
+.flexfluid {
+	flex: 1;
+}
+.flexflowcolumn {
+	flex-flow: column;
+}
+
+.panels {
+	display: flex;
+	height: 100%;
+}
+.panels .column {
+	display: flex;
+	flex-flow: column;
+}
+.panels .column:not(:last-child) {
+	border-right: 1px solid black;
+}
+
+.panel {
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	flex-flow: column;
+}
+.panel .toolbar {
+	display: flex;
+}
+.panel .panelcontent {
+	position: relative;
+	overflow: hidden;
+	flex: 1;
+}
+#tilesetpanel {
+	width: 320px;
+}
+#animpanel {
+	min-width: 128px;
+}
+
+
+.toolbar {
+	
+}
+.toolbar strong {
+
+}
+.toolbar strong.flexfluid {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: 0px;
+}
+.toolbar button {
+	overflow: hidden;
+}
+.toolbar select {
+
+}
+.toolbar > .right {
+	position: relative;
+}
+
+.canvaswrapper {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	transition: margin .15s ease-out;
+}
+canvas, img {
+	image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: pixelated;
+}
+
+.tileset-image, .tileset-mask {
+	transition: opacity .2s ease-in-out;
+	background-color: rgb(72, 48, 168);
+}
+
+.tileset-mask {
+	position: absolute;
+	left: 0;
+	top: 0;
+	opacity: 0;
+}
+.show-mask .tileset-image {
+	opacity: 0;
+}
+.show-mask .tileset-mask {
+	opacity: 1;
+}
+
+/*.tilesetscrollfix {
+	width: 320px;
+	top: 0px;
+	bottom: 0px;
+	position: absolute;
+}*/

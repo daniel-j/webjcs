@@ -1,0 +1,13 @@
+{
+  "name": "webjcs",
+  "private": true,
+  "scripts": {
+    "start": "electron app/",
+    "lint": "standard app/gui/js/*.js app/js/*.js"
+  },
+  "author": "djazz",
+  "devDependencies": {
+    "electron-prebuilt": "1.2.6",
+    "standard": "^7.1.2"
+  }
+}

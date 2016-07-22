@@ -1,0 +1,15 @@
+{
+  "name": "webjcs",
+  "version": "2.0.0",
+  "description": "Level editor for Jazz Jackrabbit 2",
+  "private": true,
+  "main": "js/background.js",
+  "author": "djazz",
+  "dependencies": {
+    "crc": "^3.4.0",
+    "gl-matrix": "^2.3.2",
+    "mithril": "^0.2.5",
+    "postal": "^2.0.4",
+    "struct": "0.0.10"
+  }
+}

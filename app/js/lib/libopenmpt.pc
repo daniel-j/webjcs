@@ -1,0 +1,13 @@
+
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libopenmpt
+Description: Tracker module player based on OpenMPT
+Version: 0.2.6611
+Requires.private:     
+Libs: -L${libdir} -lopenmpt
+Libs.private:  
+Cflags: -I${includedir}
