@@ -4,6 +4,8 @@ const vent = require('postal').channel()
 const Scrollbars = require('../scrollbars')
 const app = require('../app')
 const TileRenderer = require('../tilerenderer')
+const loop = require('raf-loop')
+const Tile = require('../tile')
 
 function viewTilesetOption (tileset) {
   if (!tileset) {
@@ -20,7 +22,7 @@ function tileMap (w, h) {
   for (let x = 0; x < w; x++) {
     map[x] = []
     for (let y = 0; y < h; y++) {
-      map[x][y] = {id: x + y * 10}
+      map[x][y] = new Tile(x + y * 10)
     }
   }
   return map
@@ -31,14 +33,14 @@ class TilesetPanel {
     this.showMask = m.prop(false)
     this.tileTypeMode = m.prop(0)
     this.tilesetList = m.prop([])
-    this.canDraw = false
-    this.redraw()
+    this.loop = loop(this.redraw.bind(this))
   }
 
   toggleMask () {
     let show = !this.showMask()
     this.showMask(show)
-    vent.publish('tileset.mask', show)
+    this.renderer.setMaskOpacity(show ? 1 : 0)
+    vent.publish('tileset.togglemask', show)
   }
 
   toggleTileType (e) {
@@ -73,32 +75,23 @@ class TilesetPanel {
       let w = 10
       let h = Math.ceil(tileCount / 10)
 
-      console.log(h)
-
       this.scrollbars.contentHeight = h * 32
       this.scrollbars.update()
 
-      this.renderer.setTileset(app.j2t.tilesetCanvas, tileCount)
+      this.renderer.setBackgroundSize(w, h)
+      this.renderer.setTileset(app.j2t.tilesetCanvas, app.j2t.maskCanvas, tileCount)
       this.renderer.setTileLayer(0, w, h, 1, 1, false)
       let map = tileMap(w, h)
       this.renderer.layers[0].setTiles(0, 0, map)
-      this.canDraw = true
+      this.loop.start()
     })
-    /*
-    vent.subscribe('tileset.mask', (show) => {
-      if (show) {
-        node.classList.add('show-mask')
-      } else {
-        node.classList.remove('show-mask')
-      }
+
+    vent.subscribe('tileset.togglemask', (show) => {
+
     })
-    */
   }
 
-  redraw () {
-    requestAnimationFrame(this.redraw.bind(this), this.canvas)
-    if (!this.canDraw) return
-
+  redraw (dt) {
     let cw = this.canvas.parentNode.offsetWidth
     let ch = this.canvas.parentNode.offsetHeight
     if (cw !== this.canvas.width) this.canvas.width = cw

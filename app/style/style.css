@@ -103,35 +103,10 @@ html, body {
 	bottom: 0;
 	transition: margin .15s ease-out;
 }
-canvas, img {
-	image-rendering: optimizeSpeed;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: optimize-contrast;
-    image-rendering: pixelated;
-}
 
-.tileset-image, .tileset-mask {
+.mask-transition {
+	position: absolute;
+	width: 0;
 	transition: opacity .2s ease-in-out;
-	background-color: rgb(72, 48, 168);
-}
-
-.tileset-mask {
-	position: absolute;
-	left: 0;
-	top: 0;
 	opacity: 0;
 }
-.show-mask .tileset-image {
-	opacity: 0;
-}
-.show-mask .tileset-mask {
-	opacity: 1;
-}
-
-/*.tilesetscrollfix {
-	width: 320px;
-	top: 0px;
-	bottom: 0px;
-	position: absolute;
-}*/

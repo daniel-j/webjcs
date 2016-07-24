@@ -2,6 +2,7 @@
 const zlib = require('zlib')
 const crc = require('crc')
 const Struct = require('struct')
+const npot = require('next-power-of-two')
 
 function wrapStruct (buffer, struct) {
   if (buffer) {
@@ -136,8 +137,8 @@ class J2T {
 
   drawTilesetImage (images) {
     let tileCount = this.tilesetInfo.fields.TileCount
-    let width = 32 * Math.min(tileCount, 256)
-    let height = Math.ceil(tileCount / 256) * 32
+    let width = npot(32 * Math.min(tileCount, 64))
+    let height = npot(Math.ceil(tileCount / 64) * 32)
 
     this.tilesetCanvas.width = width
     this.tilesetCanvas.height = height
@@ -146,8 +147,8 @@ class J2T {
     let imgd = imgdata.data
 
     for (let i = 0; i < tileCount; i++) {
-      let x = i % 256
-      let y = (i / 256) | 0
+      let x = i % 64
+      let y = (i / 64) | 0
       let offset = this.tilesetInfo.fields.ImageAddress[i]
       if (offset === 0) continue
       for (let j = 0; j < 1024; j++) {
@@ -168,8 +169,8 @@ class J2T {
 
   drawTilesetMask (masks) {
     let tileCount = this.tilesetInfo.fields.TileCount
-    let width = 32 * Math.min(tileCount, 256)
-    let height = Math.ceil(tileCount / 256) * 32
+    let width = npot(32 * Math.min(tileCount, 64))
+    let height = npot(Math.ceil(tileCount / 64) * 32)
 
     this.maskCanvas.width = width
     this.maskCanvas.height = height
@@ -178,8 +179,8 @@ class J2T {
     let imgd = imgdata.data
 
     for (let i = 0; i < tileCount; i++) {
-      let x = i % 256
-      let y = (i / 256) | 0
+      let x = i % 64
+      let y = (i / 64) | 0
       let offset = this.tilesetInfo.fields.MaskAddress[i]
       if (offset === 0) continue
       for (let x = 0; x < 128; x++) {

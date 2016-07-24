@@ -41,11 +41,13 @@ app.j2l.loadFromBuffer(fs.readFileSync('/vol/ssd/shared/games/Jazz2tsf/Castle1.j
   console.error(err)
 })
 
+/*
 const ModPlayer = require('./modplayer')
 
 let modplayer = new ModPlayer({repeatCount: 1})
 
 fs.readFile('/vol/ssd/shared/games/Jazz2tsf/Castle.j2b', (err, buffer) => {
   if (err) throw err
-  // modplayer.play(buffer)
+  modplayer.play(buffer)
 })
+*/

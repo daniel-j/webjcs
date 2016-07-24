@@ -4,6 +4,7 @@ const vent = require('postal').channel()
 const Scrollbars = require('../scrollbars')
 const app = require('../app')
 const TileRenderer = require('../tilerenderer')
+const loop = require('raf-loop')
 
 class LayerPanel {
   constructor () {
@@ -11,13 +12,14 @@ class LayerPanel {
     this.showEvents = m.prop(true)
     this.zoomLevel = m.prop(1)
     this.el = null
-    this.canDraw = false
-    this.redraw()
+    this.loop = loop(this.redraw.bind(this))
   }
 
   toggleMask () {
     let show = !this.showMask()
     this.showMask(show)
+    this.renderer.setMaskOpacity(show ? 1 : 0)
+    vent.publish('layer.togglemask', show)
   }
 
   toggleEvents () {
@@ -56,19 +58,17 @@ class LayerPanel {
       let lw = app.j2l.levelInfo.fields.LayerWidth[l]
       let lh = app.j2l.levelInfo.fields.LayerHeight[l]
       let tileCount = app.j2t.tilesetInfo.fields.TileCount
-      this.renderer.setTileset(app.j2t.tilesetCanvas, tileCount)
+
+      this.renderer.setBackgroundSize(lw, lh)
+      this.renderer.setTileset(app.j2t.tilesetCanvas, app.j2t.maskCanvas, tileCount)
       this.renderer.setTileLayer(0, lw, lh, 1, 1, false)
       this.renderer.layers[0].setTiles(0, 0, app.j2l.layers[3])
-      this.canDraw = true
+      this.renderer.setTileScale(this.zoomLevel())
+      this.loop.start()
     })
-    
-    // this.ctx.imageSmoothingEnabled = false
   }
 
-  redraw () {
-    requestAnimationFrame(this.redraw.bind(this), this.canvas)
-    if (!this.canDraw) return
-
+  redraw (dt) {
     let cw = this.canvas.parentNode.offsetWidth
     let ch = this.canvas.parentNode.offsetHeight
     if (cw !== this.canvas.width) this.canvas.width = cw

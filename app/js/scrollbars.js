@@ -224,7 +224,6 @@ class Scrollbars {
     }
   }
 
-
   update () {
     let containerWidth = this.parent.offsetWidth
     let containerHeight = this.parent.offsetHeight
