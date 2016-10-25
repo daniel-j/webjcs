@@ -2,7 +2,7 @@
 const zlib = require('zlib')
 const crc = require('crc')
 const Struct = require('struct')
-const npot = require('next-power-of-two')
+const npot = require('./util/next-power-of-two')
 
 function wrapStruct (buffer, struct) {
   if (buffer) {

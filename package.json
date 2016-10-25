@@ -7,7 +7,7 @@
   },
   "author": "djazz",
   "devDependencies": {
-    "electron-prebuilt": "1.2.6",
-    "standard": "^7.1.2"
-  }
+    "standard": "^8.5.0"
+  },
+  "dependencies": {}
 }

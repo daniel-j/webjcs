@@ -8,10 +8,9 @@
   "dependencies": {
     "crc": "^3.4.0",
     "mithril": "^0.2.5",
-    "next-power-of-two": "^1.0.0",
     "postal": "^2.0.4",
     "raf-loop": "^1.1.3",
-    "struct": "0.0.10",
-    "twgl.js": "^1.7.2"
+    "struct": "0.0.11",
+    "twgl.js": "^2.1.0"
   }
 }

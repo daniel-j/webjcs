@@ -1,6 +1,6 @@
 
 const twgl = require('twgl.js')
-const npot = require('next-power-of-two')
+const npot = require('./util/next-power-of-two')
 const Tile = require('./tile')
 
 const hasWebGL = !!window.WebGLRenderingContext && !!window.document.createElement('canvas').getContext('webgl')
@@ -345,7 +345,7 @@ Renderer.prototype.draw = function (x, y) {
     gl.useProgram(this.rectShader.program)
     twgl.setBuffersAndAttributes(gl, this.rectShader, this.rectBuffers)
     twgl.setUniforms(this.rectShader, this.rectUniforms)
-    twgl.drawBufferInfo(gl, gl.TRIANGLES, this.rectBuffers)
+    twgl.drawBufferInfo(gl, this.rectBuffers, gl.TRIANGLES)
 
     // Draw tiles
     gl.useProgram(this.tilemapShader.program)
@@ -368,7 +368,7 @@ Renderer.prototype.draw = function (x, y) {
           repeatTiles: layer.repeat ? 1 : 0,
           map: layer.tileTexture
         })
-        twgl.drawBufferInfo(gl, gl.TRIANGLES, this.tilemapBuffers)
+        twgl.drawBufferInfo(gl, this.tilemapBuffers, gl.TRIANGLES)
       } else {
         this.ctx.save()
         let w = this.ctx.canvas.width
