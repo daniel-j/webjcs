@@ -345,7 +345,7 @@ Renderer.prototype.draw = function (x, y) {
     gl.useProgram(this.rectShader.program)
     twgl.setBuffersAndAttributes(gl, this.rectShader, this.rectBuffers)
     twgl.setUniforms(this.rectShader, this.rectUniforms)
-    twgl.drawBufferInfo(gl, this.rectBuffers, gl.TRIANGLES)
+    twgl.drawBufferInfo(gl, gl.TRIANGLES, this.rectBuffers)
 
     // Draw tiles
     gl.useProgram(this.tilemapShader.program)
@@ -368,7 +368,7 @@ Renderer.prototype.draw = function (x, y) {
           repeatTiles: layer.repeat ? 1 : 0,
           map: layer.tileTexture
         })
-        twgl.drawBufferInfo(gl, this.tilemapBuffers, gl.TRIANGLES)
+        twgl.drawBufferInfo(gl, gl.TRIANGLES, this.tilemapBuffers)
       } else {
         this.ctx.save()
         let w = this.ctx.canvas.width
