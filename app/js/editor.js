@@ -1,5 +1,6 @@
 
 const fs = require('fs')
+const path = require('path')
 
 const m = require('mithril')
 const Panels = require('./components/panels')
@@ -35,12 +36,15 @@ const panels = new Panels([
 
 m.mount(document.getElementById('app'), panels)
 
-const jj2Dir = '/vol/ssd/shared/games/Jazz2tsf/'
+const jj2Dir = path.join(__dirname, '/../data/')
 
-app.j2l.loadFromBuffer(fs.readFileSync(jj2Dir + 'ab17btl06.j2l')).then(() => {
-  console.log('j2l success!')
-  app.j2t.loadFromBuffer(fs.readFileSync(jj2Dir + app.j2l.levelInfo.fields.Tileset)).then(() => {
-    console.log('j2t success!')
+const jj2File = 'ab17btl06.j2l'
+console.log('Loading ' + path.join(jj2Dir, jj2File))
+app.j2l.loadFromBuffer(fs.readFileSync(path.join(jj2Dir, jj2File))).then(() => {
+  console.log('Level loaded')
+  console.log('Loading ' + path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))
+  app.j2t.loadFromBuffer(fs.readFileSync(path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))).then(() => {
+    console.log('Tileset loaded')
     vent.publish('tileset.load')
     vent.publish('level.load')
   }).catch((err) => {

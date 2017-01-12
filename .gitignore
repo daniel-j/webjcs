@@ -1,6 +1,10 @@
 node_modules/
-app/node_modules/
 libopenmpt/
+build/
+cache/
+
+app/node_modules/
+app/data/
 app/js/oldjcs.js
 app/js/texbg.js
 

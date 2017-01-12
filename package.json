@@ -1,5 +1,6 @@
 {
   "name": "webjcs",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "start": "electron app",
@@ -7,6 +8,7 @@
   },
   "author": "djazz",
   "devDependencies": {
+    "electron-packager": "^8.5.0",
     "standard": "^8.5.0"
   },
   "dependencies": {}
