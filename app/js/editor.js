@@ -6,7 +6,6 @@ const Panels = require('./components/panels')
 const TilesetPanel = require('./components/tilesetpanel')
 const AnimPanel = require('./components/animpanel')
 const LayerPanel = require('./components/layerpanel')
-const ParallaxPanel = require('./components/parallaxpanel')
 
 const app = require('./app')
 
@@ -15,22 +14,32 @@ const vent = require('postal').channel()
 require('./domevents')
 
 const panels = new Panels([
-  {panels: [
-    {panel: new TilesetPanel(), fluid: true},
-    {panel: new AnimPanel()}
-  ]},
-  {fluid: true, panels: [
-    {panel: new LayerPanel(), fluid: true},
-    {panel: new ParallaxPanel()}
-  ]}
-
+  {
+    panels: [
+      {
+        panel: new TilesetPanel(),
+        fluid: true
+      },
+      {
+        panel: new AnimPanel()
+      }
+    ]
+  },
+  {
+    panels: [
+      {panel: new LayerPanel(), fluid: true}
+    ],
+    fluid: true
+  }
 ])
 
 m.mount(document.getElementById('app'), panels)
 
-app.j2l.loadFromBuffer(fs.readFileSync('/vol/ssd/shared/games/Jazz2tsf/Castle1.j2l')).then(() => {
+const jj2Dir = '/vol/ssd/shared/games/Jazz2tsf/'
+
+app.j2l.loadFromBuffer(fs.readFileSync(jj2Dir + 'ab17btl06.j2l')).then(() => {
   console.log('j2l success!')
-  app.j2t.loadFromBuffer(fs.readFileSync('/vol/ssd/shared/games/Jazz2tsf/' + app.j2l.levelInfo.fields.Tileset)).then(() => {
+  app.j2t.loadFromBuffer(fs.readFileSync(jj2Dir + app.j2l.levelInfo.fields.Tileset)).then(() => {
     console.log('j2t success!')
     vent.publish('tileset.load')
     vent.publish('level.load')

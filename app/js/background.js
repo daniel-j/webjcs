@@ -1,6 +1,7 @@
 
 const electron = require('electron')
 const {app, BrowserWindow, Menu} = electron
+const path = require('path')
 
 const mainMenu = Menu.buildFromTemplate(require('./menus/main-menu'))
 
@@ -16,7 +17,8 @@ function createWindow () {
     width: 800,
     height: 600,
     backgroundColor: '#201850',
-    title: 'Jazz Creation Station'
+    title: 'Jazz Creation Station',
+    icon: path.join(__dirname, '/../media/icons/JCS.png')
   })
 
   mainWindow.setMenu(mainMenu)

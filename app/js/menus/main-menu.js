@@ -57,7 +57,14 @@ module.exports = [
   },
   {
     label: '&View', submenu: [
-      {label: 'Toggle &fullscreen', role: 'togglefullscreen'}
+      {label: 'Toggle &fullscreen', role: 'togglefullscreen'},
+      {
+        label: 'Toggle Developer Tools',
+        accelerator: 'Ctrl+Shift+I',
+        click (item, focusedWindow) {
+          if (focusedWindow) focusedWindow.webContents.toggleDevTools()
+        }
+      }
     ]
   },
   {

@@ -8,7 +8,7 @@ class Scrollbars {
 
     this.element = params.element
     this.revealDistance = params.revealDistance || 250
-    this.minimumSize = params.minimumSize || 16
+    this.minimumSize = params.minimumSize || 4
     this.contentWidth = params.contentWidth || 0
     this.contentHeight = params.contentHeight || 0
     this.scrollPosition = [0, 0]
@@ -36,10 +36,14 @@ class Scrollbars {
     this.vThumb = document.createElement('div')
     this.vThumb.className = 'thumb'
 
+    this.corner = document.createElement('div')
+    this.corner.className = 'scrollbars corner disabled'
+
     this.hTrack.appendChild(this.hThumb)
     this.vTrack.appendChild(this.vThumb)
 
     this.parent.appendChild(this.smoothScroller)
+    this.parent.appendChild(this.corner)
     this.parent.appendChild(this.hTrack)
     this.parent.appendChild(this.vTrack)
 
@@ -101,7 +105,7 @@ class Scrollbars {
         let mouseDownPosition = this.state.mouseDownPosition
 
         if (this.state.holdingWhich === this.hThumb) {
-          let containerWidth = this.parent.offsetWidth
+          let containerWidth = this.getOffsetWidth()
 
           let box = this.hThumb.getBoundingClientRect()
 
@@ -113,7 +117,7 @@ class Scrollbars {
           }
           this.scrollPosition[0] = newScrollRatio * (this.contentWidth - containerWidth)
         } else if (this.state.holdingWhich === this.vThumb) {
-          let containerHeight = this.parent.offsetHeight
+          let containerHeight = this.getOffsetHeight()
 
           let box = this.vThumb.getBoundingClientRect()
 
@@ -160,8 +164,8 @@ class Scrollbars {
       if (this.isPanning) return
       let deltaX = e.wheelDeltaX / 120 // (e.wheelDeltaX > 0 ? 1 : (e.wheelDeltaX < 0 ? -1 : 0));
       let deltaY = e.wheelDeltaY / 120 // (e.wheelDeltaY > 0 ? 1 : (e.wheelDeltaY < 0 ? -1 : 0));
-      let newScrollX = Math.max(Math.min(this.scrollPosition[0] - deltaX * 32, this.contentWidth - this.parent.offsetWidth), 0)
-      let newScrollY = Math.max(Math.min(this.scrollPosition[1] - deltaY * 32, this.contentHeight - this.parent.offsetHeight), 0)
+      let newScrollX = Math.max(Math.min(this.scrollPosition[0] - deltaX * 32, this.contentWidth - this.getOffsetWidth()), 0)
+      let newScrollY = Math.max(Math.min(this.scrollPosition[1] - deltaY * 32, this.contentHeight - this.getOffsetHeight()), 0)
 
       if (newScrollX !== this.scrollPosition[0] || newScrollY !== this.scrollPosition[1]) {
         this.scrollPosition[0] = newScrollX
@@ -224,15 +228,22 @@ class Scrollbars {
     }
   }
 
-  update () {
-    let containerWidth = this.parent.offsetWidth
-    let containerHeight = this.parent.offsetHeight
+  getOffsetWidth () {
+    return this.parent.offsetWidth - (this.contentHeight > this.parent.offsetHeight ? this.vTrack.offsetWidth : 0)
+  }
+  getOffsetHeight () {
+    return this.parent.offsetHeight - (this.contentWidth > this.parent.offsetWidth ? this.hTrack.offsetHeight : 0)
+  }
+
+  update (force = false) {
+    let containerWidth = this.getOffsetWidth()
+    let containerHeight = this.getOffsetHeight()
 
     let trackWidth = this.hTrack.offsetWidth
     let trackHeight = this.vTrack.offsetHeight
 
-    let gripRatioX = containerWidth / (this.contentWidth)
-    let gripRatioY = containerHeight / (this.contentHeight)
+    let gripRatioX = containerWidth / this.contentWidth
+    let gripRatioY = containerHeight / this.contentHeight
 
     let minGripSize = this.minimumSize
     let maxGripWidth = trackWidth
@@ -280,10 +291,20 @@ class Scrollbars {
       this.vTrack.classList.remove('disabled')
     }
 
+    if (gripRatioX <= 1 && gripRatioY <= 1) {
+      this.corner.classList.remove('disabled')
+      this.hTrack.classList.add('both')
+      this.vTrack.classList.add('both')
+    } else {
+      this.corner.classList.add('disabled')
+      this.hTrack.classList.remove('both')
+      this.vTrack.classList.remove('both')
+    }
+
     this.hThumb.style.left = gripPositionX + 'px'
     this.vThumb.style.top = gripPositionY + 'px'
 
-    if (scrollX !== this.scrollPosition[0] || scrollY !== this.scrollPosition[1]) {
+    if (scrollX !== this.scrollPosition[0] || scrollY !== this.scrollPosition[1] || force) {
       this.scrollPosition[0] = scrollX
       this.scrollPosition[1] = scrollY
       this.smoothScroller.style.left = -Math.floor(scrollX) + 'px'
@@ -292,6 +313,13 @@ class Scrollbars {
     }
 
     this.fixScrollbarVisibility()
+  }
+
+  disableTransition () {
+    this.parent.classList.add('notransition')
+  }
+  enableTransition () {
+    this.parent.classList.remove('notransition')
   }
 
   emit (name, value) {

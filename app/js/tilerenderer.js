@@ -14,17 +14,42 @@ let rectVS = `
   uniform vec2 viewportSize;
   uniform vec2 viewOffset;
   uniform vec2 size;
+  uniform float scale;
 
   void main (void) {
-    gl_Position = vec4((((size * 32.0 * position - viewOffset) / viewportSize) * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);
+    gl_Position = vec4((((size * 32.0 * position - floor(viewOffset * scale) / scale) / (viewportSize / scale)) * 2.0 - 1.0) * vec2(1, -1), 0.0, 1.0);
   }
 `
 let rectFS = `
   precision highp float;
 
   uniform vec4 color;
+  uniform float opacity;
 
   void main() {
+    gl_FragColor = vec4(color.rgb, color.a * opacity);
+  }
+`
+
+// FBO SHADER
+let fboVS = `
+  attribute vec2 position;
+  varying vec2 texcoord;
+
+  void main() {
+    gl_Position = vec4(position, 0.0, 1.0);
+    texcoord = position.xy * 0.5 + 0.5;
+  }
+`
+let fboFS = `
+  precision mediump float;
+  varying vec2 texcoord;
+  uniform sampler2D texture;
+  uniform float opacity;
+
+  void main() {
+    vec4 color = texture2D(texture, texcoord);
+    color.a *= opacity;
     gl_FragColor = color;
   }
 `
@@ -35,15 +60,13 @@ let tilemapVS = `
   attribute vec2 texture;
 
   varying vec2 pixelCoord;
-  varying vec2 texCoord;
 
   uniform vec2 viewOffset;
   uniform vec2 viewportSize;
-  uniform vec2 textureSize;
+  uniform float scale;
 
   void main (void) {
-    pixelCoord = (texture * viewportSize) + viewOffset;
-    texCoord =  pixelCoord / 32.0 / textureSize;
+    pixelCoord = (texture * viewportSize) / scale + viewOffset;
     gl_Position = vec4(position, 0.0, 1.0);
   }
 `
@@ -51,51 +74,71 @@ let tilemapFS = `
   precision highp float;
 
   varying vec2 pixelCoord;
-  varying vec2 texCoord;
 
   uniform sampler2D map;
   uniform sampler2D tileset;
   uniform sampler2D mask;
+  uniform sampler2D animMap;
 
+  uniform vec2 textureSize;
   uniform vec2 spriteTextureSize;
-  uniform int repeatTiles;
+  uniform vec2 scaledSize;
+  uniform int repeatTilesX;
+  uniform int repeatTilesY;
   uniform float tileCount;
   uniform float maskOpacity;
+  uniform vec4 backgroundColor;
+
 
   const float MAX_TILES = 4096.;
 
   void main (void) {
-    vec2 mapCoord = texCoord;
-    if (repeatTiles == 0 && (texCoord.x < 0.0 || texCoord.x > 1.0 || texCoord.y < 0.0 || texCoord.y > 1.0)) { discard; }
-    else if (repeatTiles == 1 && (texCoord.x < 0.0 || texCoord.x > 1.0 || texCoord.y < 0.0 || texCoord.y > 1.0)) {
-      mapCoord = mod(mapCoord, 1.0);
+    vec2 mapCoord =  pixelCoord / 32.0 / textureSize;
+    if (repeatTilesX == 1 && (mapCoord.x * scaledSize.x < 0.0 || mapCoord.x * scaledSize.x >= 1.0)) {
+      mapCoord.x = fract(mapCoord.x * scaledSize.x) / scaledSize.x;
+    }
+    if (repeatTilesY == 1 && (mapCoord.y * scaledSize.y < 0.0 || mapCoord.y * scaledSize.y >= 1.0)) {
+      mapCoord.y = fract(mapCoord.y * scaledSize.y) / scaledSize.y;
+    }
+    if ((repeatTilesX == 0 && (mapCoord.x < 0.0 || mapCoord.x >= 1.0)) || (repeatTilesY == 0 && (mapCoord.y < 0.0 || mapCoord.y >= 1.0))) {
+      discard;
     }
     vec4 tile = texture2D(map, mapCoord);
-    // empty tile
-    if (tile.x == 0.0 && tile.y == 0.0) { discard; }
-    vec2 spriteCoord = mod(pixelCoord, 32.0);
-    vec2 spriteOffset = floor(tile.xy * 256.0);
-    float tileId = (spriteOffset.x + spriteOffset.y * 256.0);
+    if (tile.a == 0.0) {discard;}
+    vec2 spriteOffset = floor(tile.xy * 255.0);
+    float tileId = spriteOffset.x + spriteOffset.y * 256.0;
     bool flipped = tileId >= MAX_TILES;
     bool animated = tileId >= MAX_TILES * 2.;
     tileId = mod(tileId, MAX_TILES);
+    vec4 outColor = vec4(1.0, 0.0, 1.0, 1.0); // Render magenta color
+    if (animated) {
+      tile = texture2D(animMap, vec2(tileId / 256.0, 0.0));
+      spriteOffset = floor(tile.xy * 255.0);
+      tileId = spriteOffset.x + spriteOffset.y * 256.0;
+      flipped = tileId >= MAX_TILES;
+      animated = tileId >= MAX_TILES * 2.;
+      tileId = mod(tileId, MAX_TILES);
+    }
+
     if (tileId < tileCount && !animated) {
-      // vec2 tilesetPos = (spriteOffset * 32.0 + spriteCoord) / spriteTextureSize;
+      vec2 spriteCoord = mod(pixelCoord, 32.0);
       if (flipped) {
         spriteCoord.x = 32. - spriteCoord.x;
       }
-      vec2 tilesetPos = (vec2(mod(float(tileId), 64.0) * 32.0, floor(float(tileId) / 64.0) * 32.0) + spriteCoord) / spriteTextureSize;
+      vec2 tilesetPos = vec2(
+        mod(float(tileId), 64.0) * 32.0,
+        floor(float(tileId) / 64.0) * 32.0
+      );
+      //spriteCoord = clamp(spriteCoord, 0.0, 32.0);
+      tilesetPos = (tilesetPos + spriteCoord) / spriteTextureSize;
       vec4 tilesetColor = texture2D(tileset, tilesetPos);
       vec4 maskColor = texture2D(mask, tilesetPos);
-      vec4 outColor = mix(tilesetColor, maskColor, maskOpacity);
-      gl_FragColor = outColor;
-    } else {
-      // unknown tile
-      gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); // Render magenta color
-      // discard; // Tile id out of bounds
+      outColor.rgb = mix(tilesetColor.rgb, maskColor.rgb, maskOpacity * 0.7);
+      outColor.a = min(1.0, tilesetColor.a * (1.0 - maskOpacity * 0.8) + maskColor.a * maskOpacity);
+      //outColor = mix(outColor, vec4(tilesetPos, 0.0, 1.0), 0.2);
     }
-    // gl_FragColor = tile;
-    // gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    outColor = mix(backgroundColor, outColor, outColor.a);
+    gl_FragColor = outColor;
   }
 `
 
@@ -120,6 +163,7 @@ function TileMapLayer (gl, w, h, useWebGL) {
   this.scrollScaleX = 1
   this.scrollScaleY = 1
   this.repeat = false
+  this.zIndex = 0
 
   this.width = w
   this.height = h
@@ -146,9 +190,6 @@ TileMapLayer.prototype.setTexture = function (w, h, repeat) {
 
   this.textureSize[0] = w
   this.textureSize[1] = h
-
-  // this.inverseTextureSize[0] = 1 / w
-  // this.inverseTextureSize[1] = 1 / h
 }
 
 TileMapLayer.prototype.setTiles = function (x, y, selection) {
@@ -195,16 +236,19 @@ let Renderer = function (canvas, attemptWebGL) {
 
   this.useWebGL = attemptWebGL && hasWebGL
 
+  this.tileScale = 1.0
+  this.tileSize = 32
+
   if (this.useWebGL) {
-    let gl = canvas.getContext('webgl')
+    let gl = canvas.getContext('webgl', {alpha: false})
     this.gl = gl
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
     this.viewportSize = [0, 0]
-    this.scaledViewportSize = [0, 0]
     this.spriteTextureSize = [0, 0]
     this.tileset = gl.createTexture()
     this.mask = gl.createTexture()
+    this.animMap = new TileMapLayer(this.gl, 256, 1, this.useWebGL)
     this.maskTransitionElement = document.createElement('div')
     this.maskTransitionElement.className = 'mask-transition'
     document.body.appendChild(this.maskTransitionElement)
@@ -215,11 +259,12 @@ let Renderer = function (canvas, attemptWebGL) {
       texture: { numComponents: 2, data: new Float32Array([ 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0 ]) }
     })
     this.tilemapUniforms = {
-      viewportSize: this.scaledViewportSize,
+      viewportSize: this.viewportSize,
       spriteTextureSize: this.spriteTextureSize,
       tileCount: 0,
       tileset: this.tileset,
-      mask: this.mask
+      mask: this.mask,
+      animMap: this.animMap.tileTexture
     }
 
     this.rectShader = twgl.createProgramInfo(gl, [rectVS, rectFS])
@@ -227,10 +272,23 @@ let Renderer = function (canvas, attemptWebGL) {
       position: { numComponents: 2, data: new Float32Array([ -1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1 ]) }
     })
     this.rectUniforms = {
-      viewportSize: this.scaledViewportSize,
+      viewportSize: this.viewportSize,
       viewOffset: [0, 0],
-      color: [72 / 255, 48 / 255, 168 / 255, 1],
+      color: [72 / 255, 48 / 255, 168 / 255, 1.0],
+      opacity: 1.0,
       size: [0, 0]
+    }
+    this.fboShader = twgl.createProgramInfo(gl, [fboVS, fboFS])
+    this.fboBuffers = twgl.createBufferInfoFromArrays(gl, {
+      position: {numComponents: 2, data: new Float32Array([ 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1 ])}
+    })
+    this.fboAttachments = [
+      {format: gl.RGBA, type: gl.UNSIGNED_BYTE, min: gl.NEAREST, wrap: gl.CLAMP_TO_EDGE}
+    ]
+    this.FBO = {
+      front: twgl.createFramebufferInfo(gl, this.fboAttachments),
+      main: twgl.createFramebufferInfo(gl, this.fboAttachments),
+      back: twgl.createFramebufferInfo(gl, this.fboAttachments)
     }
   } else {
     this.viewportSize = [0, 0]
@@ -239,10 +297,6 @@ let Renderer = function (canvas, attemptWebGL) {
     this.mask = null
   }
 
-  this.tileScale = 1.0
-  this.tileSize = 32
-
-  this.filtered = false
   this.layers = []
 
   this.tileCount = 0
@@ -265,8 +319,15 @@ Renderer.prototype.setMaskOpacity = function (o) {
 
 Renderer.prototype.setTileScale = function (scale) {
   this.tileScale = scale
-  this.scaledViewportSize[0] = this.viewportSize[0] / scale
-  this.scaledViewportSize[1] = this.viewportSize[1] / scale
+
+  if (this.useWebGL) {
+    let gl = this.gl
+    gl.bindTexture(gl.TEXTURE_2D, this.tileset)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.tileScale < 1 ? gl.LINEAR : gl.NEAREST)
+
+    gl.bindTexture(gl.TEXTURE_2D, this.mask)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.tileScale < 1 ? gl.LINEAR : gl.NEAREST)
+  }
 }
 
 Renderer.prototype.setTileset = function (tileset, mask, tileCount = this.tileCount) {
@@ -277,7 +338,7 @@ Renderer.prototype.setTileset = function (tileset, mask, tileCount = this.tileCo
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tileset)
 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.tileScale < 1 ? gl.LINEAR : gl.NEAREST)
 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
@@ -286,7 +347,7 @@ Renderer.prototype.setTileset = function (tileset, mask, tileCount = this.tileCo
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, mask)
 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.tileScale < 1 ? gl.LINEAR : gl.NEAREST)
 
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
@@ -301,51 +362,60 @@ Renderer.prototype.setTileset = function (tileset, mask, tileCount = this.tileCo
   this.tileCount = tileCount
 }
 
-Renderer.prototype.setTileLayer = function (layerId, w, h, scrollScaleX, scrollScaleY, repeat) {
+Renderer.prototype.setTileLayer = function (layerId, w, h, scrollScaleX = 1, scrollScaleY = 1, repeatX = false, repeatY = false) {
   let layer = new TileMapLayer(this.gl, w, h, this.useWebGL)
-  layer.repeat = !!repeat
+  layer.repeatX = !!repeatX
+  layer.repeatY = !!repeatY
 
-  if (scrollScaleX) {
-    layer.scrollScaleX = scrollScaleX
-  }
-  if (scrollScaleY) {
-    layer.scrollScaleY = scrollScaleY
-  }
+  layer.scrollScaleX = scrollScaleX
+  layer.scrollScaleY = scrollScaleY
+
+  layer.positionX = 0
+  layer.positionY = 0
 
   this.layers[layerId] = layer
   return layer
 }
 
 Renderer.prototype.resizeViewport = function (width, height) {
+  let sizeChanged = width !== this.viewportSize[0] || height !== this.viewportSize[1]
+  if (!sizeChanged) return
   this.viewportSize[0] = width
   this.viewportSize[1] = height
 
   if (this.useWebGL) {
     this.gl.viewport(0, 0, width, height)
 
-    this.scaledViewportSize[0] = width / this.tileScale
-    this.scaledViewportSize[1] = height / this.tileScale
+    twgl.resizeFramebufferInfo(this.gl, this.FBO.front, this.fboAttachments, width, height)
+    twgl.resizeFramebufferInfo(this.gl, this.FBO.main, this.fboAttachments, width, height)
+    twgl.resizeFramebufferInfo(this.gl, this.FBO.back, this.fboAttachments, width, height)
   }
 }
 
 Renderer.prototype.draw = function (x, y) {
-  x = Math.floor(x - (this.viewportSize[0] / 2) / this.tileScale)
-  y = Math.floor(y - (this.viewportSize[1] / 2) / this.tileScale)
+  x = (x - (this.viewportSize[0] / 2)) / this.tileScale
+  y = (y - (this.viewportSize[1] / 2)) / this.tileScale
 
   let gl = this.gl
   let maskOpacity = window.getComputedStyle(this.maskTransitionElement).getPropertyValue('opacity')
 
   if (this.useWebGL) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.FBO.front.framebuffer)
+    gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-
-    // Draw background color
-    this.rectUniforms.viewOffset[0] = x
-    this.rectUniforms.viewOffset[1] = y
-
-    gl.useProgram(this.rectShader.program)
-    twgl.setBuffersAndAttributes(gl, this.rectShader, this.rectBuffers)
-    twgl.setUniforms(this.rectShader, this.rectUniforms)
-    twgl.drawBufferInfo(gl, gl.TRIANGLES, this.rectBuffers)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.FBO.main.framebuffer)
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.FBO.back.framebuffer)
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+    gl.clearColor(32 / 255, 24 / 255, 80 / 255, 1)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
     // Draw tiles
     gl.useProgram(this.tilemapShader.program)
@@ -353,20 +423,32 @@ Renderer.prototype.draw = function (x, y) {
     twgl.setBuffersAndAttributes(gl, this.tilemapShader, this.tilemapBuffers)
     twgl.setUniforms(this.tilemapShader, this.tilemapUniforms)
     twgl.setUniforms(this.tilemapShader, {
-      maskOpacity: maskOpacity
+      scale: this.tileScale
     })
   }
 
   // Draw each layer of the map
-  for (let i = 0; i < this.layers.length; i++) {
+  for (let i = this.layers.length - 1; i >= 0; i--) {
     let layer = this.layers[i]
+    if (layer.hidden) continue
     if (layer) {
       if (this.useWebGL) {
+        if (layer.zIndex < 0) {
+          gl.bindFramebuffer(gl.FRAMEBUFFER, this.FBO.front.framebuffer)
+        } else if (layer.zIndex > 0) {
+          gl.bindFramebuffer(gl.FRAMEBUFFER, this.FBO.back.framebuffer)
+        } else {
+          gl.bindFramebuffer(gl.FRAMEBUFFER, this.FBO.main.framebuffer)
+        }
         twgl.setUniforms(this.tilemapShader, {
-          viewOffset: [Math.floor(x * layer.scrollScaleX), Math.floor(y * layer.scrollScaleY)],
+          viewOffset: [Math.floor((x + layer.positionX) * layer.scrollScaleX) || 0, Math.floor((y + layer.positionY) * layer.scrollScaleY) || 0],
+          scaledSize: [layer.textureSize[0] / layer.width, layer.textureSize[1] / layer.height],
           textureSize: layer.textureSize,
-          repeatTiles: layer.repeat ? 1 : 0,
-          map: layer.tileTexture
+          repeatTilesX: layer.repeatX ? 1 : 0,
+          repeatTilesY: layer.repeatY ? 1 : 0,
+          map: layer.tileTexture,
+          maskOpacity: maskOpacity,
+          backgroundColor: layer.showBackground ? this.rectUniforms.color : [0, 0, 0, 0]
         })
         twgl.drawBufferInfo(gl, gl.TRIANGLES, this.tilemapBuffers)
       } else {
@@ -392,6 +474,47 @@ Renderer.prototype.draw = function (x, y) {
         this.ctx.restore()
       }
     }
+  }
+
+  if (this.useWebGL) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+
+    // Draw background tiles
+    gl.useProgram(this.fboShader.program)
+    twgl.setBuffersAndAttributes(gl, this.fboShader, this.fboBuffers)
+    twgl.setUniforms(this.fboShader, {
+      opacity: 1.0,
+      texture: this.FBO.back.attachments[0]
+    })
+    twgl.drawBufferInfo(gl, gl.TRIANGLES, this.fboBuffers)
+
+    // Draw background color
+    gl.useProgram(this.rectShader.program)
+    twgl.setBuffersAndAttributes(gl, this.rectShader, this.rectBuffers)
+    this.rectUniforms.viewOffset[0] = x
+    this.rectUniforms.viewOffset[1] = y
+    twgl.setUniforms(this.rectShader, this.rectUniforms)
+    twgl.setUniforms(this.rectShader, {
+      scale: this.tileScale,
+      opacity: 0.75
+    })
+    twgl.drawBufferInfo(gl, gl.TRIANGLES, this.rectBuffers)
+
+    // Draw main tile layer
+    gl.useProgram(this.fboShader.program)
+    twgl.setBuffersAndAttributes(gl, this.fboShader, this.fboBuffers)
+    twgl.setUniforms(this.fboShader, {
+      opacity: 1.0,
+      texture: this.FBO.main.attachments[0]
+    })
+    twgl.drawBufferInfo(gl, gl.TRIANGLES, this.fboBuffers)
+
+    // Draw front tiles
+    twgl.setUniforms(this.fboShader, {
+      opacity: 0.3,
+      texture: this.FBO.front.attachments[0]
+    })
+    twgl.drawBufferInfo(gl, gl.TRIANGLES, this.fboBuffers)
   }
 }
 

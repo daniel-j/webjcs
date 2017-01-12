@@ -36,6 +36,12 @@ class TilesetPanel {
     this.loop = loop(this.redraw.bind(this))
   }
 
+  activate (e) {
+    if (e.which === 0) {
+      vent.publish('panel.active', this)
+    }
+  }
+
   toggleMask () {
     let show = !this.showMask()
     this.showMask(show)
@@ -85,15 +91,11 @@ class TilesetPanel {
       this.renderer.layers[0].setTiles(0, 0, map)
       this.loop.start()
     })
-
-    vent.subscribe('tileset.togglemask', (show) => {
-
-    })
   }
 
   redraw (dt) {
-    let cw = this.canvas.parentNode.offsetWidth
-    let ch = this.canvas.parentNode.offsetHeight
+    let cw = this.scrollbars.getOffsetWidth()
+    let ch = this.scrollbars.getOffsetHeight()
     if (cw !== this.canvas.width) this.canvas.width = cw
     if (ch !== this.canvas.height) this.canvas.height = ch
     this.renderer.resizeViewport(cw, ch)
@@ -103,10 +105,10 @@ class TilesetPanel {
     this.renderer.draw(cw / 2, -scrollTop + ch / 2)
   }
 
-  view ({fluid, config}) {
-    return m('#tilesetpanel.panel', {class: fluid ? 'flexfluid' : '', config}, [
+  view ({fluid, config, active}) {
+    return m('#tilesetpanel.panel', {class: ((fluid ? 'flexfluid' : '') + ' ' + (active ? 'active' : '')).trim(), config, onmouseover: this.activate.bind(this)}, [
       m('.toolbar', [
-        m('strong', 'Tileset'),
+        m('.title', 'Tileset'),
         m('.selectwrap.flexfluid', m('select', {disabled: false}, [viewTilesetOption(), this.tilesetList().map(viewTilesetOption)])),
 
         m('button', {title: 'Toggle tile mask', onclick: this.toggleMask.bind(this), class: this.showMask() ? 'selected' : ''}, 'Mask'),

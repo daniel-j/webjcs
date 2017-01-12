@@ -5,6 +5,7 @@ const vent = require('postal').channel()
 class Panels {
   constructor (columns) {
     this.columns = columns
+    this.activePanel = null
 
     let startPos = 0
     let startHeight = 0
@@ -55,14 +56,15 @@ class Panels {
       resizeState.startPos = e.pageY
       resizeState.startHeight = panel.lastChild.offsetHeight
       resizeState.column = column
-      resizeState.toolbarsHeight = toolbarsHeight*/
+      resizeState.toolbarsHeight = toolbarsHeight
+      */
     })
 
     vent.subscribe('window.mousemove', (e) => {
       if (!resizingPanel) return
       let y = e.pageY
       let offset = startPos - y
-      let maxLimit = this.panelsEl.offsetHeight - resizingColumn.panels.length * 20
+      let maxLimit = this.panelsEl.offsetHeight - resizingColumn.panels.length * 24
       let newHeight = Math.min(Math.max(startHeight + offset, 0), maxLimit)
 
       resizingPanel.el.lastChild.style.height = newHeight + 'px'
@@ -72,6 +74,14 @@ class Panels {
 
     vent.subscribe('window.mouseup', (e) => {
       resizingPanel = false
+    })
+
+    /*vent.subscribe('window.mouseout', (e) => {
+      vent.publish('panel.active', null)
+    })*/
+    vent.subscribe('panel.active', (panel) => {
+      this.activePanel = panel
+      m.redraw()
     })
   }
 
@@ -88,14 +98,14 @@ class Panels {
   renderPanel (column, panel) {
     return (el, isInitialized, context, vdom) => {
       panel.el = el
-      if (panel.panel.configPanel) panel.panel.configPanel(el)
+      if (panel.panel.configPanel) panel.panel.configPanel(el, isInitialized)
     }
   }
 
   view () {
     return m('.panels', {config: this.renderPanels.bind(this)}, this.columns.map(column => {
       return m('.column', {class: column.fluid ? 'flexfluid' : '', config: this.renderColumn(column)}, column.panels.map(panel => {
-        return panel.panel.view({fluid: panel.fluid, config: this.renderPanel(column, panel)})
+        return panel.panel.view({fluid: panel.fluid, config: this.renderPanel(column, panel), active: panel.panel === this.activePanel})
       }))
     }))
   }

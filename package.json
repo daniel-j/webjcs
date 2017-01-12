@@ -2,7 +2,7 @@
   "name": "webjcs",
   "private": true,
   "scripts": {
-    "start": "electron app/",
+    "start": "electron app",
     "lint": "standard app/gui/js/*.js app/js/*.js"
   },
   "author": "djazz",

@@ -68,12 +68,12 @@ class J2L {
       .array('LayerRealWidth', 8, 'word32Ule')
       .array('LayerHeight', 8, 'word32Ule')
       .array('LayerZAxis', 8, 'word32Sle') // unused
-      .array('DetailLevel', 8, 'word8') // unused
-      .array('WaveXY', 10, 'word8') // unused
-      .array('LayerXSpeed', 8, 'word32Ule') // Divide by 65536 to get value seen in JCS
-      .array('LayerYSpeed', 8, 'word32Ule') // Divide by 65536 to get value seen in JCS
-      .array('LayerAutoXSpeed', 8, 'word32Ule') // Divide by 65536 to get value seen in JCS
-      .array('LayerAutoYSpeed', 8, 'word32Ule') // Divide by 65536 to get value seen in JCS
+      .array('DetailLevel', 8, 'word32Sle') // unused
+      .array('WaveXY', 10, 'word32Sle') // unused
+      .array('LayerXSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
+      .array('LayerYSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
+      .array('LayerAutoXSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
+      .array('LayerAutoYSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
       .array('LayerTextureMode', 8, 'word8')
       .array('LayerTextureParams', 24, 'word8')
       .word16Ule('AnimOffset') // MAX_TILES minus AnimCount, also called StaticTiles
@@ -93,6 +93,7 @@ class J2L {
       .word8('PingPong')
       .word8('Speed')
       .word8('FrameCount')
+      .array('Frame', 64, 'word16Ule')
     )
   }
 
