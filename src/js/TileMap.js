@@ -48,9 +48,9 @@ class TileMap {
         let tile = selection[sx][sy]
         if (!tile) continue
         let tileId = tile.id
-        mapBuffer[i + 0] = (tileId % 64) * 4
-        mapBuffer[i + 1] = Math.floor(tileId / 64) * 4
-        mapBuffer[i + 2] = (tile.flipped * 1 + tile.animated * 2) * 4
+        mapBuffer[i + 0] = (tileId % 256)
+        mapBuffer[i + 1] = Math.floor(tileId / 256)
+        mapBuffer[i + 2] = (tile.flipped * 1 + tile.animated * 2)
         mapBuffer[i + 3] = 255
       }
     }

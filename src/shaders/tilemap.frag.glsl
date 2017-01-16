@@ -1,4 +1,4 @@
-precision mediump float;
+precision highp float;
 
 varying vec2 pixelCoord;
 
@@ -29,11 +29,11 @@ void main (void) {
 		mapCoord.y = fract(mapCoord.y * scaled.y) / scaled.y;
 	}
 
-	vec4 tile = texture2D(map, mapCoord);
+	vec4 tile = texture2D(map, vec2(mapCoord.x, mapCoord.y));
 	if (tile.a == 0.0) {discard;}
 	vec2 spriteOffset = floor(tile.xy * 255.);
-	float tileId = floor((spriteOffset.r + spriteOffset.g * 64.) / 4.);
-	float extra = floor((tile.b * 256.) / 4.);
+	float tileId = floor(spriteOffset.r) + floor(spriteOffset.g * 256.0);
+	float extra = floor(tile.b * 256.);
 	bool flipped = extra == 1. || extra == 3.;
 	bool animated = extra == 2.;
 
@@ -41,8 +41,8 @@ void main (void) {
 	if (animated) {
 		tile = texture2D(animMap, vec2(tileId / 256.0, 0.0));
 		spriteOffset = floor(tile.xy * 255.);
-		tileId = (spriteOffset.r + spriteOffset.g * 64.) / 4.;
-		extra = floor(floor(tile.b * 256.) / 4.);
+		tileId = floor(spriteOffset.r) + floor(spriteOffset.g * 256.);
+		extra = floor(tile.b * 256.);
 		flipped = extra == 1. || extra == 3.;
 		animated = extra == 2.;
 	}
