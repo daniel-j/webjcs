@@ -81,7 +81,7 @@ const bundleElectronConfig = {
         exclude: /node_modules/,
         options: {
           sourceMaps: !inProduction,
-          presets: ['node7']
+          presets: inProduction ? ['babili'] : ['node7']
         }
       },
       {
