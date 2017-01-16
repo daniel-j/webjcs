@@ -8,8 +8,42 @@
   },
   "author": "djazz",
   "devDependencies": {
+    "babel-loader": "^6.2.10",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-node7": "^1.4.0",
+    "babel-register": "^6.18.0",
+    "buffer-loader": "0.0.1",
     "electron-packager": "^8.5.0",
-    "standard": "^8.5.0"
+    "gulp": "^3.9.1",
+    "gulp-filter": "^5.0.0",
+    "gulp-standard": "^8.0.3",
+    "gulp-watch": "^4.3.11",
+    "lazypipe": "^1.0.1",
+    "raw-loader": "^0.5.1",
+    "run-sequence": "^1.2.2",
+    "standard": "^8.5.0",
+    "stylus": "^0.54.5",
+    "stylus-loader": "^2.4.0",
+    "webpack": "^2.2.0-rc.6",
+    "webpack-glsl-loader": "^1.0.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "is-electron": "^2.0.0",
+    "browserify-zlib": "^0.1.4",
+    "crc": "^3.4.0",
+    "mithril": "^1.0.0-rc.8",
+    "postal": "^2.0.4",
+    "raf-loop": "^1.1.3",
+    "struct": "0.0.11",
+    "twgl.js": "^2.1.0"
+  },
+  "standard": {
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "globals": [
+      "WEBJCS_VERSION"
+    ]
+  }
 }

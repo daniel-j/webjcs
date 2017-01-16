@@ -25,7 +25,7 @@ function createWindow () {
 
   mainWindow.maximize()
 
-  mainWindow.loadURL(`file://${__dirname}/../html/editor.html`)
+  mainWindow.loadURL(`file://${__dirname}/../index.html`)
 
   mainWindow.webContents.openDevTools()
 

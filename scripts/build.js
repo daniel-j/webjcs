@@ -11,11 +11,14 @@ let options = {
   icon: './app/media/icons/JCS.ico',
   platform: process.argv[4] || 'linux',
   arch: process.argv[2] || undefined,
-  asar: true,
+  asar: false,
   download: {
     cache: './cache'
   },
-  tmpdir: false
+  tmpdir: false,
+  ignore: [
+    /build\/web\.js/
+  ]
 }
 
 packager(options, (err, appPaths) => {

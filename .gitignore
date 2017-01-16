@@ -3,10 +3,8 @@ libopenmpt/
 build/
 cache/
 
-app/node_modules/
-app/data/
-app/js/oldjcs.js
-app/js/texbg.js
+app/build/
 
-app/html/lib/
-app/js/lib/webgl-inspector/
+data/
+src/js/oldjcs.js
+src/js/texbg.js

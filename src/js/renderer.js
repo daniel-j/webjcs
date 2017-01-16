@@ -3,12 +3,13 @@ const m = require('mithril')
 const vent = require('postal').channel()
 const rafLoop = require('raf-loop')
 const twgl = require('twgl.js')
-const rectShader = require('./shaders/rect')
-const tilemapShader = require('./shaders/tilemap')
-const fboShader = require('./shaders/fbo')
 const TileMap = require('./TileMap')
 const Tile = require('./tile')
 const app = require('./app')
+
+const rectShader = [require('../shaders/rect.vert.glsl'), require('../shaders/rect.frag.glsl')]
+const tilemapShader = [require('../shaders/tilemap.vert.glsl'), require('../shaders/tilemap.frag.glsl')]
+const fboShader = [require('../shaders/fbo.vert.glsl'), require('../shaders/fbo.frag.glsl')]
 
 const r = {
   view ({children}) {
@@ -32,6 +33,10 @@ const r = {
   createCanvas ({state, dom}) {
     r.canvas = dom
     const gl = r.gl = twgl.getWebGLContext(r.canvas, {alpha: false})
+
+    // If webgl is not supported, abort
+    // TODO: Implement 2D Canvas fallback
+    if (!gl) return
 
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -71,7 +76,7 @@ const r = {
     r.loop = rafLoop(r.redraw)
     r.loop.start()
 
-    vent.subscribe('level.load', () => {
+    vent.subscribe('tileset.load', () => {
       gl.bindTexture(gl.TEXTURE_2D, r.textures.tileset)
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, app.j2t.tilesetCanvas)
 

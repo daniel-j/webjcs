@@ -192,11 +192,13 @@ class LayerPanel {
       this.scrollbars.update(true)
     })
 
-    this.fboAttachments = [
-      {format: r.gl.RGBA, type: r.gl.UNSIGNED_BYTE, min: r.gl.NEAREST, wrap: r.gl.CLAMP_TO_EDGE}
-    ]
-    this.fbo = r.twgl.createFramebufferInfo(r.gl, this.fboAttachments)
-    r.gl.bindFramebuffer(r.gl.FRAMEBUFFER, null)
+    if (r.gl) {
+      this.fboAttachments = [
+        {format: r.gl.RGBA, type: r.gl.UNSIGNED_BYTE, min: r.gl.NEAREST, wrap: r.gl.CLAMP_TO_EDGE}
+      ]
+      this.fbo = r.twgl.createFramebufferInfo(r.gl, this.fboAttachments)
+      r.gl.bindFramebuffer(r.gl.FRAMEBUFFER, null)
+    }
 
     vent.subscribe('renderer.draw', () => this.redraw())
   }

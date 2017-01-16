@@ -3,6 +3,8 @@ const fs = require('fs')
 const path = require('path')
 
 const m = require('mithril')
+const vent = require('postal').channel()
+
 const panels = require('./components/panels')
 const TilesetPanel = require('./components/tilesetpanel')
 const AnimPanel = require('./components/animpanel')
@@ -10,8 +12,6 @@ const LayerPanel = require('./components/layerpanel')
 const Renderer = require('./renderer')
 
 const app = require('./app')
-
-const vent = require('postal').channel()
 
 require('./domevents')
 
@@ -39,17 +39,19 @@ m.mount(document.getElementById('app'), {
   view: () => m(Renderer, m(panels, {columns: columns}))
 })
 
-const jj2Dir = path.join(__dirname, '/../data/')
+//const jj2Dir = path.join(__dirname, '/../data/')
 
-const jj2File = 'ab17btl06.j2l'
-console.log('Loading ' + path.join(jj2Dir, jj2File))
-app.j2l.loadFromBuffer(fs.readFileSync(path.join(jj2Dir, jj2File))).then(() => {
+const levelBuffer = require('buffer-loader!../../data/ab17btl06.j2l')
+const tilesetBuffer = require('buffer-loader!../../data/DiambGarden.j2t')
+//console.log('Loading ' + path.join(jj2Dir, levelFile))
+app.j2l.loadFromBuffer(levelBuffer).then(() => {
   console.log('Level loaded')
-  console.log('Loading ' + path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))
-  app.j2t.loadFromBuffer(fs.readFileSync(path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))).then(() => {
+  vent.publish('level.load')
+
+  //console.log('Loading ' + path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))
+  return app.j2t.loadFromBuffer(tilesetBuffer).then(() => {
     console.log('Tileset loaded')
     vent.publish('tileset.load')
-    vent.publish('level.load')
   }).catch((err) => {
     console.error(err)
   })

@@ -4,10 +4,12 @@ const npot = require('./util/next-power-of-two')
 class TileMap {
   constructor (w = 1, h = 1) {
     const gl = r.gl
-    this.texture = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, this.texture)
-    // Map MUST be filtered with NEAREST or tile lookup fails
-    r.setDefaultTextureProperties()
+    if (gl) {
+      this.texture = gl.createTexture()
+      gl.bindTexture(gl.TEXTURE_2D, this.texture)
+      // Map MUST be filtered with NEAREST or tile lookup fails
+      r.setDefaultTextureProperties()
+    }
     this.textureSize = [0, 0]
     this.setTexture(w, h)
 
@@ -21,9 +23,11 @@ class TileMap {
     this.height = h
     w = npot(w)
     h = npot(h)
-    gl.bindTexture(gl.TEXTURE_2D, this.texture)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(w * h * 4))
-    r.setDefaultTextureProperties()
+    if (gl) {
+      gl.bindTexture(gl.TEXTURE_2D, this.texture)
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(w * h * 4))
+      r.setDefaultTextureProperties()
+    }
 
     this.textureSize[0] = w
     this.textureSize[1] = h
@@ -51,8 +55,10 @@ class TileMap {
       }
     }
 
-    gl.bindTexture(gl.TEXTURE_2D, this.texture)
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, sw, sh, gl.RGBA, gl.UNSIGNED_BYTE, mapBuffer)
+    if (gl) {
+      gl.bindTexture(gl.TEXTURE_2D, this.texture)
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, x, y, sw, sh, gl.RGBA, gl.UNSIGNED_BYTE, mapBuffer)
+    }
   }
 }
 
