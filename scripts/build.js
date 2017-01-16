@@ -11,7 +11,7 @@ let options = {
   icon: './app/media/icons/JCS.ico',
   platform: process.argv[4] || 'linux',
   arch: process.argv[2] || undefined,
-  asar: false,
+  asar: true,
   download: {
     cache: './cache'
   },
