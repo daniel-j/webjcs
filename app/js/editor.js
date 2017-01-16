@@ -3,10 +3,11 @@ const fs = require('fs')
 const path = require('path')
 
 const m = require('mithril')
-const Panels = require('./components/panels')
+const panels = require('./components/panels')
 const TilesetPanel = require('./components/tilesetpanel')
 const AnimPanel = require('./components/animpanel')
 const LayerPanel = require('./components/layerpanel')
+const Renderer = require('./renderer')
 
 const app = require('./app')
 
@@ -14,7 +15,7 @@ const vent = require('postal').channel()
 
 require('./domevents')
 
-const panels = new Panels([
+const columns = [
   {
     panels: [
       {
@@ -32,9 +33,11 @@ const panels = new Panels([
     ],
     fluid: true
   }
-])
+]
 
-m.mount(document.getElementById('app'), panels)
+m.mount(document.getElementById('app'), {
+  view: () => m(Renderer, m(panels, {columns: columns}))
+})
 
 const jj2Dir = path.join(__dirname, '/../data/')
 

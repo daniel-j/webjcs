@@ -229,10 +229,10 @@ class Scrollbars {
   }
 
   getOffsetWidth () {
-    return this.parent.offsetWidth - (this.contentHeight > this.parent.offsetHeight ? this.vTrack.offsetWidth : 0)
+    return Math.max(0, this.parent.offsetWidth - (this.contentHeight > this.parent.offsetHeight ? this.vTrack.offsetWidth : 0))
   }
   getOffsetHeight () {
-    return this.parent.offsetHeight - (this.contentWidth > this.parent.offsetWidth ? this.hTrack.offsetHeight : 0)
+    return Math.max(0, this.parent.offsetHeight - (this.contentWidth > this.parent.offsetWidth ? this.hTrack.offsetHeight : 0))
   }
 
   update (force = false) {
@@ -291,7 +291,7 @@ class Scrollbars {
       this.vTrack.classList.remove('disabled')
     }
 
-    if (gripRatioX <= 1 && gripRatioY <= 1) {
+    if (gripRatioX < 1 && gripRatioY < 1) {
       this.corner.classList.remove('disabled')
       this.hTrack.classList.add('both')
       this.vTrack.classList.add('both')

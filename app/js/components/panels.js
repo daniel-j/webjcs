@@ -3,8 +3,8 @@ const m = require('mithril')
 const vent = require('postal').channel()
 
 class Panels {
-  constructor (columns) {
-    this.columns = columns
+  oninit (vnode) {
+    this.columns = vnode.attrs.columns
     this.activePanel = null
 
     let startPos = 0
@@ -76,39 +76,36 @@ class Panels {
       resizingPanel = false
     })
 
-    /*vent.subscribe('window.mouseout', (e) => {
-      vent.publish('panel.active', null)
-    })*/
     vent.subscribe('panel.active', (panel) => {
       this.activePanel = panel
       m.redraw()
     })
   }
 
-  renderPanels (el) {
-    this.panelsEl = el
+  renderPanels (vnode) {
+    this.panelsEl = vnode.dom
   }
 
   renderColumn (column) {
-    return (el, isInitialized, context, vdom) => {
-      column.el = el
+    return (vnode) => {
+      column.el = vnode.dom
     }
   }
 
   renderPanel (column, panel) {
-    return (el, isInitialized, context, vdom) => {
-      panel.el = el
-      if (panel.panel.configPanel) panel.panel.configPanel(el, isInitialized)
+    return (vnode) => {
+      panel.el = vnode.dom
+      if (panel.panel.configPanel) panel.panel.configPanel(vnode)
     }
   }
 
-  view () {
-    return m('.panels', {config: this.renderPanels.bind(this)}, this.columns.map(column => {
-      return m('.column', {class: column.fluid ? 'flexfluid' : '', config: this.renderColumn(column)}, column.panels.map(panel => {
-        return panel.panel.view({fluid: panel.fluid, config: this.renderPanel(column, panel), active: panel.panel === this.activePanel})
+  view (vnode) {
+    return m('.panels', {oncreate: this.renderPanels.bind(this)}, this.columns.map(column => {
+      return m('.column', {class: column.fluid ? 'flexfluid' : '', oncreate: this.renderColumn(column)}, column.panels.map(panel => {
+        return panel.panel.view({fluid: panel.fluid, oncreate: this.renderPanel(column, panel), active: panel.panel === this.activePanel})
       }))
     }))
   }
 }
 
-module.exports = Panels
+module.exports = new Panels()

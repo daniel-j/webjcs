@@ -41,6 +41,13 @@ html, body {
 	flex-flow: column;
 }
 
+.renderer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	display: block;
+}
+
 .panels {
 	display: flex;
 	height: 100%;
