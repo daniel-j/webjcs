@@ -81,6 +81,28 @@ build-win%:
 		zip -rq -9 "../$(dist).zip" .;\
 	fi
 
+# darwin 64-bit
+darwin64: platform = darwin
+darwin64: electron_arch = x64
+darwin64: dist = webjcs-$(platform)-$(electron_arch)
+darwin64: dest = build/$(dist)
+darwin64: build-darwin64
+
+build-darwin%:
+	@echo "Building $(dist)"
+	rm -rf "$(dest)" "$(dest).zip"
+	@mkdir -pv "$(dest)"
+	@#cp -v scripts/launch.sh "$(dest)/"
+	scripts/build.js $(electron_arch) $(electron_version) $(platform)
+
+	@echo $(app_version) > "$(dest)/version"
+	@echo "Build finished $(dist)"
+	@if [ "$(compress)" != "" ]; then\
+		cd "$(dest)";\
+		echo "Compressing...";\
+		zip -rq -9 "../$(dist).zip" .;\
+	fi
+
 cleanbuild:
 	rm -rf build
 
