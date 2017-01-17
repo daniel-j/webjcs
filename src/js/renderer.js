@@ -151,8 +151,8 @@ r.setDefaultTextureProperties = () => {
 
 r.drawTilemap = (info) => {
   const ctx = info.ctx || r.ctx
-  const left = Math.floor(Math.floor(info.viewOffset[0]) / 32)
-  const top = Math.floor(Math.floor(info.viewOffset[1]) / 32)
+  const left = Math.floor(info.viewOffset[0] / 32)
+  const top = Math.floor(info.viewOffset[1] / 32)
   const right = Math.ceil(Math.ceil(info.viewportSize[0] / info.scale + info.viewOffset[0]) / 32)
   const bottom = Math.ceil(Math.ceil(info.viewportSize[1] / info.scale + info.viewOffset[1]) / 32)
 

@@ -314,7 +314,6 @@ class LayerPanel {
       fbc.clearRect(0, 0, cw, ch)
 
       let zIndexLast = null
-      let currentCtx = ctx
 
       for (let i = this.layers.length - 1; i >= 0; i--) {
         const layer = this.layers[i]
