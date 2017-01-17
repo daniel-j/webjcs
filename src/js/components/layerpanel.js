@@ -223,77 +223,79 @@ class LayerPanel {
     let x = (-scrollLeft) / this.zoomLevel
     let y = (-scrollTop) / this.zoomLevel
 
-    r.twgl.resizeFramebufferInfo(gl, this.fbo, this.fboAttachments, cw, ch)
+    if (!r.disableWebGL) {
+      r.twgl.resizeFramebufferInfo(gl, this.fbo, this.fboAttachments, cw, ch)
 
-    if (this.zoomLevel < 1) {
-      gl.bindTexture(gl.TEXTURE_2D, r.textures.tileset)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      if (this.zoomLevel < 1) {
+        gl.bindTexture(gl.TEXTURE_2D, r.textures.tileset)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 
-      gl.bindTexture(gl.TEXTURE_2D, r.textures.mask)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    }
-    let zIndexLast = null
+        gl.bindTexture(gl.TEXTURE_2D, r.textures.mask)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      }
+      let zIndexLast = null
 
-    for (var i = this.layers.length - 1; i >= 0; i--) {
-      const layer = this.layers[i]
-      if (layer.hidden) continue
-      let viewOffset = [Math.floor(x * layer.speedX) || 0, Math.floor(y * layer.speedY) || 0]
-      if ((zIndexLast === null || zIndexLast !== layer.zIndex)) {
-        if (zIndexLast !== null) {
-          gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-          gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
-          gl.useProgram(r.shaders.fbo.program)
-          r.twgl.setBuffersAndAttributes(gl, r.shaders.fbo, r.buffers.fbo)
-          r.twgl.setUniforms(r.shaders.fbo, {
-            opacity: 1.0,
-            texture: this.fbo.attachments[0]
-          })
-          r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.fbo)
+      for (var i = this.layers.length - 1; i >= 0; i--) {
+        const layer = this.layers[i]
+        if (layer.hidden) continue
+        let viewOffset = [Math.floor(x * layer.speedX) || 0, Math.floor(y * layer.speedY) || 0]
+        if ((zIndexLast === null || zIndexLast !== layer.zIndex)) {
+          if (zIndexLast !== null) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+            gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
+            gl.useProgram(r.shaders.fbo.program)
+            r.twgl.setBuffersAndAttributes(gl, r.shaders.fbo, r.buffers.fbo)
+            r.twgl.setUniforms(r.shaders.fbo, {
+              opacity: 1.0,
+              texture: this.fbo.attachments[0]
+            })
+            r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.fbo)
+          }
+          gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo.framebuffer)
+          gl.clearColor(0, 0, 0, 0)
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+          gl.viewport(0, 0, cw, ch)
+          zIndexLast = layer.zIndex
         }
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.fbo.framebuffer)
-        gl.clearColor(0, 0, 0, 0)
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-        gl.viewport(0, 0, cw, ch)
-        zIndexLast = layer.zIndex
+
+        gl.useProgram(r.shaders.tilemap.program)
+        r.twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
+        r.twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
+        r.twgl.setUniforms(r.shaders.tilemap, {
+          scale: this.zoomLevel,
+          viewportSize: [cw, ch],
+          maskOpacity: maskOpacity
+        })
+
+        r.twgl.setUniforms(r.shaders.tilemap, {
+          viewOffset: viewOffset,
+          mapSize: [layer.width, layer.height],
+          textureSize: layer.textureSize,
+          repeatTilesX: layer.repeatX,
+          repeatTilesY: layer.repeatY,
+          map: layer.texture,
+          backgroundColor: [72 / 255, 48 / 255, 168 / 255, layer.backgroundOpacity * (1 + maskOpacity * 0.15)]
+        })
+        r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap)
       }
 
-      gl.useProgram(r.shaders.tilemap.program)
-      r.twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
-      r.twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
-      r.twgl.setUniforms(r.shaders.tilemap, {
-        scale: this.zoomLevel,
-        viewportSize: [cw, ch],
-        maskOpacity: maskOpacity
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+      gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
+      gl.useProgram(r.shaders.fbo.program)
+      r.twgl.setBuffersAndAttributes(gl, r.shaders.fbo, r.buffers.fbo)
+      r.twgl.setUniforms(r.shaders.fbo, {
+        opacity: zIndexLast === -1 ? 0.3 : 1,
+        texture: this.fbo.attachments[0]
       })
+      r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.fbo)
 
-      r.twgl.setUniforms(r.shaders.tilemap, {
-        viewOffset: viewOffset,
-        mapSize: [layer.width, layer.height],
-        textureSize: layer.textureSize,
-        repeatTilesX: layer.repeatX,
-        repeatTilesY: layer.repeatY,
-        map: layer.texture,
-        backgroundColor: [72 / 255, 48 / 255, 168 / 255, layer.backgroundOpacity * (1 + maskOpacity * 0.15)]
-      })
-      r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap)
-    }
+      if (this.zoomLevel < 1) {
+        gl.bindTexture(gl.TEXTURE_2D, r.textures.tileset)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
-    gl.useProgram(r.shaders.fbo.program)
-    r.twgl.setBuffersAndAttributes(gl, r.shaders.fbo, r.buffers.fbo)
-    r.twgl.setUniforms(r.shaders.fbo, {
-      opacity: zIndexLast === -1 ? 0.3 : 1,
-      texture: this.fbo.attachments[0]
-    })
-    r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.fbo)
-
-    if (this.zoomLevel < 1) {
-      gl.bindTexture(gl.TEXTURE_2D, r.textures.tileset)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-
-      gl.bindTexture(gl.TEXTURE_2D, r.textures.mask)
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+        gl.bindTexture(gl.TEXTURE_2D, r.textures.mask)
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+      }
     }
 
     // let zoom = this.zoomLevel

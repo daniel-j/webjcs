@@ -1,6 +1,7 @@
 const isElectron = require('is-electron')()
 
 const vent = require('postal').channel()
+const settings = require('./settings')
 
 const J2L = require('./J2L')
 const J2T = require('./J2T')
@@ -65,4 +66,4 @@ vent.subscribe('loadlevel', ({data, name}) => {
   })
 })
 
-module.exports = { vent, j2l, j2t }
+module.exports = { vent, settings, j2l, j2t }
