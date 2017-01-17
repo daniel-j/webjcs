@@ -16,6 +16,7 @@ class Settings {
   get (key) {
     let item = window.localStorage.getItem(prefix + key)
     if (item === null) item = this.defaults[key]
+    else item = JSON.parse(item)
     return item
   }
 }
