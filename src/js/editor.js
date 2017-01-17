@@ -36,10 +36,9 @@ const columns = [
   }
 ]
 
-const R = m('#editor', m(Renderer, m(panels, {columns: columns})))
-
 m.mount(document.getElementById('app'), {
   view: () => {
+    const R = m('#editor', m(Renderer, m(panels, {columns: columns})))
     if (isElectron) {
       return R
     } else {
