@@ -36,6 +36,10 @@ function createWindow () {
     // when you should delete the corresponding element.
     mainWindow = null
   })
+
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow.setMenuBarVisibility(true)
+  })
 }
 
 // This method will be called when Electron has finished

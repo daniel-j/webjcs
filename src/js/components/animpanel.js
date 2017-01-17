@@ -75,6 +75,7 @@ class AnimPanel {
     this.scrollbars.enableTransition()
 
     const gl = r.gl
+    const canvasRect = r.canvas.getBoundingClientRect()
     const rect = this.panelEl.parentNode.getBoundingClientRect()
     const cw = this.scrollbars.getOffsetWidth()
     const ch = this.scrollbars.getOffsetHeight()
@@ -82,7 +83,7 @@ class AnimPanel {
     let x = -scrollLeft
     let y = -scrollTop
 
-    gl.viewport(rect.left + 32 + 4, r.canvas.height - (rect.top + ch), cw - (32 + 4), ch)
+    gl.viewport(rect.left + 32 + 4, r.canvas.height - (rect.top - canvasRect.top + ch), cw - (32 + 4), ch)
     gl.useProgram(r.shaders.tilemap.program)
     r.twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
     r.twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
@@ -100,7 +101,7 @@ class AnimPanel {
     })
     r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap)
 
-    gl.viewport(rect.left, r.canvas.height - (rect.top + ch), cw, ch)
+    gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
     gl.useProgram(r.shaders.tilemap.program)
     r.twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
     r.twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)

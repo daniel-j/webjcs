@@ -212,6 +212,7 @@ class LayerPanel {
     const scrollTop = this.scrollbars.smoothScroller.offsetTop
     this.scrollbars.enableTransition()
 
+    const canvasRect = r.canvas.getBoundingClientRect()
     const rect = this.panelEl.parentNode.getBoundingClientRect()
     const maskOpacity = this.maskTween.get()
 
@@ -236,7 +237,7 @@ class LayerPanel {
       if ((zIndexLast === null || zIndexLast !== layer.zIndex)) {
         if (zIndexLast !== null) {
           gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-          gl.viewport(rect.left, r.canvas.height - (rect.top + ch), cw, ch)
+          gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
           gl.useProgram(r.shaders.fbo.program)
           r.twgl.setBuffersAndAttributes(gl, r.shaders.fbo, r.buffers.fbo)
           r.twgl.setUniforms(r.shaders.fbo, {
@@ -274,7 +275,7 @@ class LayerPanel {
     }
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    gl.viewport(rect.left, r.canvas.height - (rect.top + ch), cw, ch)
+    gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
     gl.useProgram(r.shaders.fbo.program)
     r.twgl.setBuffersAndAttributes(gl, r.shaders.fbo, r.buffers.fbo)
     r.twgl.setUniforms(r.shaders.fbo, {

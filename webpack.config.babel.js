@@ -1,5 +1,6 @@
 
 import path from 'path'
+import webpack from 'webpack'
 
 let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
@@ -50,7 +51,9 @@ const bundleWebConfig = {
     }
   },
 
-  plugins: [],
+  plugins: [
+
+  ],
   devtool: 'source-map',
   uglifyable: true
 }
@@ -81,7 +84,7 @@ const bundleElectronConfig = {
         exclude: /node_modules/,
         options: {
           sourceMaps: !inProduction,
-          presets: inProduction ? ['babili'] : ['node7']
+          presets: inProduction ? ['node7', 'babili'] : ['node7']
         }
       },
       {
@@ -103,7 +106,9 @@ const bundleElectronConfig = {
     ]
   },
 
-  plugins: [],
+  plugins: [
+    new webpack.IgnorePlugin(/^\.\/components\/menu$/)
+  ],
   devtool: 'source-map',
   uglifyable: false
 }

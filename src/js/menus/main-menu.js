@@ -2,7 +2,6 @@
 const {shell} = require('electron')
 
 function click (menuItem, win, event) {
-  console.log(menuItem)
   if (menuItem.href) {
     shell.openExternal(menuItem.href)
     return
@@ -24,7 +23,7 @@ module.exports = [
       {label: 'Save &As...', command: 'savelevelas', accelerator: 'CmdOrCtrl+Shift+S', click},
       {label: 'Save and Run', command: 'savelevelrun', accelerator: 'CmdOrCtrl+R', click},
       {type: 'separator'},
-      {label: '&Preferences', command: 'preferences', click}
+      {label: '&Preferences', command: 'openpreferences', click}
     ]
   },
   {
@@ -33,7 +32,7 @@ module.exports = [
       {label: 'Toggle &fullscreen', role: 'togglefullscreen'},
       {label: 'Toggle Developer Tools', accelerator: 'Ctrl+Shift+I', click (item, win) {
         if (win) win.webContents.toggleDevTools()
-      }}
+      }, electronOnly: true}
     ]
   },
   {

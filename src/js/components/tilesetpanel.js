@@ -87,12 +87,13 @@ class TilesetPanel {
 
   redraw () {
     const gl = r.gl
+    const canvasRect = r.canvas.getBoundingClientRect()
     const rect = this.panelEl.parentNode.getBoundingClientRect()
     const cw = this.scrollbars.getOffsetWidth()
     const ch = this.scrollbars.getOffsetHeight()
     const maskOpacity = this.maskTween.get()
 
-    gl.viewport(rect.left, r.canvas.height - (rect.top + ch), cw, ch)
+    gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
     gl.useProgram(r.shaders.tilemap.program)
     r.twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
     r.twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)

@@ -12,6 +12,7 @@ const LayerPanel = require('./components/layerpanel')
 const Renderer = require('./renderer')
 
 const app = require('./app')
+const isElectron = require('is-electron')()
 
 require('./domevents')
 
@@ -35,8 +36,16 @@ const columns = [
   }
 ]
 
+const R = m('#editor', m(Renderer, m(panels, {columns: columns})))
+
 m.mount(document.getElementById('app'), {
-  view: () => m(Renderer, m(panels, {columns: columns}))
+  view: () => {
+    if (isElectron) {
+      return R
+    } else {
+      return m(require('./components/menu'), R)
+    }
+  }
 })
 
 //const jj2Dir = path.join(__dirname, '/../data/')

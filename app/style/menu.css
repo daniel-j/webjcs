@@ -1,0 +1,101 @@
+#menu {
+	cursor: default;
+	color: #444;
+	height: 20px;
+	border-bottom: 1px solid #AAA;
+	background-color: #CCC;
+	background: -webkit-gradient(linear, left top, left bottom, from(#EEE), to(#CCC));
+	background: -moz-linear-gradient(#EEE, #CCC);
+}
+#menu ul {
+	list-style-type: none;
+	padding: 0px;
+	margin: 0px;
+}
+#menu > ul {
+	padding-left: 1px;
+}
+#menu > ul > li {
+	float: left;
+	height: 19px;
+	padding: 0px 0px;
+}
+#menu > ul > li > .label {
+	display: block;
+	padding: 0px 6px;
+	padding-top: 2px;
+	text-shadow: 0px 1px 0px #EEE;
+	line-height: 17px;
+}
+#menu > ul > li.selected > .label {
+	padding: 0px 5px;
+	border: 1px solid #AAA;
+	background-color: #EEE;
+	background: -webkit-gradient(linear, left top, left bottom, from(#FFF), to(#EEE));
+	background: -moz-linear-gradient(#FFF, #EEE);
+	margin-top: 1px;
+	border-bottom: none;
+	-webkit-border-radius: 3px 3px 0px 0px;
+	-moz-border-radius: 3px 3px 0px 0px;
+	text-shadow: 0px 1px 0px #DDD;
+	-webkit-box-shadow: 0px 0px 1px #AAA;
+	-moz-box-shadow: 0px 0px 1px #AAA;
+}
+#menu > ul > li > ul {
+	position: absolute;
+	z-index: 2;
+	min-width: 100px;
+	background-color: #EEE;
+	background: -webkit-gradient(linear, left top, left bottom, from(#EEE), to(#FFF));
+	background: -moz-linear-gradient(#EEE, #FFF);
+	border: 1px solid #AAA;
+	border-top: none;
+	display: none;
+	-webkit-box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+	-moz-box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+	padding: 4px 0px;
+	-webkit-border-radius: 0px 0px 3px 3px;
+	-moz-border-radius: 0px 0px 3px 3px;
+	min-width: 180px;
+}
+#menu > ul > li > ul.selected {
+	display: block;
+}
+#menu > ul > li > ul > li {
+	color: #444;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	line-height: 18px;
+}
+#menu > ul > li > ul > li > .label {
+	display: block;
+	padding-left: 22px;
+	padding-right: 6px;
+	text-decoration: none;
+	cursor: default;
+	color: inherit;
+}
+#menu .accelerator {
+	float: right;
+	padding-left: 15px;
+}
+#menu > ul > li > ul > li:hover {
+	background-color: #4084D6;
+	/*background: -webkit-gradient(linear, left top, left bottom, from(#0CF), to(#09F));
+	background: -moz-linear-gradient(#0EF, #09F);*/
+	color: white;
+}
+#menu > ul > li > ul > li.separator, #menu > ul > li > ul > li.separator:hover {
+	height: 0px;
+	padding: 0px;
+	border: none;
+	border-bottom: 1px solid #AAA;
+	margin: 4px 0px;
+}
+#menu > ul > li > ul > li.disabled, #menu > ul > li > ul > li.disabled:hover {
+	color: #999;
+	background: none;
+	border: none;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}

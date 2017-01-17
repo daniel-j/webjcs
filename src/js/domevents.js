@@ -1,6 +1,10 @@
 
 const vent = require('postal').channel()
 
+window.addEventListener('blur', function (e) {
+  vent.publish('window.blur')
+}, false)
+
 window.addEventListener('mousedown', function (e) {
   vent.publish('window.mousedown', e)
 }, false)

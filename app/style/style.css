@@ -1,5 +1,6 @@
 
 @import url('scrollbars.css');
+@import url('menu.css');
 
 html, body {
 	height: 100%;
@@ -20,6 +21,14 @@ html, body {
 #app {
 	height: 100%;
 	overflow: hidden;
+}
+
+#editor {
+	position: relative;
+	height: 100%;
+}
+#menu + #editor {
+	height: calc(100% - 21px);
 }
 
 .right {
