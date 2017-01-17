@@ -150,7 +150,7 @@ r.setDefaultTextureProperties = () => {
 }
 
 r.drawTilemap = (info) => {
-  const ctx = r.ctx
+  const ctx = info.ctx || r.ctx
   const left = Math.floor(Math.floor(info.viewOffset[0]) / 32)
   const top = Math.floor(Math.floor(info.viewOffset[1]) / 32)
   const right = Math.ceil(Math.ceil(info.viewportSize[0] / info.scale + info.viewOffset[0]) / 32)
@@ -175,8 +175,11 @@ r.drawTilemap = (info) => {
       const tileIndex = x + y * info.mapSize[0]
       let tile = info.map[tileIndex]
       if (!tile) continue
-      if (tile.animated) tile = r.calculateAnimTile(tile.id)
-      if (tile.flipped) continue
+      let flipped = tile.flipped
+      if (tile.animated) {
+        tile = r.anims[tile.id]
+        if (flipped) tile.flipped = !tile.flipped
+      }
 
       const tileId = tile.id
       const tilesetPos = [
@@ -192,7 +195,14 @@ r.drawTilemap = (info) => {
 
       ctx.fillRect(outPos[0], outPos[1], outPos[2], outPos[3])
       if (tileId === 0) continue
-      ctx.drawImage(info.maskOpacity < 0.5 ? r.textures.tileset : r.textures.mask, tilesetPos[0], tilesetPos[1], 32, 32, outPos[0], outPos[1], outPos[2], outPos[3])
+      ctx.save()
+      ctx.translate(outPos[0], outPos[1])
+      if (tile.flipped) {
+        ctx.translate(outPos[2], 0)
+        ctx.scale(-1, 1)
+      }
+      ctx.drawImage(info.maskOpacity < 0.5 ? r.textures.tileset : r.textures.mask, tilesetPos[0], tilesetPos[1], 32, 32, 0, 0, outPos[2], outPos[3])
+      ctx.restore()
     }
   }
   ctx.restore()

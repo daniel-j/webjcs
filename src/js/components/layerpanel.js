@@ -196,12 +196,16 @@ class LayerPanel {
       this.scrollbars.update(true)
     })
 
-    if (r.gl) {
+    if (!r.disableWebGL) {
       this.fboAttachments = [
         {format: r.gl.RGBA, type: r.gl.UNSIGNED_BYTE, min: r.gl.NEAREST, wrap: r.gl.CLAMP_TO_EDGE}
       ]
       this.fbo = r.twgl.createFramebufferInfo(r.gl, this.fboAttachments)
       r.gl.bindFramebuffer(r.gl.FRAMEBUFFER, null)
+    } else {
+      this.fbo = document.createElement('canvas')
+      this.fbo.imageSmoothingEnabled = false
+      this.fboCtx = this.fbo.getContext('2d')
     }
 
     vent.subscribe('renderer.draw', () => this.redraw())
@@ -209,6 +213,7 @@ class LayerPanel {
 
   redraw () {
     const gl = r.gl
+    const ctx = r.ctx
     const cw = this.scrollbars.getOffsetWidth()
     const ch = this.scrollbars.getOffsetHeight()
 
@@ -235,7 +240,7 @@ class LayerPanel {
       }
       let zIndexLast = null
 
-      for (var i = this.layers.length - 1; i >= 0; i--) {
+      for (let i = this.layers.length - 1; i >= 0; i--) {
         const layer = this.layers[i]
         if (layer.hidden) continue
         let viewOffset = [Math.floor(x * layer.speedX) || 0, Math.floor(y * layer.speedY) || 0]
@@ -296,6 +301,54 @@ class LayerPanel {
         gl.bindTexture(gl.TEXTURE_2D, r.textures.mask)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
       }
+    } else {
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(rect.left, rect.top - canvasRect.top, cw, ch)
+      ctx.clip()
+      ctx.translate(rect.left, rect.top - canvasRect.top)
+
+      const fbc = this.fboCtx
+      this.fbo.width = cw
+      this.fbo.height = ch
+      fbc.clearRect(0, 0, cw, ch)
+
+      let zIndexLast = null
+      let currentCtx = ctx
+
+      for (let i = this.layers.length - 1; i >= 0; i--) {
+        const layer = this.layers[i]
+        if (layer.hidden) continue
+        let viewOffset = [Math.floor(x * layer.speedX) || 0, Math.floor(y * layer.speedY) || 0]
+        if ((zIndexLast === null || zIndexLast !== layer.zIndex)) {
+          if (zIndexLast !== null) {
+            ctx.drawImage(this.fbo, 0, 0)
+          }
+          fbc.clearRect(0, 0, cw, ch)
+          zIndexLast = layer.zIndex
+        }
+
+        r.drawTilemap({
+          ctx: fbc,
+          scale: this.zoomLevel,
+          viewportSize: [cw, ch],
+          maskOpacity: maskOpacity,
+          viewOffset: viewOffset,
+          mapSize: [layer.width, layer.height],
+          // textureSize: layer.textureSize,
+          repeatTilesX: layer.repeatX,
+          repeatTilesY: layer.repeatY,
+          map: layer.texture,
+          backgroundColor: [72 / 255, 48 / 255, 168 / 255, layer.backgroundOpacity * (1 + maskOpacity * 0.15)]
+        })
+      }
+
+      ctx.save()
+      ctx.globalAlpha = zIndexLast === -1 ? 0.3 : 1
+      ctx.drawImage(this.fbo, 0, 0)
+      ctx.restore()
+
+      ctx.restore()
     }
 
     // let zoom = this.zoomLevel
