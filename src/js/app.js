@@ -10,8 +10,59 @@ const j2t = new J2T()
 
 if (isElectron) {
   require('electron').ipcRenderer.on('menuclick', (event, command) => {
-    vent.publish('menuclick', command)
+    vent.publish('menuclick.' + command)
   })
 }
+
+// File > Open - For web and electron
+if (!isElectron) {
+  const openlevelinput = document.createElement('input')
+  openlevelinput.setAttribute('accept', '.j2l')
+  openlevelinput.addEventListener('change', (e) => {
+    const file = openlevelinput.files[0]
+    const name = file.name
+    const fr = new FileReader()
+    fr.addEventListener('load', () => {
+      const data = Buffer.from(fr.result)
+      vent.publish('loadlevel', { data, name })
+    }, false)
+    fr.readAsArrayBuffer(file)
+    // reset it
+    openlevelinput.value = ''
+  }, false)
+  vent.subscribe('menuclick.openlevel', () => {
+    openlevelinput.type = 'file'
+    openlevelinput.click()
+  })
+} else {
+  const dialog = require('electron').remote.dialog
+  const fs = require('fs')
+  vent.subscribe('menuclick.openlevel', () => {
+    dialog.showOpenDialog({
+      title: 'Open Jazz Jackrabbit 2 level',
+      filters: [{
+        name: 'Jazz2 Level',
+        extensions: ['j2l']
+      }],
+      properties: ['openFile']
+    }, (filePaths) => {
+      const name = filePaths[0]
+      fs.readFile(name, (err, data) => {
+        if (err) throw err
+        vent.publish('loadlevel', { data, name })
+      })
+    })
+  })
+}
+
+vent.subscribe('loadlevel', ({data, name}) => {
+  j2l.loadFromBuffer(data).then(() => {
+    alert(j2l.header.fields.LevelName + '\n' + j2l.levelInfo.fields.Tileset)
+    vent.publish('level.load')
+  }).catch((err) => {
+    alert(err)
+    console.error(err)
+  })
+})
 
 module.exports = { vent, j2l, j2t }

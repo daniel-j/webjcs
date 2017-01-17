@@ -4,12 +4,21 @@ const vent = require('postal').channel()
 const rafLoop = require('raf-loop')
 const twgl = require('twgl.js')
 const TileMap = require('./TileMap')
-const Tile = require('./tile')
+const Tile = require('./Tile')
 const app = require('./app')
 
-const rectShader = [require('../shaders/rect.vert.glsl'), require('../shaders/rect.frag.glsl')]
-const tilemapShader = [require('../shaders/tilemap.vert.glsl'), require('../shaders/tilemap.frag.glsl')]
-const fboShader = [require('../shaders/fbo.vert.glsl'), require('../shaders/fbo.frag.glsl')]
+const rectShader = [
+  require('../shaders/rect.vert.glsl'),
+  require('../shaders/rect.frag.glsl')
+]
+const tilemapShader = [
+  require('../shaders/tilemap.vert.glsl'),
+  require('../shaders/tilemap.frag.glsl')
+]
+const fboShader = [
+  require('../shaders/fbo.vert.glsl'),
+  require('../shaders/fbo.frag.glsl')
+]
 
 const r = {
   view ({children}) {

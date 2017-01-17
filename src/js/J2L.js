@@ -8,7 +8,7 @@ animSelection =  false
 const zlib = require('zlib')
 const crc = require('crc')
 const Struct = require('struct')
-const Tile = require('./tile')
+const Tile = require('./Tile')
 
 function wrapStruct (buffer, struct) {
   if (buffer) {
@@ -170,16 +170,16 @@ class J2L {
       let headerBuffer = buffer.slice(0, 262)
       let header = J2L.HeaderStruct(headerBuffer)
       if (header.fields.Magic !== 'LEVL') {
-        reject(new Error('Not a level'))
+        reject(new Error('Not a valid Jazz2 Level file'))
         return
       }
       let checksum = crc.crc32(buffer.slice(262))
       if (header.fields.Checksum !== checksum) {
-        reject(new Error('Invalid checksum'))
+        reject(new Error('J2L has an invalid checksum'))
         return
       }
       if (header.fields.Version !== J2L.VERSION_123 && header.fields.Version !== J2L.VERSION_TSF) {
-        reject(new Error('Unknown version ' + header.fields.Version))
+        reject(new Error('J2L is of an unknown version: ' + header.fields.Version))
         return
       }
       this.version = header.fields.Version

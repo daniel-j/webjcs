@@ -174,12 +174,16 @@ class LayerPanel {
 
     vent.subscribe('panel.resize', () => this.scrollbars.update())
 
+    for (let i = 0; i < 8; i++) {
+      this.layers[i] = new TileMap(1, 1)
+    }
+
     vent.subscribe('level.load', () => {
       for (let i = 0; i < 8; i++) {
         let lw = app.j2l.levelInfo.fields.LayerWidth[i]
         let lh = app.j2l.levelInfo.fields.LayerHeight[i]
-        let layer = new TileMap(lw, lh)
-        this.layers[i] = layer
+        const layer = this.layers[i]
+        layer.setTexture(lw, lh)
         layer.speedX = app.j2l.levelInfo.fields.LayerXSpeed[i] / 65536
         layer.speedY = app.j2l.levelInfo.fields.LayerYSpeed[i] / 65536
         layer.setTiles(0, 0, app.j2l.layers[i])

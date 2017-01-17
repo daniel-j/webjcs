@@ -6,7 +6,7 @@ const app = require('../app')
 const Scrollbars = require('../scrollbars')
 const TileMap = require('../TileMap')
 const r = require('../renderer')
-const Tile = require('../tile')
+const Tile = require('../Tile')
 
 class AnimPanel {
   constructor () {

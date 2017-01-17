@@ -11,8 +11,7 @@ function click (menuItem) {
     // ...
   }
   if (menuItem.command) {
-    vent.publish('menuclick', menuItem.command)
-    alert('Execute command ' + menuItem.command)
+    vent.publish('menuclick.' + menuItem.command)
   }
 }
 
@@ -77,7 +76,7 @@ const Menu = {
     }
     if (item.click) {
       state.currentItem = null
-      click(item)
+      setTimeout(() => click(item), 20)
     }
     if (item.role === 'togglefullscreen') {
       state.currentItem = null

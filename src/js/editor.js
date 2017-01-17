@@ -48,16 +48,16 @@ m.mount(document.getElementById('app'), {
   }
 })
 
-//const jj2Dir = path.join(__dirname, '/../data/')
+// const jj2Dir = path.join(__dirname, '/../data/')
 
 const levelBuffer = require('buffer-loader!../../data/ab17btl06.j2l')
 const tilesetBuffer = require('buffer-loader!../../data/DiambGarden.j2t')
-//console.log('Loading ' + path.join(jj2Dir, levelFile))
+// console.log('Loading ' + path.join(jj2Dir, levelFile))
 app.j2l.loadFromBuffer(levelBuffer).then(() => {
   console.log('Level loaded')
   vent.publish('level.load')
 
-  //console.log('Loading ' + path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))
+  // console.log('Loading ' + path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))
   return app.j2t.loadFromBuffer(tilesetBuffer).then(() => {
     console.log('Tileset loaded')
     vent.publish('tileset.load')
