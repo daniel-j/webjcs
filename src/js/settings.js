@@ -1,10 +1,12 @@
 
+const isElectron = require('is-electron')()
+const os = require('os')
+
 const prefix = 'webjcs:'
 
 class Settings {
   constructor (defaults = {}) {
     this.defaults = defaults
-    this.settings = {}
   }
 
   set (key, value) {
@@ -22,5 +24,11 @@ class Settings {
 }
 
 module.exports = new Settings({
-  disable_webgl: false
+  disable_webgl: false,
+
+  paths: isElectron && os.platform() === 'win32' ? ['C:\\Games\\Jazz2\\'] : [],
+  jj2_exe: isElectron && os.platform() === 'win32' ? 'C:\\Games\\Jazz2\\Jazz2+.exe' : '',
+  jj2_args: isElectron ? '-windowed -nolog' + (os.platform() !== 'win32' ? ' -noddrawwin -noddraw -noddrawmemcheck -nocpucheck' : '') : '',
+  wine_prefix: isElectron && os.platform() !== 'win32' && process.env.HOME ? process.env.HOME : ''
+
 })

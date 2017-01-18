@@ -103,6 +103,12 @@ build-darwin%:
 		zip -rq -9 "../$(dist).zip" .;\
 	fi
 
+asar:
+	cp -r app build/app
+	cd build/app; rm -rf build/*.map build/web.js webgl-inspector
+	asar pack build/app build/app.asar
+	rm -rf build/app
+
 cleanbuild:
 	rm -rf build
 

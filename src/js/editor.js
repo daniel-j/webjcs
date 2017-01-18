@@ -12,6 +12,7 @@ const app = require('./app')
 const isElectron = require('is-electron')()
 
 require('./domevents')
+require('./commands')
 
 const columns = [
   {
@@ -44,24 +45,26 @@ m.mount(document.getElementById('app'), {
   }
 })
 
-// const jj2Dir = path.join(__dirname, '/../data/')
-const levelBuffer = require('buffer-loader!../../data/ab17btl06.j2l')
-const tilesetBuffer = require('buffer-loader!../../data/DiambGarden.j2t')
-// console.log('Loading ' + path.join(jj2Dir, levelFile))
-app.j2l.loadFromBuffer(levelBuffer, 'ab17btl06.j2l').then(() => {
-  console.log('Level loaded')
-  vent.publish('level.load')
+if (!isElectron) {
+  // const jj2Dir = path.join(__dirname, '/../data/')
+  const levelBuffer = require('buffer-loader!../../data/ab17btl06.j2l')
+  const tilesetBuffer = require('buffer-loader!../../data/DiambGarden.j2t')
+  // console.log('Loading ' + path.join(jj2Dir, levelFile))
+  app.j2l.loadFromBuffer(levelBuffer, 'ab17btl06.j2l').then(() => {
+    console.log('Level loaded')
+    vent.publish('level.load')
 
-  // console.log('Loading ' + path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))
-  return app.j2t.loadFromBuffer(tilesetBuffer, 'DiambGarden.j2t').then(() => {
-    console.log('Tileset loaded')
-    vent.publish('tileset.load')
+    // console.log('Loading ' + path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))
+    return app.j2t.loadFromBuffer(tilesetBuffer, 'DiambGarden.j2t').then(() => {
+      console.log('Tileset loaded')
+      vent.publish('tileset.load')
+    }).catch((err) => {
+      console.error(err)
+    })
   }).catch((err) => {
     console.error(err)
   })
-}).catch((err) => {
-  console.error(err)
-})
+}
 
 /*
 const ModPlayer = require('./modplayer')

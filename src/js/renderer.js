@@ -44,6 +44,13 @@ r.oncreate = ({dom}) => {
   r.loop = rafLoop(r.redraw)
   r.disableWebGL = settings.get('disable_webgl')
 
+  vent.subscribe('window.resize', () => {
+    r.canvas.width = r.canvas.parentNode.offsetWidth
+    r.canvas.height = r.canvas.parentNode.offsetHeight
+  })
+  r.canvas.width = r.canvas.parentNode.offsetWidth
+  r.canvas.height = r.canvas.parentNode.offsetHeight
+
   if (r.disableWebGL) {
     r.initCanvasRenderer()
   } else {
@@ -225,8 +232,6 @@ r.calculateAnimTile = (id) => {
 }
 
 r.redraw = (dt) => {
-  r.canvas.width = r.canvas.parentNode.offsetWidth
-  r.canvas.height = r.canvas.parentNode.offsetHeight
   const gl = r.gl
   const ctx = r.ctx
 

@@ -21,7 +21,8 @@ module.exports = [
       {type: 'separator'},
       {label: '&Save', command: 'savelevel', accelerator: 'CmdOrCtrl+S', click},
       {label: 'Save &As...', command: 'savelevelas', accelerator: 'CmdOrCtrl+Shift+S', click},
-      {label: 'Save and Run', command: 'savelevelrun', accelerator: 'CmdOrCtrl+R', click},
+      {label: 'Save and Run', command: 'savelevelrun', accelerator: 'CmdOrCtrl+Shift+R', click},
+      {label: '&Run', command: 'levelrun', accelerator: 'CmdOrCtrl+R', click},
       {type: 'separator'},
       {label: '&Preferences', command: 'openpreferences', click}
     ]

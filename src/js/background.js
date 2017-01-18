@@ -3,6 +3,10 @@ const electron = require('electron')
 const {app, BrowserWindow, Menu} = electron
 const path = require('path')
 
+const args = process.argv.slice(2)
+
+let fileToLoad = args.length > 0 ? args[args.length - 1] : null
+
 const mainMenu = Menu.buildFromTemplate(require('./menus/main-menu'))
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -28,6 +32,13 @@ function createWindow () {
   mainWindow.loadURL(`file://${__dirname}/../index.html`)
 
   mainWindow.webContents.openDevTools()
+
+  mainWindow.webContents.once('did-finish-load', () => {
+    if (fileToLoad) {
+      console.log('Loading ' + fileToLoad)
+      mainWindow.webContents.send('loadlevel', fileToLoad)
+    }
+  })
 
   // Emitted when the window is closed.
   mainWindow.on('closed', () => {

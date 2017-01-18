@@ -46,7 +46,8 @@ webpackConfig.forEach((c) => {
     }
   }
   c.plugins.push(new webpack.DefinePlugin({
-    WEBJCS_VERSION: JSON.stringify(require('./package.json').version)
+    WEBJCS_VERSION: JSON.stringify(require('./package.json').version),
+    WEBGL_INSPECTOR: process.env.WEBGL_INSPECTOR === '1'
   }))
   delete c.uglifyable
 })

@@ -107,7 +107,8 @@ const bundleElectronConfig = {
   },
 
   plugins: [
-    new webpack.IgnorePlugin(/^\.\/components\/menu$/)
+    new webpack.IgnorePlugin(/^\.\/components\/menu$/),
+    new webpack.IgnorePlugin(/\/data\/.*?\.(j2l|j2t)$/)
   ],
   devtool: 'source-map',
   uglifyable: false

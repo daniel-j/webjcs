@@ -8,6 +8,7 @@
   },
   "author": "djazz",
   "devDependencies": {
+    "asar": "^0.13.0",
     "babel-loader": "^6.2.10",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-node7": "^1.4.0",
@@ -45,7 +46,8 @@
       "node": true
     },
     "globals": [
-      "WEBJCS_VERSION"
+      "WEBJCS_VERSION",
+      "WEBGL_INSPECTOR"
     ]
   }
 }

@@ -1,0 +1,3 @@
+[submodule "app/webgl-inspector"]
+	path = app/webgl-inspector
+	url = https://github.com/benvanik/WebGL-Inspector.git
