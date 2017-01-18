@@ -86,77 +86,51 @@ class AnimPanel {
 
     if (!r.disableWebGL) {
       gl.viewport(rect.left + 32 + 4, r.canvas.height - (rect.top - canvasRect.top + ch), cw - (32 + 4), ch)
-      gl.useProgram(r.shaders.tilemap.program)
-      r.twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
-      r.twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
-      r.twgl.setUniforms(r.shaders.tilemap, {
-        scale: 1,
-        viewportSize: [cw - (32 + 4), ch],
-        viewOffset: [Math.floor(x), Math.floor(y)],
-        mapSize: [this.framesMap.width, this.framesMap.height],
-        textureSize: this.framesMap.textureSize,
-        repeatTilesX: 0,
-        repeatTilesY: 0,
-        map: this.framesMap.texture,
-        maskOpacity: 0,
-        backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
-      })
-      r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap)
-
-      gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
-      gl.useProgram(r.shaders.tilemap.program)
-      r.twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
-      r.twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
-      r.twgl.setUniforms(r.shaders.tilemap, {
-        scale: 1,
-        viewportSize: [cw, ch],
-        viewOffset: [0, Math.floor(y)],
-        mapSize: [this.animMap.width, this.animMap.height],
-        textureSize: this.animMap.textureSize,
-        repeatTilesX: 0,
-        repeatTilesY: 0,
-        map: this.animMap.texture,
-        maskOpacity: 0,
-        backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
-      })
-      r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap)
     } else {
       ctx.save()
       ctx.beginPath()
       ctx.rect(rect.left + 32 + 4, rect.top - canvasRect.top, cw - (32 + 4), ch)
       ctx.clip()
       ctx.translate(rect.left + 32 + 4, rect.top - canvasRect.top)
-      r.drawTilemap({
-        scale: 1,
-        viewportSize: [cw - (32 + 4), ch],
-        viewOffset: [Math.floor(x), Math.floor(y)],
-        mapSize: [this.framesMap.width, this.framesMap.height],
-        // textureSize: this.framesMap.textureSize,
-        repeatTilesX: 0,
-        repeatTilesY: 0,
-        map: this.framesMap.texture,
-        maskOpacity: 0,
-        backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
-      })
+    }
+    r.drawTilemap({
+      scale: 1,
+      viewportSize: [cw - (32 + 4), ch],
+      viewOffset: [Math.floor(x), Math.floor(y)],
+      mapSize: [this.framesMap.width, this.framesMap.height],
+      textureSize: this.framesMap.textureSize,
+      repeatTilesX: 0,
+      repeatTilesY: 0,
+      map: this.framesMap.texture,
+      maskOpacity: 0,
+      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
+    })
+    if (r.disableWebGL) {
       ctx.restore()
+    }
 
+    if (!r.disableWebGL) {
+      gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
+    } else {
       ctx.save()
       ctx.beginPath()
       ctx.rect(rect.left, rect.top - canvasRect.top, cw, ch)
       ctx.clip()
       ctx.translate(rect.left, rect.top - canvasRect.top)
-      r.drawTilemap({
-        scale: 1,
-        viewportSize: [cw, ch],
-        viewOffset: [0, Math.floor(y)],
-        mapSize: [this.animMap.width, this.animMap.height],
-        // textureSize: this.animMap.textureSize,
-        repeatTilesX: 0,
-        repeatTilesY: 0,
-        map: this.animMap.texture,
-        maskOpacity: 0,
-        backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
-      })
+    }
+    r.drawTilemap({
+      scale: 1,
+      viewportSize: [cw, ch],
+      viewOffset: [0, Math.floor(y)],
+      mapSize: [this.animMap.width, this.animMap.height],
+      textureSize: this.animMap.textureSize,
+      repeatTilesX: 0,
+      repeatTilesY: 0,
+      map: this.animMap.texture,
+      maskOpacity: 0,
+      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
+    })
+    if (r.disableWebGL) {
       ctx.restore()
     }
   }

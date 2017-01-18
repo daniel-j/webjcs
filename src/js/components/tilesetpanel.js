@@ -96,40 +96,26 @@ class TilesetPanel {
 
     if (!r.disableWebGL) {
       gl.viewport(rect.left, r.canvas.height - (rect.top - canvasRect.top + ch), cw, ch)
-      gl.useProgram(r.shaders.tilemap.program)
-      r.twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
-      r.twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
-      r.twgl.setUniforms(r.shaders.tilemap, {
-        scale: 1,
-        viewportSize: [cw, ch],
-        viewOffset: [Math.floor(-this.scrollbars.smoothScroller.offsetLeft), Math.floor(-this.scrollbars.smoothScroller.offsetTop)],
-        mapSize: [this.map.width, this.map.height],
-        textureSize: this.map.textureSize,
-        repeatTilesX: 0,
-        repeatTilesY: 0,
-        map: this.map.texture,
-        maskOpacity: maskOpacity,
-        backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
-      })
-      r.twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap)
     } else {
       ctx.save()
       ctx.beginPath()
       ctx.rect(rect.left, rect.top - canvasRect.top, cw, ch)
       ctx.clip()
       ctx.translate(rect.left, rect.top - canvasRect.top)
-      r.drawTilemap({
-        scale: 1,
-        viewportSize: [cw, ch],
-        viewOffset: [Math.floor(-this.scrollbars.smoothScroller.offsetLeft), Math.floor(-this.scrollbars.smoothScroller.offsetTop)],
-        mapSize: [this.map.width, this.map.height],
-        // textureSize: this.map.textureSize, // not needed for 2d canvas
-        repeatTilesX: 0,
-        repeatTilesY: 0,
-        map: this.map.texture,
-        maskOpacity: maskOpacity,
-        backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
-      })
+    }
+    r.drawTilemap({
+      scale: 1,
+      viewportSize: [cw, ch],
+      viewOffset: [Math.floor(-this.scrollbars.smoothScroller.offsetLeft), Math.floor(-this.scrollbars.smoothScroller.offsetTop)],
+      mapSize: [this.map.width, this.map.height],
+      textureSize: this.map.textureSize,
+      repeatTilesX: 0,
+      repeatTilesY: 0,
+      map: this.map.texture,
+      maskOpacity: maskOpacity,
+      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
+    })
+    if (r.disableWebGL) {
       ctx.restore()
     }
   }

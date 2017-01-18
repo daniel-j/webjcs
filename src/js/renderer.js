@@ -151,6 +151,15 @@ r.setDefaultTextureProperties = () => {
 }
 
 r.drawTilemap = (info) => {
+  if (!r.disableWebGL) {
+    const gl = r.gl
+    gl.useProgram(r.shaders.tilemap.program)
+    twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
+    twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
+    twgl.setUniforms(r.shaders.tilemap, info)
+    twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap)
+    return
+  }
   const ctx = info.ctx || r.ctx
   const left = Math.floor(info.viewOffset[0] / 32)
   const top = Math.floor(info.viewOffset[1] / 32)
