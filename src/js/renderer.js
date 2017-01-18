@@ -66,6 +66,7 @@ r.view = ({children}) => {
 r.initCanvasRenderer = () => {
   const ctx = r.canvas.getContext('2d')
   r.ctx = ctx
+  ctx.imageSmoothingEnabled = false
 
   r.textures.tileset = app.j2t.tilesetCanvas
   r.textures.mask = app.j2t.maskCanvas
@@ -156,6 +157,8 @@ r.drawTilemap = (info) => {
   const right = Math.ceil(Math.ceil(info.viewportSize[0] / info.scale + info.viewOffset[0]) / 32)
   const bottom = Math.ceil(Math.ceil(info.viewportSize[1] / info.scale + info.viewOffset[1]) / 32)
 
+  ctx.imageSmoothingEnabled = false
+
   ctx.save()
   ctx.fillStyle = 'rgba(' + [info.backgroundColor[0] * 255, info.backgroundColor[1] * 255, info.backgroundColor[2] * 255, info.backgroundColor[3]].join(',') + ')'
 
@@ -187,8 +190,8 @@ r.drawTilemap = (info) => {
         Math.floor(tileId / 64) * 32
       ]
       const outPos = [
-        Math.floor(mapx * info.scale * 32 - info.viewOffset[0]),
-        Math.floor(mapy * info.scale * 32 - info.viewOffset[1]),
+        Math.floor(mapx * info.scale * 32 - info.viewOffset[0] * info.scale),
+        Math.floor(mapy * info.scale * 32 - info.viewOffset[1] * info.scale),
         Math.floor(32 * info.scale),
         Math.floor(32 * info.scale)
       ]

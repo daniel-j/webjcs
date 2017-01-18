@@ -144,6 +144,7 @@ class J2T {
 
     this.tilesetCanvas.width = width
     this.tilesetCanvas.height = height
+    this.tilesetCtx.imageSmoothingEnabled = false
 
     let imgdata = this.tilesetCtx.createImageData(32, 32)
     let imgd = imgdata.data
@@ -176,6 +177,7 @@ class J2T {
 
     this.maskCanvas.width = width
     this.maskCanvas.height = height
+    this.maskCtx.imageSmoothingEnabled = false
 
     let imgdata = this.maskCtx.createImageData(32, 32)
     let imgd = imgdata.data

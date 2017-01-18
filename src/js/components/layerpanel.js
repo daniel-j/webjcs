@@ -204,8 +204,8 @@ class LayerPanel {
       r.gl.bindFramebuffer(r.gl.FRAMEBUFFER, null)
     } else {
       this.fbo = document.createElement('canvas')
-      this.fbo.imageSmoothingEnabled = false
       this.fboCtx = this.fbo.getContext('2d')
+      this.fboCtx.imageSmoothingEnabled = false
     }
 
     vent.subscribe('renderer.draw', () => this.redraw())
