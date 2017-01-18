@@ -170,13 +170,13 @@ class Scrollbars {
       if (newScrollX !== this.scrollPosition[0] || newScrollY !== this.scrollPosition[1]) {
         this.scrollPosition[0] = newScrollX
         this.scrollPosition[1] = newScrollY
-        e.preventDefault()
+        // e.preventDefault()
         this.update()
         this.smoothScroller.style.left = -Math.floor(newScrollX) + 'px'
         this.smoothScroller.style.top = -Math.floor(newScrollY) + 'px'
         this.emit('scroll')
       }
-    }, false)
+    }, {passive: true})
 
     this.parent.addEventListener('mousemove', (e) => {
       this.state.isMouseOver = true
