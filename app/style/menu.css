@@ -75,6 +75,9 @@
 	cursor: default;
 	color: inherit;
 }
+#menu > ul > li > ul > li > a.label[href] {
+	text-decoration: underline;
+}
 #menu .accelerator {
 	float: right;
 	padding-left: 15px;
