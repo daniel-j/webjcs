@@ -19,7 +19,6 @@ class LayerPanel {
     this.showEvents = true
     this.zoomLevel = 1
     this.currentLayer = 3
-    this.el = null
     this.layers = []
 
     vent.subscribe('window.keypress', (e) => {
@@ -158,10 +157,6 @@ class LayerPanel {
     this.showEvents = show
   }
 
-  configPanel ({dom}) {
-    this.el = dom
-  }
-
   addScrollbars ({dom}) {
     this.panelEl = dom
     this.scrollbars = new Scrollbars({
@@ -174,6 +169,10 @@ class LayerPanel {
 
     vent.subscribe('panel.resize', () => this.scrollbars.update())
 
+    this.initialize()
+  }
+
+  initialize () {
     for (let i = 0; i < 8; i++) {
       this.layers[i] = new TileMap(1, 1)
     }

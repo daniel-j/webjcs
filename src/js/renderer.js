@@ -24,11 +24,6 @@ const fboShader = [
 function mod (n, m) {
   return ((n % m) + m) % m
 }
-function clamp (value, min, max) {
-  return min < max
-    ? (value < min ? min : value > max ? max : value)
-    : (value < max ? max : value > min ? min : value)
-}
 
 const r = {}
 r.canvas = null
@@ -190,6 +185,7 @@ r.drawTilemap = (info) => {
       let flipped = tile.flipped
       if (tile.animated) {
         tile = r.anims[tile.id]
+        if (!tile) continue
         if (flipped) tile.flipped = !tile.flipped
       }
 

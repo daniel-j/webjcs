@@ -70,6 +70,10 @@ class TilesetPanel {
     this.scrollbars.update()
     vent.subscribe('panel.resize', () => this.scrollbars.update())
 
+    this.initialize()
+  }
+
+  initialize () {
     this.map = new TileMap(1, 1)
 
     vent.subscribe('tileset.load', () => {

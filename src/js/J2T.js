@@ -52,6 +52,8 @@ class J2T {
     this.version = J2T.VERSION_123
     this.isTSF = false
 
+    this.name = ''
+
     this.header = J2T.HeaderStruct()
     this.tilesetInfo = J2T.TilesetInfoStruct(this.version)
     this.tilesetInfo.allocate()
@@ -74,7 +76,8 @@ class J2T {
     this.maskCtx.imageSmoothingEnabled = false
   }
 
-  loadFromBuffer (buffer) {
+  loadFromBuffer (buffer, name = '') {
+    this.name = name
     return new Promise((resolve, reject) => {
       let headerBuffer = buffer.slice(0, 262)
       let header = J2T.HeaderStruct(headerBuffer)

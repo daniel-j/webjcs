@@ -36,6 +36,10 @@ class AnimPanel {
 
     vent.subscribe('panel.resize', () => this.scrollbars.update())
 
+    this.initialize()
+  }
+
+  initialize () {
     this.animMap = new TileMap(1, 256)
     this.framesMap = new TileMap(64, 256)
 

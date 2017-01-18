@@ -57,8 +57,11 @@ if (!isElectron) {
 }
 
 vent.subscribe('loadlevel', ({data, name}) => {
-  j2l.loadFromBuffer(data).then(() => {
-    alert(j2l.header.fields.LevelName + '\n' + j2l.levelInfo.fields.Tileset)
+  j2l.loadFromBuffer(data, name).then(() => {
+    const tilesetName = j2l.levelInfo.fields.Tileset
+    if (confirm('Tileset ' + tilesetName + ' was not found, do you want to search for it on J2O?')) {
+      window.open('https://www.jazz2online.com/downloads/search/?search=' + encodeURIComponent(tilesetName), '_blank')
+    }
     vent.publish('level.load')
   }).catch((err) => {
     alert(err)

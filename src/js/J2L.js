@@ -101,6 +101,8 @@ class J2L {
     this.version = J2L.VERSION_123
     this.isTSF = false
 
+    this.name = ''
+
     this.header = J2L.HeaderStruct()
     this.levelInfo = J2L.LevelInfoStruct(this.version)
     this.levelInfo.allocate()
@@ -165,7 +167,8 @@ class J2L {
     }
   }
 
-  loadFromBuffer (buffer) {
+  loadFromBuffer (buffer, name = '') {
+    this.name = name
     return new Promise((resolve, reject) => {
       let headerBuffer = buffer.slice(0, 262)
       let header = J2L.HeaderStruct(headerBuffer)
