@@ -44,9 +44,8 @@ class J2L {
 
     let animCount = maxAnims
     if (buffer) {
-      // Anim list is zero bytes if level have no animations
+      // Anim list can be of variable size (MLLE)
       animCount = buffer.readUInt16LE(11)
-      if (animCount > 0) animCount = maxAnims
     }
 
     let s = Struct()
