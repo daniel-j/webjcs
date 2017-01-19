@@ -11,8 +11,9 @@ const bundleWebConfig = {
   },
 
   output: {
-    path: path.join(__dirname, '/'),
-    filename: './app/build/[name].js'
+    path: path.join(__dirname, '/app/'),
+    filename: 'build/[name].js',
+    chunkFilename: 'build/[id].web.js'
   },
 
   target: 'web',
@@ -54,7 +55,7 @@ const bundleWebConfig = {
   plugins: [
 
   ],
-  devtool: inProduction ? undefined : 'source-map'
+  devtool: inProduction ? 'source-map' : 'source-map'
 }
 
 const bundleElectronConfig = {
@@ -64,8 +65,9 @@ const bundleElectronConfig = {
   },
 
   output: {
-    path: path.join(__dirname, '/'),
-    filename: './app/build/[name].js'
+    path: path.join(__dirname, '/app/'),
+    filename: 'build/[name].js',
+    chunkFilename: 'build/[id].electron.js'
   },
 
   target: 'electron',
@@ -97,8 +99,8 @@ const bundleElectronConfig = {
   },
 
   plugins: [
-    new webpack.IgnorePlugin(/^\.\/components\/menu$/),
-    new webpack.IgnorePlugin(/\/data\/.*?\.(j2l|j2t)$/)
+    // new webpack.IgnorePlugin(/^\.\/components\/menu$/),
+    // new webpack.IgnorePlugin(/\/data\/.*?\.(j2l|j2t)$/)
   ],
   devtool: inProduction ? undefined : 'source-map'
 }
@@ -122,10 +124,10 @@ if (inProduction) {
   bundleElectronConfig.module.rules.push({
     test: /\.js$/,
     loader: 'babel-loader',
-    // exclude: /node_modules/,
     options: {
       sourceMaps: false,
-      presets: ['babili']
+      presets: ['babili'],
+      comments: false
     }
   })
 }
@@ -139,7 +141,8 @@ configs.forEach((c) => {
   }
   c.plugins.push(new webpack.DefinePlugin({
     WEBJCS_VERSION: JSON.stringify(require('./package.json').version),
-    WEBGL_INSPECTOR: process.env.WEBGL_INSPECTOR === '1'
+    WEBGL_INSPECTOR: process.env.WEBGL_INSPECTOR === '1',
+    IS_ELECTRON: c === bundleElectronConfig
   }))
 })
 

@@ -17,7 +17,6 @@
     "buffer-loader": "0.0.1",
     "electron-packager": "^8.5.0",
     "gulp": "^3.9.1",
-    "gulp-filter": "^5.0.0",
     "gulp-standard": "^8.0.3",
     "gulp-watch": "^4.3.11",
     "lazypipe": "^1.0.1",
@@ -47,7 +46,8 @@
     },
     "globals": [
       "WEBJCS_VERSION",
-      "WEBGL_INSPECTOR"
+      "WEBGL_INSPECTOR",
+      "IS_ELECTRON"
     ]
   }
 }

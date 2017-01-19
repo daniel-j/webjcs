@@ -1,6 +1,9 @@
-const isElectron = require('is-electron')()
 
 let s = document.createElement('script')
+
+// Since this loader is used by both web and electron, it has check dynamically
+let isElectron = require('is-electron')()
+
 if (isElectron) {
   s.src = './build/electron.js'
 } else {

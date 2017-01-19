@@ -1,13 +1,12 @@
 
 const path = require('path')
 const vent = require('./vent')
-const isElectron = require('is-electron')()
 const app = require('./app')
 const settings = require('./settings')
 const findFile = require('./util/findFile')
 const fs = require('fs')
 
-if (isElectron) {
+if (IS_ELECTRON) {
   const {ipcRenderer} = require('electron')
   ipcRenderer.on('menuclick', (event, command) => {
     vent.publish('menuclick.' + command)
@@ -21,7 +20,7 @@ if (isElectron) {
 }
 
 // File > Open - For web and electron
-if (!isElectron) {
+if (!IS_ELECTRON) {
   const openlevelinput = document.createElement('input')
   openlevelinput.setAttribute('accept', '.j2l')
   openlevelinput.addEventListener('change', (e) => {
@@ -67,7 +66,7 @@ vent.subscribe('loadlevel', (ev, {data, name, dir}) => {
   app.j2l.loadFromBuffer(data, name).then(() => {
     const tilesetName = app.j2l.levelInfo.fields.Tileset
 
-    if (isElectron) {
+    if (IS_ELECTRON) {
       let paths = settings.get('paths').map((p) => path.normalize(p.replace(/(\/|\\)$/, '')))
       if (dir) {
         dir = path.normalize(dir)

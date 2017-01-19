@@ -6,7 +6,6 @@ import del from 'del'
 import Sequence from 'run-sequence'
 import watch from 'gulp-watch'
 import lazypipe from 'lazypipe'
-import filter from 'gulp-filter'
 
 // script
 import standard from 'gulp-standard'
@@ -28,7 +27,7 @@ function webpackTask (callback) {
   // run webpack
   wpCompiler.run(function (err, stats) {
     if (err) throw new gutil.PluginError('webpack', err)
-    gutil.log('[webpack]', stats.toString({
+    gutil.log('[webpack]\n', stats.toString({
       colors: true,
       hash: false,
       version: false,
@@ -40,7 +39,6 @@ function webpackTask (callback) {
 }
 
 let lintPipe = lazypipe()
-  .pipe(filter, ['**/*', '!src/lib/**/*'])
   .pipe(standard)
   .pipe(standard.reporter, 'default', { breakOnError: false })
 
@@ -58,17 +56,17 @@ gulp.task('watch:webpack', () => {
 })
 
 gulp.task('lint', () => {
-  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/**/*.js']).pipe(lintPipe())
+  return gulp.src(['gulpfile.babel.js', 'webpack.config.babel.js', 'src/js/**/*.js']).pipe(lintPipe())
 })
 gulp.task('watch:lint', () => {
-  return watch(['src/**/*.js', 'gulpfile.babel.js', 'webpack.config.babel.js'], watchOpts, function (file) {
+  return watch(['src/js/**/*.js', 'gulpfile.babel.js', 'webpack.config.babel.js'], watchOpts, function (file) {
     gulp.src(file.path).pipe(lintPipe())
   })
 })
 
 // Default task
 gulp.task('default', (done) => {
-  sequence('clean', ['webpack', 'lint'], done)
+  sequence('clean', 'lint', 'webpack', done)
 })
 
 // Watch task

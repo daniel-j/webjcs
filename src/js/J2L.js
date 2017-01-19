@@ -42,7 +42,14 @@ class J2L {
       maxAnims = 256
     }
 
-    return wrapStruct(buffer, Struct()
+    let animCount = maxAnims
+    if (buffer) {
+      // Anim list is zero bytes if level have no animations
+      animCount = buffer.readUInt16LE(11)
+      if (animCount > 0) animCount = maxAnims
+    }
+
+    let s = Struct()
       .word16Ule('JCSHorizontalOffset')
       .word16Ule('SecurityEnvelope1') // 0xBA00 if passworded, 0x0000 otherwise
       .word16Ule('JCSVerticalOffset')
@@ -81,8 +88,9 @@ class J2L {
       .array('IsEachTileFlipped', maxTiles, 'word8') // set to 1 if a tile appears flipped anywhere in the level
       .array('TileTypes', maxTiles, 'word8') // translucent=1 or caption=4, basically. Doesn't work on animated tiles.
       .array('XMask', maxTiles, 'word8') // unused
-      .array('Anim', maxAnims, J2L.AnimatedTileStruct())
-    )
+      .array('Anim', animCount, J2L.AnimatedTileStruct())
+
+    return wrapStruct(buffer, s)
   }
 
   static AnimatedTileStruct (buffer) {
