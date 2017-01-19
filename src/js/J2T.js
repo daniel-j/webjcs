@@ -124,10 +124,10 @@ class J2T {
               this.palette = new Uint32Array(data.buffer.slice(0, 4 * 256))
               break
             case 1:
-              images = new Uint8Array(data.buffer)
+              images = new Uint8Array(data.buffer, data.byteOffset, data.length / Uint8Array.BYTES_PER_ELEMENT)
               break
             case 3:
-              masks = new Uint8Array(data.buffer)
+              masks = new Uint8Array(data.buffer, data.byteOffset, data.length / Uint8Array.BYTES_PER_ELEMENT)
               break
           }
 
