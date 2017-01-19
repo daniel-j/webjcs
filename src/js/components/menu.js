@@ -1,6 +1,6 @@
 
 const m = require('mithril')
-const vent = require('postal').channel()
+const vent = require('../vent')
 
 const screenfull = require('screenfull')
 
@@ -19,7 +19,7 @@ const Menu = {
   oncreate ({state, dom}) {
     state.currentItem = null
     state.menuEl = dom
-    vent.subscribe('window.mousedown', (e) => {
+    vent.subscribe('window.mousedown', (ev, e) => {
       let t = e.target
       while (t !== document.body) {
         if (t.parentNode === dom) {

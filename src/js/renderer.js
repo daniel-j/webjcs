@@ -1,8 +1,8 @@
 
 const m = require('mithril')
-const vent = require('postal').channel()
+const vent = require('./vent')
 const rafLoop = require('raf-loop')
-const twgl = require('twgl.js')
+const twgl = require('twgl.js/dist/twgl')
 const TileMap = require('./TileMap')
 const Tile = require('./Tile')
 const app = require('./app')

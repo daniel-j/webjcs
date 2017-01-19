@@ -1,6 +1,6 @@
 
 const m = require('mithril')
-const vent = require('postal').channel()
+const vent = require('../vent')
 
 class Panels {
   oninit (vnode) {
@@ -12,7 +12,7 @@ class Panels {
     let resizingPanel = null
     let resizingColumn = null
 
-    vent.subscribe('window.mousedown', (e) => {
+    vent.subscribe('window.mousedown', (ev, e) => {
       // find out if the event occurs on a toolbar drag-handle
       if (!e.target.parentNode.classList.contains('toolbar') || e.target.parentNode.firstChild !== e.target) return
 
@@ -60,7 +60,7 @@ class Panels {
       */
     })
 
-    vent.subscribe('window.mousemove', (e) => {
+    vent.subscribe('window.mousemove', (ev, e) => {
       if (!resizingPanel) return
       let y = e.pageY
       let offset = startPos - y
@@ -72,11 +72,11 @@ class Panels {
       vent.publish('panel.resize')
     })
 
-    vent.subscribe('window.mouseup', (e) => {
+    vent.subscribe('window.mouseup', (ev, e) => {
       resizingPanel = false
     })
 
-    vent.subscribe('panel.active', (panel) => {
+    vent.subscribe('panel.active', (ev, panel) => {
       this.activePanel = panel
       m.redraw()
     })

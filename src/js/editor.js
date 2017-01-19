@@ -1,6 +1,6 @@
 
 const m = require('mithril')
-const vent = require('postal').channel()
+const vent = require('./vent')
 
 const panels = require('./components/panels')
 const TilesetPanel = require('./components/tilesetpanel')

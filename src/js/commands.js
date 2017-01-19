@@ -1,6 +1,6 @@
 
 const path = require('path')
-const vent = require('postal').channel()
+const vent = require('./vent')
 const isElectron = require('is-electron')()
 const app = require('./app')
 const settings = require('./settings')
@@ -63,7 +63,7 @@ if (!isElectron) {
   })
 }
 
-vent.subscribe('loadlevel', ({data, name, dir}) => {
+vent.subscribe('loadlevel', (ev, {data, name, dir}) => {
   app.j2l.loadFromBuffer(data, name).then(() => {
     const tilesetName = app.j2l.levelInfo.fields.Tileset
 
