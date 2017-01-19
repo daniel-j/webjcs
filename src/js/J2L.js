@@ -211,9 +211,9 @@ class J2L {
 
           switch (dataId) {
             case 0: this.levelInfo = J2L.LevelInfoStruct(this.version, data); break
-            case 1: this.events = new Uint32Array(data.buffer); break
-            case 2: dictionary = new Uint16Array(data.buffer); break
-            case 3: map = new Uint16Array(data.buffer); break
+            case 1: this.events = new Uint32Array(data.buffer, data.byteOffset, data.length / Uint32Array.BYTES_PER_ELEMENT); break
+            case 2: dictionary = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
+            case 3: map = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
           }
 
           offset += this.header.fields.StreamSize[2 * dataId]
