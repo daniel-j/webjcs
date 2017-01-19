@@ -120,7 +120,7 @@ app/lib/libopenmpt.js:
 	curl -L -o "libopenmpt-$(libopenmpt_version)-$(libopenmpt_beta).tar.gz" "https://lib.openmpt.org/files/libopenmpt/src/libopenmpt-$(libopenmpt_version)-$(libopenmpt_beta).tar.gz"
 	tar -zxf "libopenmpt-$(libopenmpt_version)-$(libopenmpt_beta).tar.gz"
 	mkdir -p app/lib
-	cd "libopenmpt-$(libopenmpt_version)" && make CONFIG=emscripten TEST=0 EXAMPLES=0 && cp bin/libopenmpt* ../app/lib/
+	cd "libopenmpt-$(libopenmpt_version)" && make CONFIG=emscripten TEST=0 EXAMPLES=0 && cp bin/libopenmpt{.js,.js.mem} ../app/lib/
 
 cleanbuild:
 	rm -rf build
