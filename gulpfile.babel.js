@@ -15,42 +15,12 @@ import webpackConfig from './webpack.config.babel.js'
 
 const sequence = Sequence.use(gulp)
 
-const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
+// const inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
 
 let watchOpts = {
   readDelay: 500,
   verbose: true
 }
-
-webpackConfig.forEach((c) => {
-  if (inProduction) {
-    delete c.devtool
-    c.plugins.push(new webpack.LoaderOptionsPlugin({
-      minimize: true,
-      debug: false
-    }))
-
-    if (c.uglifyable) {
-      c.plugins.push(new webpack.optimize.UglifyJsPlugin({
-        compress: {
-          warnings: false,
-          screw_ie8: true
-        },
-        comments: false,
-        mangle: {
-          screw_ie8: true
-        },
-        screw_ie8: true,
-        sourceMap: !!c.devtool
-      }))
-    }
-  }
-  c.plugins.push(new webpack.DefinePlugin({
-    WEBJCS_VERSION: JSON.stringify(require('./package.json').version),
-    WEBGL_INSPECTOR: process.env.WEBGL_INSPECTOR === '1'
-  }))
-  delete c.uglifyable
-})
 
 const wpCompiler = webpack(webpackConfig)
 
