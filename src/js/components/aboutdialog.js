@@ -1,3 +1,4 @@
+
 const m = require('mithril')
 const Dialog = require('./dialog')
 const vent = require('../vent')
