@@ -1,15 +1,20 @@
 const isElectron = require('is-electron')()
 
-let s = document.createElement('script')
-if (isElectron) {
-  s.src = './build/electron.js'
-} else {
-  s.src = './build/web.js'
-}
-document.body.appendChild(s)
-
 if (WEBGL_INSPECTOR) {
-  s = document.createElement('script')
+  let s = document.createElement('script')
+  s.onload = loadMain
   s.src = 'webgl-inspector/core/embed.js'
+  document.body.appendChild(s)
+} else {
+  loadMain()
+}
+
+function loadMain () {
+  let s = document.createElement('script')
+  if (isElectron) {
+    s.src = './build/electron.js'
+  } else {
+    s.src = './build/web.js'
+  }
   document.body.appendChild(s)
 }

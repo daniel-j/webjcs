@@ -51,7 +51,19 @@ r.oncreate = ({dom}) => {
   r.canvas.width = r.canvas.parentNode.offsetWidth
   r.canvas.height = r.canvas.parentNode.offsetHeight
 
+  if (!r.disableWebGL) {
+    let testGl = twgl.getWebGLContext(document.createElement('canvas'), {alpha: false})
+
+    // If webgl is not supported
+    // fallback to 2D Canvas
+    if (!testGl) {
+      console.warn('WebGL is not supported, falling back to 2D Canvas')
+      r.disableWebGL = true
+    }
+  }
+
   if (r.disableWebGL) {
+    console.log('Disabled WebGL')
     r.initCanvasRenderer()
   } else {
     r.initWebGLRenderer()
@@ -77,17 +89,7 @@ r.initCanvasRenderer = () => {
 }
 
 r.initWebGLRenderer = () => {
-  const gl = twgl.getWebGLContext(r.canvas, {alpha: false})
-
-  // If webgl is not supported
-  // fallback to 2D Canvas
-  if (!gl) {
-    r.disableWebGL = true
-    r.initCanvasRenderer()
-    return
-  }
-
-  r.gl = gl
+  const gl = r.gl = twgl.getWebGLContext(r.canvas, {alpha: false})
   r.twgl = twgl
 
   gl.enable(gl.BLEND)
