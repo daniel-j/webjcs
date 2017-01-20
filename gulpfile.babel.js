@@ -50,7 +50,7 @@ gulp.task('clean', () => del([
 // Main tasks
 gulp.task('webpack', webpackTask)
 gulp.task('watch:webpack', () => {
-  return watch(['src/js/**/*.js', 'src/shaders/**/*.glsl'], watchOpts, function () {
+  return watch(['src/js/**/*.js', 'src/style/**/*.css', 'src/shaders/**/*.glsl'], watchOpts, function () {
     return sequence('webpack')
   })
 })
