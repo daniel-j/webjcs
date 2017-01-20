@@ -30,6 +30,10 @@ html, body {
 	height: calc(100% - 21px);
 }
 
+.center {
+	text-align: center;
+}
+
 .right {
 	float: right;
 }

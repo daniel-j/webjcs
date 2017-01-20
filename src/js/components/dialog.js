@@ -17,6 +17,7 @@ const Dialog = {
       state.form.reset()
     }
     attrs.showModal = () => attrs.show(true)
+    attrs.close = dom.close
   },
   view ({children, state, attrs}) {
     return m('dialog', {
