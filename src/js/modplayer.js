@@ -1,6 +1,6 @@
 // heavily inspired by https://github.com/deskjet/chiptune2.js
 
-const Module = require('../lib/libopenmpt.js')
+const Module = window.Module
 
 // player
 class ModPlayer {

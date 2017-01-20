@@ -1,6 +1,6 @@
 
 const m = require('mithril')
-const vent = require('postal').channel()
+const vent = require('../vent')
 
 const app = require('../app')
 const Scrollbars = require('../scrollbars')

@@ -1,5 +1,5 @@
 
-const vent = require('postal').channel()
+const vent = require('./vent')
 
 window.addEventListener('blur', function (e) {
   vent.publish('window.blur')

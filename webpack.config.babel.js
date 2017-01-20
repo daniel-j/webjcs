@@ -11,8 +11,9 @@ const bundleWebConfig = {
   },
 
   output: {
-    path: path.join(__dirname, '/'),
-    filename: './app/build/[name].js'
+    path: path.join(__dirname, '/app/'),
+    filename: 'build/[name].js',
+    chunkFilename: 'build/[id].web.js'
   },
 
   target: 'web',
@@ -54,8 +55,7 @@ const bundleWebConfig = {
   plugins: [
 
   ],
-  devtool: 'source-map',
-  uglifyable: true
+  devtool: inProduction ? 'source-map' : 'source-map'
 }
 
 const bundleElectronConfig = {
@@ -65,8 +65,9 @@ const bundleElectronConfig = {
   },
 
   output: {
-    path: path.join(__dirname, '/'),
-    filename: './app/build/[name].js'
+    path: path.join(__dirname, '/app/'),
+    filename: 'build/[name].js',
+    chunkFilename: 'build/[id].electron.js'
   },
 
   target: 'electron',
@@ -78,15 +79,6 @@ const bundleElectronConfig = {
 
   module: {
     rules: [
-      {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/,
-        options: {
-          sourceMaps: !inProduction,
-          presets: inProduction ? ['node7', 'babili'] : ['node7']
-        }
-      },
       {
         test: /\.styl$/,
         loader: ['raw-loader', 'stylus-loader']
@@ -107,11 +99,51 @@ const bundleElectronConfig = {
   },
 
   plugins: [
-    new webpack.IgnorePlugin(/^\.\/components\/menu$/),
-    new webpack.IgnorePlugin(/\/data\/.*?\.(j2l|j2t)$/)
+    // new webpack.IgnorePlugin(/^\.\/components\/menu$/),
+    // new webpack.IgnorePlugin(/\/data\/.*?\.(j2l|j2t)$/)
   ],
-  devtool: 'source-map',
-  uglifyable: false
+  devtool: inProduction ? undefined : 'source-map'
 }
 
-export default [bundleWebConfig, bundleElectronConfig]
+const configs = [bundleWebConfig, bundleElectronConfig]
+
+if (inProduction) {
+  bundleWebConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
+    compress: {
+      warnings: false,
+      screw_ie8: true
+    },
+    comments: false,
+    mangle: {
+      screw_ie8: true
+    },
+    screw_ie8: true,
+    sourceMap: false
+  }))
+
+  bundleElectronConfig.module.rules.push({
+    test: /\.js$/,
+    loader: 'babel-loader',
+    options: {
+      sourceMaps: false,
+      presets: ['babili'],
+      comments: false
+    }
+  })
+}
+
+configs.forEach((c) => {
+  if (inProduction) {
+    c.plugins.push(new webpack.LoaderOptionsPlugin({
+      minimize: true,
+      debug: false
+    }))
+  }
+  c.plugins.push(new webpack.DefinePlugin({
+    WEBJCS_VERSION: JSON.stringify(require('./package.json').version),
+    WEBGL_INSPECTOR: process.env.WEBGL_INSPECTOR === '1',
+    IS_ELECTRON: c === bundleElectronConfig
+  }))
+})
+
+export default configs

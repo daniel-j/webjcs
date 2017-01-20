@@ -8,7 +8,7 @@ arch = $(shell uname -m)
 platform = linux
 compression =
 
-.PHONY: all clean default
+.PHONY: all clean default libopenmpt
 
 default: $(arch)
 
@@ -37,7 +37,7 @@ armv7l: dist = webjcs-$(platform)-$(electron_arch)
 armv7l: dest = build/$(dist)
 armv7l: build-linux-armv7l
 
-build-linux-%:
+build-linux-%: libopenmpt
 	@echo "Building $(dist)"
 	rm -rf "$(dest)" "$(dest).tar.gz"
 	@mkdir -pv "$(dest)"
@@ -50,6 +50,7 @@ build-linux-%:
 		cd "$(dest)";\
 		echo "Compressing...";\
 		tar -czf "../$(dist).tar.gz" .;\
+		du -h "../$(dist).tar.gz";\
 	fi
 
 # win32
@@ -66,7 +67,7 @@ win64: dist = webjcs-$(platform)-$(electron_arch)
 win64: dest = build/$(dist)
 win64: build-win64
 
-build-win%:
+build-win%: libopenmpt
 	@echo "Building $(dist)"
 	rm -rf "$(dest)" "$(dest).zip"
 	@mkdir -pv "$(dest)"
@@ -79,6 +80,7 @@ build-win%:
 		cd "$(dest)";\
 		echo "Compressing...";\
 		zip -rq -9 "../$(dist).zip" .;\
+		du -h "../$(dist).zip";\
 	fi
 
 # darwin 64-bit
@@ -88,7 +90,7 @@ darwin64: dist = webjcs-$(platform)-$(electron_arch)
 darwin64: dest = build/$(dist)
 darwin64: build-darwin64
 
-build-darwin%:
+build-darwin%: libopenmpt
 	@echo "Building $(dist)"
 	rm -rf "$(dest)" "$(dest).zip"
 	@mkdir -pv "$(dest)"
@@ -101,13 +103,24 @@ build-darwin%:
 		cd "$(dest)";\
 		echo "Compressing...";\
 		zip -rq -9 "../$(dist).zip" .;\
+		du -h "../$(dist).zip";\
 	fi
 
-asar:
+asar: libopenmpt
 	cp -r app build/app
 	cd build/app; rm -rf build/*.map build/web.js webgl-inspector
 	asar pack build/app build/app.asar
 	rm -rf build/app
+	du -h build/app.asar
+
+libopenmpt: libopenmpt_version = 0.2.7386
+libopenmpt: libopenmpt_beta = beta20.3
+libopenmpt: app/lib/libopenmpt.js
+app/lib/libopenmpt.js:
+	curl -L -o "libopenmpt-$(libopenmpt_version)-$(libopenmpt_beta).tar.gz" "https://lib.openmpt.org/files/libopenmpt/src/libopenmpt-$(libopenmpt_version)-$(libopenmpt_beta).tar.gz"
+	tar -zxf "libopenmpt-$(libopenmpt_version)-$(libopenmpt_beta).tar.gz"
+	mkdir -p app/lib
+	cd "libopenmpt-$(libopenmpt_version)" && make CONFIG=emscripten TEST=0 EXAMPLES=0 && cp bin/libopenmpt{.js,.js.mem} ../app/lib/
 
 cleanbuild:
 	rm -rf build

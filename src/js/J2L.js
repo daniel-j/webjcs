@@ -42,7 +42,13 @@ class J2L {
       maxAnims = 256
     }
 
-    return wrapStruct(buffer, Struct()
+    let animCount = maxAnims
+    if (buffer) {
+      // Anim list can be of variable size (MLLE)
+      animCount = buffer.readUInt16LE(11)
+    }
+
+    let s = Struct()
       .word16Ule('JCSHorizontalOffset')
       .word16Ule('SecurityEnvelope1') // 0xBA00 if passworded, 0x0000 otherwise
       .word16Ule('JCSVerticalOffset')
@@ -81,8 +87,9 @@ class J2L {
       .array('IsEachTileFlipped', maxTiles, 'word8') // set to 1 if a tile appears flipped anywhere in the level
       .array('TileTypes', maxTiles, 'word8') // translucent=1 or caption=4, basically. Doesn't work on animated tiles.
       .array('XMask', maxTiles, 'word8') // unused
-      .array('Anim', maxAnims, J2L.AnimatedTileStruct())
-    )
+      .array('Anim', animCount, J2L.AnimatedTileStruct())
+
+    return wrapStruct(buffer, s)
   }
 
   static AnimatedTileStruct (buffer) {
@@ -211,9 +218,9 @@ class J2L {
 
           switch (dataId) {
             case 0: this.levelInfo = J2L.LevelInfoStruct(this.version, data); break
-            case 1: this.events = new Uint32Array(data.buffer); break
-            case 2: dictionary = new Uint16Array(data.buffer); break
-            case 3: map = new Uint16Array(data.buffer); break
+            case 1: this.events = new Uint32Array(data.buffer, data.byteOffset, data.length / Uint32Array.BYTES_PER_ELEMENT); break
+            case 2: dictionary = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
+            case 3: map = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
           }
 
           offset += this.header.fields.StreamSize[2 * dataId]

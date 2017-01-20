@@ -1,4 +1,6 @@
-const isElectron = require('is-electron')()
+
+// Since this loader is used by both web and electron, it has to be checked in runtime
+let isElectron = require('is-electron')()
 
 if (WEBGL_INSPECTOR) {
   let s = document.createElement('script')
