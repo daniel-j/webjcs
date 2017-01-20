@@ -37,7 +37,7 @@ armv7l: dist = webjcs-$(platform)-$(electron_arch)
 armv7l: dest = build/$(dist)
 armv7l: build-linux-armv7l
 
-build-linux-%: libopenmpt
+build-linux-%:
 	@echo "Building $(dist)"
 	rm -rf "$(dest)" "$(dest).tar.gz"
 	@mkdir -pv "$(dest)"
@@ -67,7 +67,7 @@ win64: dist = webjcs-$(platform)-$(electron_arch)
 win64: dest = build/$(dist)
 win64: build-win64
 
-build-win%: libopenmpt
+build-win%:
 	@echo "Building $(dist)"
 	rm -rf "$(dest)" "$(dest).zip"
 	@mkdir -pv "$(dest)"
@@ -90,7 +90,7 @@ darwin64: dist = webjcs-$(platform)-$(electron_arch)
 darwin64: dest = build/$(dist)
 darwin64: build-darwin64
 
-build-darwin%: libopenmpt
+build-darwin%:
 	@echo "Building $(dist)"
 	rm -rf "$(dest)" "$(dest).zip"
 	@mkdir -pv "$(dest)"
@@ -106,7 +106,7 @@ build-darwin%: libopenmpt
 		du -h "../$(dist).zip";\
 	fi
 
-asar: libopenmpt
+asar:
 	cp -r app build/app
 	cd build/app; rm -rf build/*.map build/web.js webgl-inspector
 	asar pack build/app build/app.asar
