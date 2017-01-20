@@ -1,8 +1,14 @@
 
 import path from 'path'
 import webpack from 'webpack'
+import ExtractTextPlugin from 'extract-text-webpack-plugin'
 
 let inProduction = process.env.NODE_ENV === 'production' || process.argv.indexOf('-p') !== -1
+
+const extractStyle = new ExtractTextPlugin({
+  filename: 'build/[name].css',
+  allChunks: true
+})
 
 const bundleWebConfig = {
   entry: {
@@ -13,7 +19,7 @@ const bundleWebConfig = {
   output: {
     path: path.join(__dirname, '/app/'),
     filename: 'build/[name].js',
-    chunkFilename: 'build/[id].web.js'
+    chunkFilename: 'build/web.[id].js'
   },
 
   target: 'web',
@@ -25,7 +31,7 @@ const bundleWebConfig = {
         loader: 'babel-loader',
         exclude: /node_modules/,
         options: {
-          sourceMaps: true,
+          sourceMaps: !inProduction,
           presets: ['es2015']
         }
       },
@@ -55,7 +61,7 @@ const bundleWebConfig = {
   plugins: [
 
   ],
-  devtool: inProduction ? 'source-map' : 'source-map'
+  devtool: inProduction ? undefined : 'source-map'
 }
 
 const bundleElectronConfig = {
@@ -67,7 +73,7 @@ const bundleElectronConfig = {
   output: {
     path: path.join(__dirname, '/app/'),
     filename: 'build/[name].js',
-    chunkFilename: 'build/[id].electron.js'
+    chunkFilename: 'build/electron.[id].js'
   },
 
   target: 'electron',
@@ -133,6 +139,18 @@ if (inProduction) {
 }
 
 configs.forEach((c) => {
+  c.module.rules.push({
+    test: /\.css$/i,
+    loader: extractStyle.extract({
+      loader: [{
+        loader: 'css-loader',
+        query: {
+          minimize: inProduction
+        }
+      }]
+    })
+  })
+  c.plugins.push(extractStyle)
   if (inProduction) {
     c.plugins.push(new webpack.LoaderOptionsPlugin({
       minimize: true,

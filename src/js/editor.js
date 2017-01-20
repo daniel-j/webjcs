@@ -12,6 +12,8 @@ const AnimPanel = require('./components/animpanel')
 const LayerPanel = require('./components/layerpanel')
 const Renderer = require('./renderer')
 
+const AboutDialog = require('./components/aboutdialog')
+
 const columns = [
   {
     panels: [
@@ -34,7 +36,11 @@ const columns = [
 
 m.mount(document.getElementById('app'), {
   view: () => {
-    const R = m('#editor', m(Renderer, m(panels, {columns: columns})))
+    const R = m(
+      '#editor',
+      m(Renderer, m(panels, {columns: columns})),
+      m(AboutDialog)
+    )
     if (IS_ELECTRON) {
       return R
     } else {
@@ -43,8 +49,8 @@ m.mount(document.getElementById('app'), {
   }
 })
 
-if (!IS_ELECTRON) {
-  require.ensure([], () => {
+require.ensure([], () => {
+  if (!IS_ELECTRON) {
     // const jj2Dir = path.join(__dirname, '/../data/')
     const levelBuffer = require('buffer-loader!../../data/ab17btl06.j2l')
     const tilesetBuffer = require('buffer-loader!../../data/DiambGarden.j2t')
@@ -63,8 +69,8 @@ if (!IS_ELECTRON) {
     }).catch((err) => {
       console.error(err)
     })
-  })
-}
+  }
+})
 
 /*
 const ModPlayer = require('./modplayer')

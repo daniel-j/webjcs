@@ -108,7 +108,7 @@ build-darwin%:
 
 asar:
 	cp -r app build/app
-	cd build/app; rm -rf build/*.map build/web.js webgl-inspector
+	cd build/app; rm -rf build/*.map build/web.* webgl-inspector
 	asar pack build/app build/app.asar
 	rm -rf build/app
 	du -h build/app.asar

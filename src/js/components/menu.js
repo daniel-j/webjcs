@@ -1,6 +1,7 @@
 
 const m = require('mithril')
 const vent = require('../vent')
+require('../../style/menu.css')
 
 const screenfull = require('screenfull')
 

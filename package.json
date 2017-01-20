@@ -15,7 +15,9 @@
     "babel-register": "^6.18.0",
     "babili": "0.0.10",
     "buffer-loader": "0.0.1",
+    "css-loader": "^0.26.1",
     "electron-packager": "^8.5.0",
+    "extract-text-webpack-plugin": "^2.0.0-beta.5",
     "gulp": "^3.9.1",
     "gulp-standard": "^8.0.3",
     "gulp-watch": "^4.3.11",
@@ -31,6 +33,7 @@
   "dependencies": {
     "browserify-zlib": "^0.1.4",
     "crc": "^3.4.4",
+    "dialog-polyfill": "^0.4.5",
     "is-electron": "^2.0.0",
     "mithril": "^1.0.0-rc.8",
     "pubsub-js": "^1.5.4",
