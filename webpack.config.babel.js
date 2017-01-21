@@ -111,7 +111,14 @@ const bundleElectronConfig = {
   devtool: inProduction ? undefined : 'source-map'
 }
 
-const configs = [bundleWebConfig, bundleElectronConfig]
+const configs = []
+
+if (process.env.NO_WEB !== '1') {
+  configs.push(bundleWebConfig)
+}
+if (process.env.NO_ELECTRON !== '1') {
+  configs.push(bundleElectronConfig)
+}
 
 if (inProduction) {
   bundleWebConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
@@ -160,7 +167,8 @@ configs.forEach((c) => {
   c.plugins.push(new webpack.DefinePlugin({
     WEBJCS_VERSION: JSON.stringify(require('./package.json').version),
     WEBGL_INSPECTOR: process.env.WEBGL_INSPECTOR === '1',
-    IS_ELECTRON: c === bundleElectronConfig
+    IS_ELECTRON: c === bundleElectronConfig,
+    DEVELOPMENT: !inProduction
   }))
 })
 

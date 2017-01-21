@@ -50,7 +50,7 @@ m.mount(document.getElementById('app'), {
 })
 
 require.ensure([], () => {
-  if (!IS_ELECTRON) {
+  if (!IS_ELECTRON && DEVELOPMENT) {
     // const jj2Dir = path.join(__dirname, '/../data/')
     const levelBuffer = require('buffer-loader!../../data/ab17btl06.j2l')
     const tilesetBuffer = require('buffer-loader!../../data/DiambGarden.j2t')

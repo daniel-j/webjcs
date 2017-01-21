@@ -50,7 +50,8 @@
     "globals": [
       "WEBJCS_VERSION",
       "WEBGL_INSPECTOR",
-      "IS_ELECTRON"
+      "IS_ELECTRON",
+      "DEVELOPMENT"
     ]
   }
 }
