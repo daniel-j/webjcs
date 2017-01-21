@@ -66,7 +66,11 @@ gulp.task('watch:lint', () => {
 
 // Default task
 gulp.task('default', (done) => {
-  sequence('clean', 'lint', 'webpack', done)
+  sequence('clean', 'lint', 'build', done)
+})
+
+gulp.task('build', (done) => {
+  sequence('webpack', done)
 })
 
 // Watch task

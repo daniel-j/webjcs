@@ -31,7 +31,9 @@ function createWindow () {
 
   mainWindow.loadURL(`file://${__dirname}/../index.html`)
 
-  mainWindow.webContents.openDevTools()
+  if (DEVELOPMENT) {
+    mainWindow.webContents.openDevTools()
+  }
 
   mainWindow.webContents.once('did-finish-load', () => {
     if (fileToLoad) {

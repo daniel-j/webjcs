@@ -120,8 +120,6 @@ if (process.env.NO_ELECTRON !== '1') {
   configs.push(bundleElectronConfig)
 }
 
-console.log(bundleWebConfig.entry)
-
 if (inProduction) {
   bundleWebConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
     compress: {
