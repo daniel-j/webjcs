@@ -19,7 +19,6 @@ const PreferencesDialog = {
     state.dialog = {
       onclose: (e) => {
         let val = state.dialog.dom.returnValue
-        console.log(val, typeof val)
         if (val !== 'ok') {
           resetPreferences(state.prefs)
           return
@@ -42,11 +41,13 @@ const PreferencesDialog = {
       m('.title', 'Preferences'),
       m('div', [
         m('div', checkbox('Disable WebGL', state.prefs, 'disable_webgl')),
-        m('label', 'Search paths'),
-        state.prefs.paths.map((v, i, a) => {
-          return m('div', m('input', {value: v, oninput: m.withAttr('value', (v) => { a[i] = v })}))
-        }),
-        m('button', {type: 'button', onclick: () => state.prefs.paths.push('')}, 'Add')
+        IS_ELECTRON ? [
+          m('label', 'Search paths'),
+          state.prefs.paths.map((v, i, a) => {
+            return m('div', m('input', {value: v, oninput: m.withAttr('value', (v) => { a[i] = v })}))
+          }),
+          m('button', {type: 'button', onclick: () => state.prefs.paths.push('')}, 'Add')
+        ] : null
       ]),
       m('.buttons.center', [
         m('button', {type: 'submit', value: 'ok'}, 'OK'),
