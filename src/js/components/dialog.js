@@ -14,18 +14,18 @@ const Dialog = {
       } else {
         dom.show()
       }
-      state.form.reset()
     }
     attrs.showModal = () => attrs.show(true)
     attrs.close = dom.close
+    attrs.dom = dom
   },
   view ({children, state, attrs}) {
     return m('dialog', {
       onclose: (e) => attrs.onclose(e),
-      oncancel: (e) => attrs.oncancel(e)
+      oncancel: (e) => { attrs.dom.returnValue = 'cancel' }
     }, m('form', {
       method: 'dialog',
-      oncreate: ({dom}) => { state.form = dom }
+      oncreate: ({dom}) => { state.form = attrs.form = dom }
     }, children))
   }
 }

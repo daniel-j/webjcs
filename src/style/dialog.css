@@ -22,6 +22,7 @@ dialog .buttons {
 	border-top: 1px solid #CCC;
 	padding: 2px;
 	text-align: center;
+	clear: both;
 }
 
 dialog::backdrop, dialog + .backdrop {

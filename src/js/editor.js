@@ -12,7 +12,8 @@ const AnimPanel = require('./components/animpanel')
 const LayerPanel = require('./components/layerpanel')
 const Renderer = require('./renderer')
 
-const AboutDialog = require('./components/aboutdialog')
+const AboutDialog = require('./components/dialogs/about')
+const PreferencesDialog = require('./components/dialogs/preferences')
 
 const columns = [
   {
@@ -39,7 +40,8 @@ m.mount(document.getElementById('app'), {
     const R = m(
       '#editor',
       m(Renderer, m(panels, {columns: columns})),
-      m(AboutDialog)
+      m(AboutDialog),
+      m(PreferencesDialog)
     )
     if (IS_ELECTRON) {
       return R

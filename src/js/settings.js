@@ -12,7 +12,9 @@ class Settings {
     window.localStorage.setItem(prefix + key, JSON.stringify(value))
   }
   setDefault (key) {
-    this.set(key, this.defaults[key])
+    const def = this.defaults[key]
+    this.set(key, def)
+    return def
   }
   get (key) {
     let item = window.localStorage.getItem(prefix + key)
