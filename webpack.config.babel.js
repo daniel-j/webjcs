@@ -111,14 +111,16 @@ const bundleElectronConfig = {
   devtool: inProduction ? undefined : 'source-map'
 }
 
-const configs = []
+const configs = [bundleWebConfig]
 
-if (process.env.NO_WEB !== '1') {
-  configs.push(bundleWebConfig)
+if (process.env.NO_WEB === '1') {
+  delete bundleWebConfig.entry.web
 }
 if (process.env.NO_ELECTRON !== '1') {
   configs.push(bundleElectronConfig)
 }
+
+console.log(bundleWebConfig.entry)
 
 if (inProduction) {
   bundleWebConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
