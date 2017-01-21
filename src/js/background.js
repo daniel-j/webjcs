@@ -21,7 +21,7 @@ function createWindow () {
     width: 800,
     height: 600,
     backgroundColor: '#383c4a', // #201850
-    title: 'Jazz Creation Station',
+    title: 'WebJCS',
     icon: path.join(__dirname, '/../media/icons/JCS.png')
   })
 
