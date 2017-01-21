@@ -17,7 +17,7 @@ let options = {
   },
   tmpdir: false,
   ignore: [
-    /build\/web\.js/,
+    /build\/web\./,
     /webgl-inspector/
   ]
 }
