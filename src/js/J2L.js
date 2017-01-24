@@ -179,7 +179,7 @@ class J2L {
     return new Promise((resolve, reject) => {
       let headerBuffer = buffer.slice(0, 262)
       let header = J2L.HeaderStruct(headerBuffer)
-      if (header.fields.Magic !== 'LEVL') {
+      if (header.fields.Magic !== J2L.IDENTIFIER) {
         reject(new Error('Not a valid Jazz2 Level file'))
         return
       }
@@ -200,12 +200,12 @@ class J2L {
       let offset = 262
 
       let dictionary
-      let map
+      let wordMap
 
       let inflateNext = () => {
         if (offset >= buffer.length) {
           this.initLayers()
-          this.loadLayersFromDictMap(dictionary, map)
+          this.loadLayersFromDictMap(dictionary, wordMap)
           resolve()
           return
         }
@@ -220,7 +220,7 @@ class J2L {
             case 0: this.levelInfo = J2L.LevelInfoStruct(this.version, data); break
             case 1: this.events = new Uint32Array(data.buffer, data.byteOffset, data.length / Uint32Array.BYTES_PER_ELEMENT); break
             case 2: dictionary = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
-            case 3: map = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
+            case 3: wordMap = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
           }
 
           offset += this.header.fields.StreamSize[2 * dataId]
@@ -232,7 +232,7 @@ class J2L {
     })
   }
 
-  loadLayersFromDictMap (dictionary, map) {
+  loadLayersFromDictMap (dictionary, wordMap) {
     let animCount = this.levelInfo.fields.AnimCount
     let mapOffset = 0
 
@@ -251,7 +251,7 @@ class J2L {
 
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < realWidth; x++) {
-          let wordId = map[mapOffset]
+          let wordId = wordMap[mapOffset]
           for (let t = 0; t < 4; t++) {
             if (x * 4 + t >= width) break
             this.layers[l][x * 4 + t][y].fromNumber(dictionary[wordId * 4 + t], this.isTSF, animCount)
@@ -261,9 +261,181 @@ class J2L {
       }
     }
   }
+
+  export (version = this.version) {
+    let maxTiles = 1024
+    let maxAnims = 128
+    if (version === J2L.VERSION_TSF) { // If it's TSF (1.24)
+      maxTiles = 4096
+      maxAnims = 256
+    }
+    let animCount = this.levelInfo.fields.AnimCount
+    let staticTiles = maxTiles - animCount
+
+    let tileNeedsFlip = new Set()
+    let animNeedsFlip = new Set()
+
+    let dictArray = [new Uint16Array(4)] // data3
+    let wordMap = [] // data4
+    let uniqueWords = []
+
+    for (let l = 0; l < 8; l++) {
+      let lw = this.levelInfo.fields.LayerWidth[l]
+      let lh = this.levelInfo.fields.LayerHeight[l]
+      let tileWidth = (this.levelInfo.fields.LayerMiscProperties[l] & 1) === 1
+      this.levelInfo.fields.DoesLayerHaveAnyTiles[l] = this.checkIfLayerHasTiles(l)
+      this.levelInfo.fields.LayerRealWidth[l] = lw
+      if (tileWidth) {
+        switch (lw % 4) {
+          case 0: break
+          case 2: this.levelInfo.fields.LayerRealWidth[l] *= 2; break
+          default: this.levelInfo.fields.LayerRealWidth[l] *= 4; break
+        }
+      }
+      if (!this.levelInfo.fields.DoesLayerHaveAnyTiles[l]) continue
+
+      let realWidth = Math.ceil(this.levelInfo.fields.LayerRealWidth[l] / 4) * 4
+
+      for (let y = 0; y < lh; y++) {
+        for (let x = 0; x < realWidth; x += 4) {
+          let hasAnimAndEvent = false
+          let wordIndex = -1
+          let tmpWord = new Uint16Array(4)
+          for (let k = 0; k < 4; k++) {
+            if (!tileWidth && x + k >= lw) break
+            let tile = this.layers[l][(x + k) % lw][y]
+            if (tile.id === 0 && !tile.animated) tile.flipped = false
+            let rawTile = tile.toNumber(version === J2L.VERSION_TSF, animCount)
+            tmpWord[k] = rawTile
+            if (l === 3 && tile.animated && this.events[x + k + y * lw] > 0) {
+              hasAnimAndEvent = true
+            }
+            if (tile.flipped && !tile.animated) {
+              tileNeedsFlip.add(tile.id)
+            } else if (tile.flipped) {
+              animNeedsFlip.add(tile.id)
+            }
+          }
+          if (!hasAnimAndEvent) {
+            wordIndex = dictArray.findIndex((word, i) => {
+              return tmpWord[0] === word[0] && tmpWord[1] === word[1] && tmpWord[2] === word[2] && tmpWord[3] === word[3]
+            })
+          }
+          if (wordIndex === -1) {
+            wordIndex = dictArray.length
+            dictArray.push(tmpWord)
+          }
+          if (hasAnimAndEvent) {
+            uniqueWords.push(wordIndex)
+          }
+          wordMap.push(wordIndex)
+        }
+      }
+    }
+
+    let dictionary = new Uint16Array(dictArray.length * 4)
+    for (let i = 0; i < dictArray.length; i++) {
+      dictionary.set(dictArray[i], i * 4)
+    }
+
+    wordMap = Uint16Array.from(wordMap)
+
+    for (let i = 0; i < staticTiles; i++) {
+      this.levelInfo.fields.IsEachTileFlipped[i] = tileNeedsFlip.has(i) ? 1 : 0
+    }
+
+    /*
+    console.log('dictionary', dictionary.length, this.dictionary.length)
+
+    for (let i = 0; i < dictionary.length || i < this.dictionary.length; i += 4) {
+      if (dictionary[i] !== this.dictionary[i] || dictionary[i + 1] !== this.dictionary[i + 1] || dictionary[i + 2] !== this.dictionary[i + 2] || dictionary[i + 3] !== this.dictionary[i + 3]) {
+        console.log(i / 4, [dictionary[i], dictionary[i + 1], dictionary[i + 2], dictionary[i + 3]], [this.dictionary[i], this.dictionary[i + 1], this.dictionary[i + 2], this.dictionary[i + 3]])
+      }
+    }
+
+    console.log(this.dictionary)
+    console.log(dictionary)
+
+    console.log('map', wordMap.length, this.map.length)
+    for (let i = 0; i < wordMap.length || i < this.map.length; i++) {
+      if (wordMap[i] !== this.map[i]) {
+        console.log(i, wordMap[i], this.map[i])
+      }
+    }
+
+    console.log(this.map)
+    console.log(wordMap)
+    */
+
+    let data1 = this.levelInfo.buffer()
+
+    this.header.fields.StreamSize[0 * 2 + 1] = data1.byteLength
+    this.header.fields.StreamSize[1 * 2 + 1] = this.events.byteLength
+    this.header.fields.StreamSize[2 * 2 + 1] = dictionary.byteLength
+    this.header.fields.StreamSize[3 * 2 + 1] = wordMap.byteLength
+
+    return this.compressBuffers([data1, Buffer.from(this.events.buffer), Buffer.from(dictionary.buffer), Buffer.from(wordMap.buffer)]).then((streams) => {
+      this.header.fields.StreamSize[0 * 2] = streams[0].length
+      this.header.fields.StreamSize[1 * 2] = streams[1].length
+      this.header.fields.StreamSize[2 * 2] = streams[2].length
+      this.header.fields.StreamSize[3 * 2] = streams[3].length
+
+      let streamBuffer = Buffer.concat(streams)
+
+      this.header.fields.Checksum = crc.crc32(streamBuffer)
+      this.header.fields.FileSize = this.header.length() + streamBuffer.length
+      this.header.fields.Version = version
+
+      let fileBuffer = Buffer.concat([this.header.buffer(), streamBuffer])
+      return fileBuffer
+    })
+  }
+
+  checkIfLayerHasTiles (l) {
+    if (l === 3) return 1
+    let lw = this.levelInfo.fields.LayerWidth[l]
+    let lh = this.levelInfo.fields.LayerHeight[l]
+    for (let x = 0; x < lw; x++) {
+      for (let y = 0; y < lh; y++) {
+        let tile = this.layers[l][x][y]
+        if (tile.id > 0 || tile.animated) {
+          return 1
+        }
+      }
+    }
+    return 0
+  }
+
+  compressBuffers (buffers) {
+    return new Promise((resolve, reject) => {
+      let index = 0
+      let compressed = []
+      function r (index) {
+        let buffer = buffers[index]
+        if (!buffer) {
+          resolve(compressed)
+          return
+        }
+        zlib.deflate(buffer, {level: 9}, (err, data) => {
+          if (err) {
+            reject(err)
+            return
+          }
+          compressed[index] = data
+          r(index + 1)
+        })
+      }
+      r(index)
+    })
+  }
 }
 
+J2L.IDENTIFIER = 'LEVL'
 J2L.VERSION_123 = 0x202
 J2L.VERSION_TSF = 0x203
+J2L.HEADER_NOTICE =
+  '                      Jazz Jackrabbit 2 Data File\r\n\r\n' +
+  '         Retail distribution of this data is prohibited without\r\n' +
+  '             written permission from Epic MegaGames, Inc.\r\n\r\n\x1A'
 
 module.exports = J2L

@@ -99,3 +99,14 @@ vent.subscribe('loadlevel', (ev, {data, name, dir}) => {
     console.error(err)
   })
 })
+
+vent.subscribe('menuclick.savelevel', () => {
+  app.j2l.export().then((buffer) => {
+    if (!IS_ELECTRON) {
+      const saveAs = require('file-saver').saveAs
+      const file = new File([buffer.buffer], 'webjcs.j2l', {type: 'application/x-jazz2-level'})
+      saveAs(file)
+    }
+    vent.publish('loadlevel', {data: buffer})
+  })
+})
