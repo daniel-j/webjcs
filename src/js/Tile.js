@@ -12,6 +12,7 @@ class Tile {
       } else {
         this.id = tile.id
         this.flipped = !!tile.flipped
+        this.vflipped = !!tile.vflipped
         this.animated = !!tile.animated
       }
     }
@@ -20,7 +21,7 @@ class Tile {
   toNumber (isTSF = false, animCount = 0) {
     let maxTiles = !isTSF ? 1024 : 4096
     let staticTiles = maxTiles - animCount
-    return this.id & (maxTiles - 1) | (this.flipped ? maxTiles : 0) | (this.animated ? staticTiles : 0)
+    return (this.id & (maxTiles - 1)) + (this.flipped ? maxTiles : 0) + (this.vflipped ? 0x2000 : 0) + (this.animated ? staticTiles : 0)
   }
 
   fromNumber (n, isTSF = false, animCount = 0) {
@@ -28,6 +29,7 @@ class Tile {
     let staticTiles = maxTiles - animCount
     this.id = n & (maxTiles - 1)
     this.flipped = (n & maxTiles) !== 0
+    this.vflipped = (n & 0x2000) !== 0
     this.animated = false
     if (this.id >= staticTiles) {
       this.id -= staticTiles
