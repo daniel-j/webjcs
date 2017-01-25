@@ -3,6 +3,7 @@ const m = require('mithril')
 const Dialog = require('../dialog')
 const vent = require('../../vent')
 const settings = require('../../settings')
+const toggler = require('../misc').toggler
 
 function resetPreferences (prefs) {
   for (let key in prefs) {
@@ -10,8 +11,13 @@ function resetPreferences (prefs) {
   }
 }
 
-function checkbox (label, prefs, key) {
-  return m('label', label, m('input', {type: 'checkbox', checked: prefs[key], onchange: m.withAttr('checked', (val) => { prefs[key] = val })}))
+function boolInput (label, prefs, key, {disabled} = {}) {
+  return m(toggler, {
+    checked: !!prefs[key],
+    disabled: !!disabled,
+    onchange: m.withAttr('checked', (val) => { prefs[key] = val }),
+    style: {width: '100%'}
+  }, label)
 }
 
 const PreferencesDialog = {
@@ -39,8 +45,8 @@ const PreferencesDialog = {
   view ({state}) {
     return m(Dialog, state.dialog, [
       m('.title', 'Preferences'),
-      m('div', [
-        m('div', checkbox('Disable WebGL', state.prefs, 'disable_webgl')),
+      m('.content', [
+        m('div', boolInput('Disable WebGL', state.prefs, 'disable_webgl')),
         IS_ELECTRON ? [
           m('label', 'Search paths'),
           state.prefs.paths.map((v, i, a) => {

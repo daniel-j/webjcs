@@ -3,6 +3,7 @@ const m = require('mithril')
 const Dialog = require('../dialog')
 const vent = require('../../vent')
 const app = require('../../app')
+const toggler = require('../misc').toggler
 
 function reset (p, l) {
   let f = app.j2l.levelInfo.fields
@@ -41,40 +42,52 @@ function hex2rgb (hex) {
   return components.slice(1, 4).map((hex) => parseInt(hex, 16))
 }
 
-function checkbox (label, prefs, key) {
-  return m('label', m('input', {type: 'checkbox', checked: !!prefs[key], onchange: m.withAttr('checked', (val) => { prefs[key] = val })}), label)
+function boolInput (label, prefs, key, {disabled} = {}) {
+  return m(toggler, {
+    checked: !!prefs[key],
+    disabled: !!disabled,
+    onchange: m.withAttr('checked', (val) => { prefs[key] = val }),
+    style: {width: '100%'}
+  }, label)
 }
-function floatInput (label, prefs, key, {min = -Infinity, max = Infinity}) {
-  return m('label', label, m('input', {
+function floatInput (prefs, key, {min = -Infinity, max = Infinity, disabled, style} = {}) {
+  return m('input.flexfluid', {
     type: 'text',
+    size: 10,
     required: true,
     pattern: '-?\\d*?.?\\d*?',
     value: prefs[key],
+    disabled: !!disabled,
     oninput: m.withAttr('value', (val) => { prefs[key] = val }),
     onchange: () => {
       prefs[key] = Math.min(max, Math.max(min, parseFloat(prefs[key])))
       if (!isFinite(prefs[key])) prefs[key] = ''
-    }
-  }))
+    },
+    style
+  })
 }
-function integerInput (label, prefs, key, {min, max}) {
-  return m('label', label, m('input', {
+function integerInput (prefs, key, {min, max, disabled, style} = {}) {
+  return m('input.flexfluid', {
     type: 'number',
+    size: 10,
     step: 1,
     min,
     max,
     required: true,
     pattern: '\\d*',
     value: prefs[key],
-    oninput: m.withAttr('value', (val) => { prefs[key] = val })
-  }))
+    disabled: !!disabled,
+    oninput: m.withAttr('value', (val) => { prefs[key] = val }),
+    style
+  })
 }
-function colorInput (label, prefs, key) {
-  return m('label', label, m('input', {
+function colorInput (prefs, key, {disabled} = {}) {
+  return m('input', {
     type: 'color',
     value: rgb2hex(prefs[key]),
+    disabled: disabled,
     oninput: m.withAttr('value', (val) => { prefs[key] = hex2rgb(val) })
-  }))
+  })
 }
 
 const LayerPropertiesDialog = {
@@ -130,34 +143,45 @@ const LayerPropertiesDialog = {
   view ({state}) {
     return m(Dialog, state.dialog, [
       m('.title', 'Layer Properties for layer #' + (state.currentLayer + 1)),
-      m('div', [
-        floatInput('X-Speed', state.prefs, 'speedX', {min: -32768, max: 32768}),
-        floatInput('Auto X-Speed', state.prefs, 'autoSpeedX', {min: -32768, max: 32768})
-      ]),
-      m('div', [
-        floatInput('Y-Speed', state.prefs, 'speedY', {min: -32768, max: 32768}),
-        floatInput('Auto Y-Speed', state.prefs, 'autoSpeedY', {min: -32768, max: 32768})
-      ]),
-      m('div', [
-        integerInput('Width', state.prefs, 'layerWidth', {min: 1, max: 1023}),
-        integerInput('Height', state.prefs, 'layerHeight', {min: 1, max: 1023})
-      ]),
-      m('div', [
-        checkbox('Tile Width', state.prefs, 'tileWidth'),
-        checkbox('Height', state.prefs, 'tileHeight')
-      ]),
-      m('div', [
-        checkbox('Limit Visible Region', state.prefs, 'limitVisibleRegion')
-      ]),
-      m('div', [
-        checkbox('Texture mode', state.prefs, 'textureMode')
-      ]),
-      m('div', [
-        integerInput('Texture type', state.prefs, 'textureType', {min: 0, maz: 255}),
-        colorInput('Fade color', state.prefs, 'textureParams')
-      ]),
-      m('div', [
-        checkbox('Parallaxing stars background', state.prefs, 'parallaxStars')
+      m('table.content', {style: {width: '100%', borderSpacing: '5px', borderCollapse: 'separate'}}, [
+        m('tr', [
+          m('td', 'X-Speed'),
+          m('td', {width: '100'}, m('.flexwrapper', floatInput(state.prefs, 'speedX', {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
+          m('td', 'Auto X-Speed'),
+          m('td', {width: '100'}, m('.flexwrapper', floatInput(state.prefs, 'autoSpeedX', {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
+        ]),
+        m('tr', [
+          m('td', 'Y-Speed'),
+          m('td', m('.flexwrapper', floatInput(state.prefs, 'speedY', {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
+          m('td', 'Auto Y-Speed'),
+          m('td', m('.flexwrapper', floatInput(state.prefs, 'autoSpeedY', {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
+        ]),
+        m('tr', [
+          m('td', 'Width'),
+          m('td', m('.flexwrapper', integerInput(state.prefs, 'layerWidth', {min: 1, max: 1023}))),
+          m('td', 'Height'),
+          m('td', m('.flexwrapper', integerInput(state.prefs, 'layerHeight', {min: 1, max: 1023})))
+        ]),
+        m('tr', [
+          m('td', {colspan: 2}, boolInput('Tile Width', state.prefs, 'tileWidth')),
+          m('td', {colspan: 2}, boolInput('Tile Height', state.prefs, 'tileHeight'))
+        ]),
+        m('tr', [
+          m('td', {colspan: 4}, boolInput('Limit Visible Region', state.prefs, 'limitVisibleRegion'))
+        ]),
+        m('tr', [
+          m('td', {colspan: 4}, boolInput('Texture mode', state.prefs, 'textureMode'))
+        ]),
+        m('tr', [
+          m('td', {colspan: 4}, m('.flexwrapper', {style: {alignItems: 'center'}}, [
+            'Texture type ',
+            integerInput(state.prefs, 'textureType', {min: 0, maz: 255, disabled: !state.prefs.textureMode, style: {margin: '0 10px'}}),
+            colorInput(state.prefs, 'textureParams', {disabled: !state.prefs.textureMode})
+          ]))
+        ]),
+        m('tr', [
+          m('td', {colspan: 4}, boolInput('Parallaxing stars background', state.prefs, 'parallaxStars'))
+        ])
       ]),
       m('.buttons.center', [
         m('button', {type: 'submit', value: 'ok', autofocus: true}, 'OK'),

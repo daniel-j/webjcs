@@ -1,0 +1,91 @@
+
+.toggler, .toggler * {
+	box-sizing: border-box;
+}
+
+.toggler {
+	display: inline-block;
+	margin: 2px;
+	margin-right: 10px;
+	position: relative;
+	vertical-align: middle;
+}
+
+.toggler a {
+	padding: 1px;
+	border: 1px solid rgba(0,0,0,0.25);
+	border-radius: 4px;
+	width: 50px;
+	display: inline-block;
+	height: 22px;
+	background: #daa8a8;
+	background: hsl(227, 14%, 20%);
+	position: relative;
+	left: 0px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,0.15) inset;
+	vertical-align: middle;
+	transition: background 0.2s;
+	pointer-events: none;
+	will-change: background;
+}
+
+.toggler a:before {
+	background: hsl(227, 14%, 40%);
+	width: 24px;
+	height: 24px;
+	margin-top: -4px;
+	margin-left: -3px;
+	line-height: 24px;
+	content: " ";
+	display: block;
+	border-radius: 4px;
+	position: absolute;
+	left: 1px;
+	transition: left 0.2s;
+	border: 1px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	font-family: "FontAwesome";
+	color: #956666;
+	font-size: 15px;
+	text-align: center;
+	text-shadow: 1px 1px #fff;
+	will-change: left;
+}
+
+.toggler input {
+	opacity: 0;
+	width: 0px;
+	height: 0px;
+	position: absolute;
+}
+
+.toggler input:checked + a {
+	background: #c1daa8;
+	background: hsl(213, 65%, 60%);
+}
+
+.toggler input:checked + a:before {
+	left: 27px;
+	color: #758d5c;
+	content: " ";
+}
+
+.toggler input ~ .toggle-on {
+	display: none;
+}
+
+.toggler input ~ .toggle-off {
+	display: inline-block;
+}
+
+.toggler input:checked ~ .toggle-on {
+	display: inline-block;
+}
+
+.toggler input:checked ~ .toggle-off {
+	display: none;
+}
+
+.toggler span {
+	margin-left: 6px;
+}

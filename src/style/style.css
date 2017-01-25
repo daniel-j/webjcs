@@ -11,7 +11,11 @@ html, body {
 	/*background-color: rgb(32, 24, 80);*/
 	background-color: #383c4a;
 
+	-webkit-touch-callout: none;
 	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 	cursor: default;
 }
 
@@ -35,6 +39,9 @@ html, body {
 .right {
 	float: right;
 }
+.textright {
+	text-align: right;
+}
 
 .fullheight {
 	height: 100%;
@@ -49,6 +56,17 @@ html, body {
 }
 .flexflowcolumn {
 	flex-flow: column;
+}
+
+table {
+	margin: 0;
+	padding: 0;
+	border-spacing: 0;
+	border-collapse: collapse;
+}
+table td {
+	padding: 0;
+	margin: 0;
 }
 
 .renderer {
