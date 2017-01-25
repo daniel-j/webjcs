@@ -159,16 +159,20 @@ class J2L {
     */
   }
 
-  initLayers () {
+  initLayers (events) {
     this.layers = []
     for (let l = 0; l < 8; l++) {
       this.layers[l] = []
-      let width = this.levelInfo.fields.LayerWidth[l]
-      let height = this.levelInfo.fields.LayerHeight[l]
-      for (let x = 0; x < width; x++) {
+      let lw = this.levelInfo.fields.LayerWidth[l]
+      let lh = this.levelInfo.fields.LayerHeight[l]
+      for (let x = 0; x < lw; x++) {
         this.layers[l][x] = []
-        for (let y = 0; y < height; y++) {
-          this.layers[l][x][y] = new Tile()
+        for (let y = 0; y < lh; y++) {
+          let t = new Tile()
+          if (l === 3) {
+            t.event = events[x + lw * y]
+          }
+          this.layers[l][x][y] = t
         }
       }
     }
@@ -199,12 +203,13 @@ class J2L {
       let dataId = 0
       let offset = 262
 
+      let events
       let dictionary
       let wordMap
 
       let inflateNext = () => {
         if (offset >= buffer.length) {
-          this.initLayers()
+          this.initLayers(events)
           this.loadLayersFromDictMap(dictionary, wordMap)
           resolve()
           return
@@ -218,7 +223,7 @@ class J2L {
 
           switch (dataId) {
             case 0: this.levelInfo = J2L.LevelInfoStruct(this.version, data); break
-            case 1: this.events = new Uint32Array(data.buffer, data.byteOffset, data.length / Uint32Array.BYTES_PER_ELEMENT); break
+            case 1: events = new Uint32Array(data.buffer, data.byteOffset, data.length / Uint32Array.BYTES_PER_ELEMENT); break
             case 2: dictionary = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
             case 3: wordMap = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
           }
@@ -278,10 +283,14 @@ class J2L {
     let dictArray = [new Uint16Array(4)] // data3
     let wordMap = [] // data4
     let uniqueWords = []
+    let events
 
     for (let l = 0; l < 8; l++) {
       let lw = this.levelInfo.fields.LayerWidth[l]
       let lh = this.levelInfo.fields.LayerHeight[l]
+      if (l === 3) {
+        events = new Uint32Array(lw * lh)
+      }
       let tileWidth = (this.levelInfo.fields.LayerMiscProperties[l] & 1) === 1
       this.levelInfo.fields.DoesLayerHaveAnyTiles[l] = this.checkIfLayerHasTiles(l)
       this.levelInfo.fields.LayerRealWidth[l] = lw
@@ -302,12 +311,17 @@ class J2L {
           let wordIndex = -1
           let tmpWord = new Uint16Array(4)
           for (let k = 0; k < 4; k++) {
-            if (!tileWidth && x + k >= lw) break
             let tile = this.layers[l][(x + k) % lw][y]
             if (tile.id === 0 && !tile.animated) tile.flipped = false
             let rawTile = tile.toNumber(version === J2L.VERSION_TSF, animCount)
+
+            if (l === 3 && x + k < lw) {
+              events[x + k + y * lw] = tile.event
+            }
+            if (!tileWidth && x + k >= lw) break
+
             tmpWord[k] = rawTile
-            if (l === 3 && tile.animated && this.events[x + k + y * lw] > 0) {
+            if (l === 3 && tile.animated && tile.event > 0) {
               hasAnimAndEvent = true
             }
             if (tile.flipped && !tile.animated) {
@@ -370,11 +384,11 @@ class J2L {
     let data1 = this.levelInfo.buffer()
 
     this.header.fields.StreamSize[0 * 2 + 1] = data1.byteLength
-    this.header.fields.StreamSize[1 * 2 + 1] = this.events.byteLength
+    this.header.fields.StreamSize[1 * 2 + 1] = events.byteLength
     this.header.fields.StreamSize[2 * 2 + 1] = dictionary.byteLength
     this.header.fields.StreamSize[3 * 2 + 1] = wordMap.byteLength
 
-    return this.compressBuffers([data1, Buffer.from(this.events.buffer), Buffer.from(dictionary.buffer), Buffer.from(wordMap.buffer)]).then((streams) => {
+    return this.compressBuffers([data1, Buffer.from(events.buffer), Buffer.from(dictionary.buffer), Buffer.from(wordMap.buffer)]).then((streams) => {
       this.header.fields.StreamSize[0 * 2] = streams[0].length
       this.header.fields.StreamSize[1 * 2] = streams[1].length
       this.header.fields.StreamSize[2 * 2] = streams[2].length
