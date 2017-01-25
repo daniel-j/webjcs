@@ -7,6 +7,7 @@ const TileMap = require('./TileMap')
 const Tile = require('./Tile')
 const app = require('./app')
 const settings = require('./settings')
+const mod = require('./util/helpers').mod
 
 const rectShader = [
   require('../shaders/rect.vert.glsl'),
@@ -20,10 +21,6 @@ const fboShader = [
   require('../shaders/fbo.vert.glsl'),
   require('../shaders/fbo.frag.glsl')
 ]
-
-function mod (n, m) {
-  return ((n % m) + m) % m
-}
 
 const r = {}
 r.canvas = null

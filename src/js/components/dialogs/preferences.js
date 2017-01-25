@@ -11,7 +11,7 @@ function resetPreferences (prefs) {
 }
 
 function checkbox (label, prefs, key) {
-  return m('label', 'Disable WebGL', m('input', {type: 'checkbox', checked: prefs[key], onchange: m.withAttr('checked', (val) => { prefs[key] = val })}))
+  return m('label', label, m('input', {type: 'checkbox', checked: prefs[key], onchange: m.withAttr('checked', (val) => { prefs[key] = val })}))
 }
 
 const PreferencesDialog = {
@@ -50,9 +50,9 @@ const PreferencesDialog = {
         ] : null
       ]),
       m('.buttons.center', [
-        m('button', {type: 'submit', value: 'ok'}, 'OK'),
+        m('button', {type: 'submit', value: 'ok', autofocus: true}, 'OK'),
         ' ',
-        m('button', {type: 'submit', value: 'close', autofocus: true}, 'Cancel')
+        m('button', {type: 'submit', value: 'close'}, 'Cancel')
       ])
     ])
   }

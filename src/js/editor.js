@@ -14,6 +14,7 @@ const Renderer = require('./renderer')
 
 const AboutDialog = require('./components/dialogs/about')
 const PreferencesDialog = require('./components/dialogs/preferences')
+const LayerPropertiesDialog = require('./components/dialogs/layerproperties')
 
 const columns = [
   {
@@ -41,7 +42,8 @@ m.mount(document.getElementById('app'), {
       '#editor',
       m(Renderer, m(panels, {columns: columns})),
       m(AboutDialog),
-      m(PreferencesDialog)
+      m(PreferencesDialog),
+      m(LayerPropertiesDialog)
     )
     if (IS_ELECTRON) {
       return R

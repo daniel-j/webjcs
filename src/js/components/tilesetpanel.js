@@ -137,7 +137,7 @@ class TilesetPanel {
           m('div', 'None')
         ])
       ]),
-      m('.panelcontent', m('.canvaswrapper', {oncreate: this.addScrollbars.bind(this)}))
+      m('.panelcontent', m('div', {oncreate: this.addScrollbars.bind(this)}))
     ])
   }
 }

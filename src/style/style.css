@@ -1,6 +1,4 @@
 
-@import url('scrollbars.css');
-
 html, body {
 	height: 100%;
 	margin: 0px;
@@ -86,11 +84,9 @@ html, body {
 	overflow: hidden;
 	flex: 1;
 }
+
 #tilesetpanel {
 	width: 333px;
-}
-#animpanel {
-	min-width: 128px;
 }
 
 .toolbar {
@@ -124,18 +120,6 @@ html, body {
 	white-space: nowrap;
 	text-overflow: clip;
 	overflow: hidden;
-}
-
-.canvaswrapper {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: 0;
-	bottom: 0;
-	transition: margin .15s ease-out;
-}
-.canvaswrapper canvas {
-	display: block;
 }
 
 .mask-transition {

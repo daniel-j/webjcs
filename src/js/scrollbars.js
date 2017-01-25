@@ -1,4 +1,6 @@
 
+require('../style/scrollbars.css')
+
 let isHoldingScrollbar = false
 
 class Scrollbars {

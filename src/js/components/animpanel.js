@@ -146,7 +146,7 @@ class AnimPanel {
 
         m('button', {title: 'Toggle tile mask', onclick: this.toggleMask.bind(this), class: this.showMask ? 'selected' : ''}, 'Mask')
       ]),
-      m('.panelcontent', m('.canvaswrapper', {oncreate: this.addScrollbars.bind(this)}))
+      m('.panelcontent', m('div', {oncreate: this.addScrollbars.bind(this)}))
     ])
   }
 }

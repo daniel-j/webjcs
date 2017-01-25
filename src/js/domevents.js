@@ -1,5 +1,6 @@
 
 const vent = require('./vent')
+const Dialog = require('./components/dialog')
 
 window.addEventListener('blur', function (e) {
   vent.publish('window.blur')
@@ -29,5 +30,7 @@ window.addEventListener('resize', function () {
 }, false)
 
 window.addEventListener('keypress', function (e) {
+  if (Dialog.currentModal) return
+  if (document.activeElement !== document.body || !document.activeElement) return
   vent.publish('window.keypress', e)
 }, false)

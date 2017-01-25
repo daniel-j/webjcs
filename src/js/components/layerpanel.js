@@ -6,6 +6,7 @@ const app = require('../app')
 const TileMap = require('../TileMap')
 const r = require('../renderer')
 const Tween = require('../util/tween')
+const mod = require('../util/helpers').mod
 
 class LayerPanel {
   constructor () {
@@ -21,7 +22,7 @@ class LayerPanel {
     this.currentLayer = 3
     this.layers = []
 
-    vent.subscribe('window.keypress', (e) => {
+    vent.subscribe('window.keypress', (ev, e) => {
       if (!this.isActive) return
       let kc = e.keyCode
       let c = String.fromCharCode(kc)
@@ -32,6 +33,8 @@ class LayerPanel {
         this.setZoomLevel(this.zoomLevel * 2)
       } else if (c === '-') {
         this.setZoomLevel(this.zoomLevel * 0.5)
+      } else if (c === 'p') {
+        vent.publish('layerpanel.openproperties', this.currentLayer)
       } else {
         console.log(kc, c)
       }
@@ -80,16 +83,25 @@ class LayerPanel {
     let currentSpeedX = app.j2l.levelInfo.fields.LayerXSpeed[l] / 65536
     let currentSpeedY = app.j2l.levelInfo.fields.LayerYSpeed[l] / 65536
 
+    let currentAutoSpeedX = app.j2l.levelInfo.fields.LayerAutoXSpeed[l] / 65536
+    let currentAutoSpeedY = app.j2l.levelInfo.fields.LayerAutoYSpeed[l] / 65536
+
     for (let i = 0; i < 8; i++) {
       let layer = this.layers[i]
       let speedX = app.j2l.levelInfo.fields.LayerXSpeed[i] / 65536
       let speedY = app.j2l.levelInfo.fields.LayerYSpeed[i] / 65536
+      let autoSpeedX = app.j2l.levelInfo.fields.LayerAutoXSpeed[i] / 65536
+      let autoSpeedY = app.j2l.levelInfo.fields.LayerAutoYSpeed[i] / 65536
       if (i === l) {
         layer.speedX = 1
         layer.speedY = 1
+        layer.autoSpeedX = 0
+        layer.autoSpeedY = 0
       } else {
         layer.speedX = speedX / currentSpeedX
         layer.speedY = speedY / currentSpeedY
+        layer.autoSpeedX = autoSpeedX
+        layer.autoSpeedY = autoSpeedY
         if (!isFinite(layer.speedX)) layer.speedX = 0
         if (!isFinite(layer.speedY)) layer.speedY = 0
       }
@@ -177,6 +189,15 @@ class LayerPanel {
       this.layers[i] = new TileMap(1, 1)
     }
 
+    vent.subscribe('layer.resize', (ev, [l, w, h]) => {
+      app.j2l.resizeLayer(l, w, h)
+      this.layers[l].setTexture(w, h)
+      this.layers[l].setTiles(0, 0, app.j2l.layers[l])
+    })
+    vent.subscribe('layer.refresh', () => {
+      this.setCurrentLayer(this.currentLayer)
+    })
+
     vent.subscribe('level.load', () => {
       for (let i = 0; i < 8; i++) {
         let lw = app.j2l.levelInfo.fields.LayerWidth[i]
@@ -249,11 +270,12 @@ class LayerPanel {
       this.fboCtx.clearRect(0, 0, cw, ch)
     }
     let zIndexLast = null
+    let now = Date.now() / 1000
 
     for (let i = this.layers.length - 1; i >= 0; i--) {
       const layer = this.layers[i]
       if (layer.hidden) continue
-      let viewOffset = [Math.floor(x * layer.speedX) || 0, Math.floor(y * layer.speedY) || 0]
+      let viewOffset = [Math.floor(x * layer.speedX + mod(layer.autoSpeedX * now, layer.width) * 32) || 0, Math.floor(y * layer.speedY + mod(layer.autoSpeedY * now, layer.height) * 32) || 0]
       if ((zIndexLast === null || zIndexLast !== layer.zIndex)) {
         if (zIndexLast !== null) {
           if (!r.disableWebGL) {
@@ -381,6 +403,8 @@ class LayerPanel {
         m('button', {title: 'Zoom in', onclick: this.setZoomLevel.bind(this, this.zoomLevel * 2)}, '+'),
         m('button', {title: 'Zoom out', onclick: this.setZoomLevel.bind(this, this.zoomLevel * 0.5)}, '-'),
         m('.spacer'),
+        m('button', {title: 'Layer properties', onclick: () => vent.publish('layerpanel.openproperties', this.currentLayer)}, 'i'),
+        m('.spacer'),
         layerButtons,
         m('.spacer'),
         m('button.tile-modes.right', {title: 'Toggle tile modes', onclick: this.toggleTileMode.bind(this)}, [
@@ -391,7 +415,7 @@ class LayerPanel {
         ]),
         m('button', {title: 'Toggle events', onclick: this.toggleEvents.bind(this), class: this.showEvents ? 'selected' : ''}, 'Events')
       ]),
-      m('.panelcontent', m('.canvaswrapper', {oncreate: this.addScrollbars.bind(this)}))
+      m('.panelcontent', m('div', {oncreate: this.addScrollbars.bind(this)}))
     ])
   }
 }
