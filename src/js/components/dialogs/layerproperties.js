@@ -81,12 +81,23 @@ function integerInput (prefs, key, {min, max, disabled, style} = {}) {
     style
   })
 }
-function colorInput (prefs, key, {disabled} = {}) {
+function selectInput (prefs, key, items, {disabled, style} = {}) {
+  return m('select.flexfluid', {
+    value: prefs[key],
+    disabled: !!disabled,
+    onchange: m.withAttr('value', (val) => { prefs[key] = val }),
+    style
+  }, items.map((item, value) => {
+    return m('option', {value}, item)
+  }))
+}
+function colorInput (prefs, key, {disabled, style} = {}) {
   return m('input', {
     type: 'color',
     value: rgb2hex(prefs[key]),
     disabled: disabled,
-    oninput: m.withAttr('value', (val) => { prefs[key] = hex2rgb(val) })
+    oninput: m.withAttr('value', (val) => { prefs[key] = hex2rgb(val) }),
+    style
   })
 }
 
@@ -131,6 +142,7 @@ const LayerPropertiesDialog = {
     }
     state.currentLayer = 3
     state.prefs = {}
+    reset(state.prefs, state.currentLayer)
   },
   oncreate ({dom, state}) {
     vent.subscribe('layerpanel.openproperties', (ev, l) => {
@@ -145,21 +157,21 @@ const LayerPropertiesDialog = {
       m('.title', 'Layer Properties for layer #' + (state.currentLayer + 1)),
       m('table.content', {style: {width: '100%', borderSpacing: '5px', borderCollapse: 'separate'}}, [
         m('tr', [
-          m('td', 'X-Speed'),
-          m('td', {width: '100'}, m('.flexwrapper', floatInput(state.prefs, 'speedX', {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
-          m('td', 'Auto X-Speed'),
-          m('td', {width: '100'}, m('.flexwrapper', floatInput(state.prefs, 'autoSpeedX', {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
+          m('td.textright', 'X-Speed'),
+          m('td', {width: 120}, m('.flexwrapper', floatInput(state.prefs, 'speedX', {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
+          m('td.textright', 'Auto X-Speed'),
+          m('td', {width: 120}, m('.flexwrapper', floatInput(state.prefs, 'autoSpeedX', {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
         ]),
         m('tr', [
-          m('td', 'Y-Speed'),
+          m('td.textright', 'Y-Speed'),
           m('td', m('.flexwrapper', floatInput(state.prefs, 'speedY', {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
-          m('td', 'Auto Y-Speed'),
+          m('td.textright', 'Auto Y-Speed'),
           m('td', m('.flexwrapper', floatInput(state.prefs, 'autoSpeedY', {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
         ]),
         m('tr', [
-          m('td', 'Width'),
+          m('td.textright', 'Width'),
           m('td', m('.flexwrapper', integerInput(state.prefs, 'layerWidth', {min: 1, max: 1023}))),
-          m('td', 'Height'),
+          m('td.textright', 'Height'),
           m('td', m('.flexwrapper', integerInput(state.prefs, 'layerHeight', {min: 1, max: 1023})))
         ]),
         m('tr', [
@@ -173,15 +185,25 @@ const LayerPropertiesDialog = {
           m('td', {colspan: 4}, boolInput('Texture mode', state.prefs, 'textureMode'))
         ]),
         m('tr', [
-          m('td', {colspan: 4}, m('.flexwrapper', {style: {alignItems: 'center'}}, [
-            'Texture type ',
-            integerInput(state.prefs, 'textureType', {min: 0, maz: 255, disabled: !state.prefs.textureMode, style: {margin: '0 10px'}}),
-            colorInput(state.prefs, 'textureParams', {disabled: !state.prefs.textureMode})
-          ]))
+          m('td.textright', 'Texture type '),
+          m('td', m('.flexwrapper', selectInput(state.prefs, 'textureType', ['Warp Horizon', 'Tunnel', 'Menu', 'Tile Menu'], {disabled: !state.prefs.textureMode}))),
+            // integerInput(state.prefs, 'textureType', {min: 0, maz: 255, disabled: !state.prefs.textureMode, style: {margin: '0 10px'}}),
+          +state.prefs.textureType < 2 ? [
+            m('td.textright', 'Fade Color'),
+            m('td', colorInput(state.prefs, 'textureParams', {disabled: !state.prefs.textureMode, style: {marginLeft: '5px'}}))
+          ] : null
         ]),
-        m('tr', [
-          m('td', {colspan: 4}, boolInput('Parallaxing stars background', state.prefs, 'parallaxStars'))
-        ])
+        +state.prefs.textureType === 2 ? m('tr', m('td', {colspan: 4}, m('.flexwrapper.alignitemscenter', [
+          'Palrow 16',
+          integerInput(state.prefs.textureParams, 0, {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {margin: '0 5px'}}),
+          'Palrow 32',
+          integerInput(state.prefs.textureParams, 1, {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {margin: '0 5px'}}),
+          'Palrow 256',
+          integerInput(state.prefs.textureParams, 2, {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {marginLeft: '5px'}})
+        ]))) : null,
+        +state.prefs.textureType < 3 ? m('tr', [
+          m('td', {colspan: 4}, boolInput(['Parallaxing stars', 'Spiral', 'Reverse gradients'][state.prefs.textureType], state.prefs, 'parallaxStars'))
+        ]) : null
       ]),
       m('.buttons.center', [
         m('button', {type: 'submit', value: 'ok', autofocus: true}, 'OK'),

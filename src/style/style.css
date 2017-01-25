@@ -50,6 +50,9 @@ html, body {
 .flexwrapper {
 	display: flex;
 }
+.alignitemscenter {
+	align-items: center;
+}
 .flexfluid {
 	flex: 1;
 	min-width: 0;

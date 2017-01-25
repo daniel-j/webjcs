@@ -9,7 +9,7 @@ dialog {
 	max-width: 600px;
 	padding: 4px;
 	background-color: hsl(227, 14%, 20%);
-	color: #CCC;
+	color: hsl(227, 14%, 85%);
 	font-size: 14px;
 }
 dialog .title {
@@ -81,7 +81,21 @@ dialog input[type='color']::-webkit-color-swatch {
 	border: none;
 }
 
-dialog input:disabled {
+dialog select {
+	border: 1px solid hsl(227, 14%, 15%);
+	border-radius: 2px;
+	background-color: hsl(227, 14%, 30%);
+	color: white;
+	font-size: 14px;
+	padding: 2px 4px;
+	margin: 2px;
+}
+dialog select option {
+	background-color: hsl(227, 14%, 30%);
+	color: white;
+}
+
+dialog input:disabled, dialog select:disabled {
 	/*color: hsl(227, 14%, 50%);*/
 	opacity: 0.3;
 }
