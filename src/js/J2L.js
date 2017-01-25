@@ -178,6 +178,25 @@ class J2L {
     }
   }
 
+  resizeLayer (l, w, h) {
+    let lw = this.levelInfo.fields.LayerWidth[l]
+    let lh = this.levelInfo.fields.LayerHeight[l]
+    if (lw !== w || lh !== h) {
+      lw = this.levelInfo.fields.LayerWidth[l] = w
+      lh = this.levelInfo.fields.LayerHeight[l] = h
+
+      this.layers[l].length = lw
+      for (let x = 0; x < lw; x++) {
+        this.layers[l][x] = this.layers[l][x] || []
+        this.layers[l][x].length = lh
+        for (let y = 0; y < lh; y++) {
+          let t = this.layers[l][x][y] || new Tile()
+          this.layers[l][x][y] = t
+        }
+      }
+    }
+  }
+
   loadFromBuffer (buffer, name = '') {
     this.name = name
     return new Promise((resolve, reject) => {
