@@ -61,6 +61,7 @@
 
 
 /* THEME */
+/*
 .scrollbars.horizontal {
 	transition: height .2s ease-in-out, background-color .2s ease-in-out;
 }
@@ -73,7 +74,7 @@
 .scrollbars.vertical .thumb {
 	transition: background-color .2s ease-in-out, top .15s ease-out;
 }
-
+*/
 .scrollbars.track {
 	background-color: #3e434f;
 	border-color: #2b2e39;
@@ -105,7 +106,7 @@
 }
 
 .scrollbars.smooth {
-	transition: left .15s ease-out, top .15s ease-out;
+	/*transition: left .15s ease-out, top .15s ease-out;*/
 	width: 0;
 	height: 0;
 	position: absolute;
