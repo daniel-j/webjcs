@@ -20,6 +20,18 @@ const Dialog = {
     }
     attrs.showModal = () => attrs.show(true)
     attrs.close = (val) => dom.close(val)
+    state.onValueChange = (e) => {
+      let t = e.target
+      console.log(t.type)
+      if (e.type === 'input' && t.type.startsWith('select')) {
+        e.redraw = false
+        return
+      }
+      let val = t.value
+      if (t.type === 'checkbox') val = t.checked
+      if (attrs.onValueChange) return attrs.onValueChange(e, e.type, t.type, t.name, val)
+      else e.redraw = false
+    }
     attrs.dom = dom
   },
   view ({children, state, attrs}) {
@@ -33,7 +45,9 @@ const Dialog = {
       oncancel: (e) => { attrs.dom.returnValue = 'cancel' }
     }, m('form', {
       method: 'dialog',
-      oncreate: ({dom}) => { state.form = attrs.form = dom }
+      oncreate: ({dom}) => { state.form = attrs.form = dom },
+      oninput: state.onValueChange,
+      onchange: state.onValueChange
     }, children))
   }
 }

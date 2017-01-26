@@ -5,6 +5,10 @@ const vent = require('../../vent')
 const app = require('../../app')
 const toggler = require('../misc').toggler
 
+function clamp (n, min, max) {
+  return Math.max(min, Math.min(n, max))
+}
+
 function reset (p, l) {
   let f = app.j2l.levelInfo.fields
   p.speedX = f.LayerXSpeed[l] / 65536
@@ -42,61 +46,58 @@ function hex2rgb (hex) {
   return components.slice(1, 4).map((hex) => parseInt(hex, 16))
 }
 
-function boolInput (label, prefs, key, {disabled} = {}) {
+function boolInput (label, name, checked, {disabled} = {}) {
   return m(toggler, {
-    checked: !!prefs[key],
-    disabled: !!disabled,
-    onchange: m.withAttr('checked', (val) => { prefs[key] = val }),
-    style: {width: '100%'}
+    name,
+    checked: !!checked,
+    disabled: !!disabled
   }, label)
 }
-function floatInput (prefs, key, {min = -Infinity, max = Infinity, disabled, style} = {}) {
+function floatInput (name, value, {min = -Infinity, max = Infinity, disabled, style} = {}) {
   return m('input.flexfluid', {
     type: 'text',
+    name,
     size: 10,
+    min,
+    max,
     required: true,
     pattern: '-?\\d*?.?\\d*?',
-    value: prefs[key],
+    value,
     disabled: !!disabled,
-    oninput: m.withAttr('value', (val) => { prefs[key] = val }),
-    onchange: () => {
-      prefs[key] = Math.min(max, Math.max(min, parseFloat(prefs[key])))
-      if (!isFinite(prefs[key])) prefs[key] = ''
-    },
     style
   })
 }
-function integerInput (prefs, key, {min, max, disabled, style} = {}) {
+function integerInput (name, value, {min, max, disabled, style} = {}) {
   return m('input.flexfluid', {
     type: 'number',
+    name,
     size: 10,
     step: 1,
     min,
     max,
     required: true,
     pattern: '\\d*',
-    value: prefs[key],
+    value,
     disabled: !!disabled,
-    oninput: m.withAttr('value', (val) => { prefs[key] = val }),
     style
   })
 }
-function selectInput (prefs, key, items, {disabled, style} = {}) {
+function selectInput (name, value, items, {disabled, style} = {}) {
   return m('select.flexfluid', {
-    value: prefs[key],
+    name,
+    value,
     disabled: !!disabled,
-    onchange: m.withAttr('value', (val) => { prefs[key] = val }),
     style
   }, items.map((item, value) => {
     return m('option', {value}, item)
   }))
 }
-function colorInput (prefs, key, {disabled, style} = {}) {
+function colorInput (name, value, {disabled, style} = {}) {
   return m('input', {
+    name,
     type: 'color',
-    value: rgb2hex(prefs[key]),
+    value: rgb2hex(value),
     disabled: disabled,
-    oninput: m.withAttr('value', (val) => { prefs[key] = hex2rgb(val) }),
     style
   })
 }
@@ -109,12 +110,12 @@ const LayerPropertiesDialog = {
         if (val !== 'ok') {
           return
         }
-        console.log('Applying layer properties...')
+        // console.log('Applying layer properties...')
         let p = state.prefs
         let l = state.currentLayer
         let f = app.j2l.levelInfo.fields
-        p.layerWidth = parseInt(p.layerWidth)
-        p.layerHeight = parseInt(p.layerHeight)
+        p.layerWidth = clamp(parseInt(p.layerWidth), 1, 1023)
+        p.layerHeight = clamp(parseInt(p.layerHeight), 1, 1023)
         if (p.layerWidth !== f.LayerWidth[l] || p.layerHeight !== f.LayerHeight[l]) {
           if (p.layerWidth < f.LayerWidth[l] || p.layerHeight < f.LayerHeight[l]) {
             if (!confirm('Are you sure you want to shrink the layer?')) {
@@ -124,10 +125,10 @@ const LayerPropertiesDialog = {
           }
           vent.publish('layer.resize', [this.currentLayer, p.layerWidth, p.layerHeight])
         }
-        f.LayerXSpeed[l] = p.speedX * 65536
-        f.LayerYSpeed[l] = p.speedY * 65536
-        f.LayerAutoXSpeed[l] = p.autoSpeedX * 65536
-        f.LayerAutoYSpeed[l] = p.autoSpeedY * 65536
+        f.LayerXSpeed[l] = clamp(p.speedX, -32768, 32767) * 65536
+        f.LayerYSpeed[l] = clamp(p.speedY, -32768, 32767) * 65536
+        f.LayerAutoXSpeed[l] = clamp(p.autoSpeedX, -32768, 32767) * 65536
+        f.LayerAutoYSpeed[l] = clamp(p.autoSpeedY, -32768, 32767) * 65536
 
         // clear lower 5 bits and then set the new bits
         f.LayerMiscProperties[l] &= -1 << 5
@@ -138,6 +139,26 @@ const LayerPropertiesDialog = {
         f.LayerTextureParams[l * 3 + 2] = p.textureParams[2]
 
         vent.publish('layer.refresh')
+      },
+      onValueChange (e, ev, type, name, value) {
+        let t = e.target
+        let p = state.prefs
+        let parts = name.split('.')
+        let o = p
+        let i = 0
+        while (i < parts.length - 1) {
+          o = o[parts[i]]
+          i++
+        }
+        let key = parts[i]
+        name = parts[0]
+        type = t.dataset.type || type
+        if (type === 'color') {
+          value = hex2rgb(value)
+        }
+        o[key] = value
+
+        // console.log(ev, type, name, value)
       }
     }
     state.currentLayer = 3
@@ -158,51 +179,50 @@ const LayerPropertiesDialog = {
       m('table.content', {style: {width: '100%', borderSpacing: '5px', borderCollapse: 'separate'}}, [
         m('tr', [
           m('td.textright', 'X-Speed'),
-          m('td', {width: 120}, m('.flexwrapper', floatInput(state.prefs, 'speedX', {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
+          m('td', {width: 120}, m('.flexwrapper', floatInput('speedX', state.prefs.speedX, {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
           m('td.textright', 'Auto X-Speed'),
-          m('td', {width: 120}, m('.flexwrapper', floatInput(state.prefs, 'autoSpeedX', {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
+          m('td', {width: 120}, m('.flexwrapper', floatInput('autoSpeedX', state.prefs.autoSpeedX, {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
         ]),
         m('tr', [
           m('td.textright', 'Y-Speed'),
-          m('td', m('.flexwrapper', floatInput(state.prefs, 'speedY', {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
+          m('td', m('.flexwrapper', floatInput('speedY', state.prefs.speedY, {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
           m('td.textright', 'Auto Y-Speed'),
-          m('td', m('.flexwrapper', floatInput(state.prefs, 'autoSpeedY', {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
+          m('td', m('.flexwrapper', floatInput('autoSpeedY', state.prefs.autoSpeedY, {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
         ]),
         m('tr', [
           m('td.textright', 'Width'),
-          m('td', m('.flexwrapper', integerInput(state.prefs, 'layerWidth', {min: 1, max: 1023}))),
+          m('td', m('.flexwrapper', integerInput('layerWidth', state.prefs.layerWidth, {min: 1, max: 1023}))),
           m('td.textright', 'Height'),
-          m('td', m('.flexwrapper', integerInput(state.prefs, 'layerHeight', {min: 1, max: 1023})))
+          m('td', m('.flexwrapper', integerInput('layerHeight', state.prefs.layerHeight, {min: 1, max: 1023})))
         ]),
         m('tr', [
-          m('td', {colspan: 2}, boolInput('Tile Width', state.prefs, 'tileWidth')),
-          m('td', {colspan: 2}, boolInput('Tile Height', state.prefs, 'tileHeight'))
+          m('td', {colspan: 2}, boolInput('Tile Width', 'tileWidth', state.prefs.tileWidth)),
+          m('td', {colspan: 2}, boolInput('Tile Height', 'tileHeight', state.prefs.tileHeight))
         ]),
         m('tr', [
-          m('td', {colspan: 4}, boolInput('Limit Visible Region', state.prefs, 'limitVisibleRegion'))
+          m('td', {colspan: 4}, boolInput('Limit Visible Region', 'limitVisibleRegion', state.prefs.limitVisibleRegion))
         ]),
         m('tr', [
-          m('td', {colspan: 4}, boolInput('Texture mode', state.prefs, 'textureMode'))
+          m('td', {colspan: 4}, boolInput('Texture mode', 'textureMode', state.prefs.textureMode))
         ]),
         m('tr', [
           m('td.textright', 'Texture type '),
-          m('td', m('.flexwrapper', selectInput(state.prefs, 'textureType', ['Warp Horizon', 'Tunnel', 'Menu', 'Tile Menu'], {disabled: !state.prefs.textureMode}))),
-            // integerInput(state.prefs, 'textureType', {min: 0, maz: 255, disabled: !state.prefs.textureMode, style: {margin: '0 10px'}}),
+          m('td', m('.flexwrapper', selectInput('textureType', state.prefs.textureType, ['Warp Horizon', 'Tunnel', 'Menu', 'Tile Menu'], {disabled: !state.prefs.textureMode}))),
           +state.prefs.textureType < 2 ? [
             m('td.textright', 'Fade Color'),
-            m('td', colorInput(state.prefs, 'textureParams', {disabled: !state.prefs.textureMode, style: {marginLeft: '5px'}}))
+            m('td', colorInput('textureParams', state.prefs.textureParams, {disabled: !state.prefs.textureMode, style: {marginLeft: '5px'}}))
           ] : null
         ]),
         +state.prefs.textureType === 2 ? m('tr', m('td', {colspan: 4}, m('.flexwrapper.alignitemscenter', [
           'Palrow 16',
-          integerInput(state.prefs.textureParams, 0, {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {margin: '0 5px'}}),
+          integerInput('textureParams.0', state.prefs.textureParams[0], {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {margin: '0 5px'}}),
           'Palrow 32',
-          integerInput(state.prefs.textureParams, 1, {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {margin: '0 5px'}}),
+          integerInput('textureParams.1', state.prefs.textureParams[1], {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {margin: '0 5px'}}),
           'Palrow 256',
-          integerInput(state.prefs.textureParams, 2, {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {marginLeft: '5px'}})
+          integerInput('textureParams.2', state.prefs.textureParams[2], {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {marginLeft: '5px'}})
         ]))) : null,
         +state.prefs.textureType < 3 ? m('tr', [
-          m('td', {colspan: 4}, boolInput(['Parallaxing stars', 'Spiral', 'Reverse gradients'][state.prefs.textureType], state.prefs, 'parallaxStars'))
+          m('td', {colspan: 4}, boolInput(['Parallaxing stars', 'Spiral', 'Reverse gradients'][state.prefs.textureType], 'parallaxStars', state.prefs.parallaxStars))
         ]) : null
       ]),
       m('.buttons.center', [
