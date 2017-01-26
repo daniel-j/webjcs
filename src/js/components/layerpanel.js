@@ -422,10 +422,10 @@ class LayerPanel {
       m('.toolbar', [
         m('.title.flexfluid', m('.text-clip', this.getLayerTitle())),
 
-        m('button', {title: 'Zoom in', onclick: this.setZoomLevel.bind(this, this.zoomLevel * 2)}, '+'),
-        m('button', {title: 'Zoom out', onclick: this.setZoomLevel.bind(this, this.zoomLevel * 0.5)}, '-'),
+        m('button', {title: 'Zoom in [+]', onclick: this.setZoomLevel.bind(this, this.zoomLevel * 2)}, '+'),
+        m('button', {title: 'Zoom out [-]', onclick: this.setZoomLevel.bind(this, this.zoomLevel * 0.5)}, '-'),
         m('.spacer'),
-        m('button', {title: 'Layer properties', onclick: () => vent.publish('layerpanel.openproperties', this.currentLayer)}, 'i'),
+        m('button', {title: 'Layer properties [P]', onclick: () => vent.publish('layerpanel.openproperties', this.currentLayer)}, 'i'),
         m('.spacer'),
         layerButtons,
         m('.spacer'),
