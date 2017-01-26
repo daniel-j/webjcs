@@ -304,6 +304,7 @@ class LayerPanel {
       }
 
       r.drawTilemap({
+        ctx: this.fboCtx,
         scale: this.zoomLevel,
         viewportSize: [cw, ch],
         maskOpacity: maskOpacity,
