@@ -7,6 +7,8 @@ const screenfull = require('screenfull')
 
 const mainMenu = require('../menus/main-menu')
 
+const isMacOS = navigator.platform.includes('Mac')
+
 function click (menuItem) {
   if (menuItem.href) {
     // ...
@@ -17,8 +19,12 @@ function click (menuItem) {
 }
 
 const Menu = {
-  oncreate ({state, dom}) {
+  oninit ({state}) {
     state.currentItem = null
+    state.menuEl = null
+    state.accelerators = {}
+  },
+  oncreate ({state, dom}) {
     state.menuEl = dom
     vent.subscribe('window.mousedown', (ev, e) => {
       let t = e.target
@@ -37,6 +43,15 @@ const Menu = {
         m.redraw()
       }
     })
+    vent.subscribe('window.keydown', (ev, {e, key, accel, hasActiveElement, modalOpen}) => {
+      let menuItem = state.accelerators[accel]
+      if (!menuItem) console.log(accel)
+      if (!menuItem || (hasActiveElement && menuItem && menuItem.hasActiveElement === false)) return
+      e.preventDefault()
+      if (modalOpen) return
+      console.log(accel, menuItem.command)
+      state.clickItem(menuItem, state)
+    })
   },
 
   build (list, state, level = 0, selected) {
@@ -45,6 +60,15 @@ const Menu = {
       if (item.electronOnly) return null
       if (item.label) {
         let label = item.label.replace(/&(.)/g, '<u>$1</u>')
+        let accel = item.accelerator
+        if (accel) {
+          state.accelerators[accel.replace('CmdOrCtrl', isMacOS ? 'Meta' : 'Ctrl')] = item
+          accel = accel.replace('CmdOrCtrl', isMacOS ? '⌘' : 'Ctrl')
+          if (isMacOS) {
+            accel = accel.replace('Shift', '⇧')
+            accel = accel.replace(/\+/g, ' ')
+          }
+        }
         return m(
           'li', {
             class: [item === state.currentItem ? 'selected' : ''].join(' ')
@@ -57,7 +81,7 @@ const Menu = {
               target: item.href && '_blank'
             },
             m.trust(label),
-            item.accelerator && m('.accelerator', item.accelerator)
+            accel && m('.accelerator', accel)
           ),
           Menu.build(item.submenu, state, level + 1, item === state.currentItem)
         )
@@ -75,6 +99,10 @@ const Menu = {
         state.currentItem = item
       }
     }
+    state.clickItem(item, state)
+  },
+
+  clickItem (item, state) {
     if (item.click) {
       state.currentItem = null
       setTimeout(() => click(item), 20)
@@ -100,6 +128,7 @@ const Menu = {
   },
 
   view ({children, state}) {
+    state.accelerators = {}
     return [
       m('#menu', Menu.build(mainMenu, state)),
       children

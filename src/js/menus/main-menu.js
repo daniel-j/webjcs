@@ -24,7 +24,7 @@ module.exports = [
       {label: 'Save and Run', command: 'savelevelrun', accelerator: 'CmdOrCtrl+Shift+R', click},
       {label: '&Run', command: 'levelrun', accelerator: 'CmdOrCtrl+R', click},
       {type: 'separator'},
-      {label: '&Preferences', command: 'openpreferences', click}
+      {label: '&Preferences', command: 'openpreferences', accelerator: 'CmdOrCtrl+,', click}
     ]
   },
   {
@@ -39,8 +39,8 @@ module.exports = [
   {
     label: '&Edit',
     submenu: [
-      {label: '&Undo', command: 'undo', accelerator: 'CmdOrCtrl+Z', enabled: false, click},
-      {label: '&Redo', command: 'redo', accelerator: 'CmdOrCtrl+Shift+Z', enabled: false, click}
+      {label: '&Undo', command: 'undo', accelerator: 'CmdOrCtrl+Z', enabled: false, click, hasActiveElement: false},
+      {label: '&Redo', command: 'redo', accelerator: 'CmdOrCtrl+Shift+Z', enabled: false, click, hasActiveElement: false}
     ]
   },
   {

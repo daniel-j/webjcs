@@ -22,21 +22,42 @@ class LayerPanel {
     this.currentLayer = 3
     this.layers = []
 
-    vent.subscribe('window.keypress', (ev, e) => {
-      if (!this.isActive) return
-      let kc = e.keyCode
-      let c = String.fromCharCode(kc)
-      if (kc >= 49 && kc <= 56) { // Number 1-8
-        let l = kc - 49
-        this.setCurrentLayer(l)
-      } else if (c === '+') {
+    vent.subscribe('window.keydown', (ev, {e, key, accel, dialogOpen, hasActiveElement}) => {
+      if (!this.isActive || dialogOpen || hasActiveElement) return
+      const isMacOS = navigator.platform.includes('Mac')
+      const ctrlKey = isMacOS ? e.metaKey : e.ctrlKey
+      let prevent = true
+      if (!e.shiftKey && key >= 1 && key <= 8) { // Number 1-8
+        let l = key - 1
+        if (!ctrlKey) {
+          this.setCurrentLayer(l)
+        } else {
+          vent.publish('layerpanel.openproperties', l)
+        }
+      } else {
+        prevent = false
+        // console.log(kc, c)
+      }
+      if (prevent) {
+        e.preventDefault()
+      }
+    })
+    vent.subscribe('window.keypress', (ev, {e, dialogOpen, hasActiveElement}) => {
+      if (!this.isActive || dialogOpen || hasActiveElement) return
+      const kc = e.keyCode
+      const c = String.fromCharCode(kc)
+      let prevent = true
+      if (c === '+') {
         this.setZoomLevel(this.zoomLevel * 2)
       } else if (c === '-') {
         this.setZoomLevel(this.zoomLevel * 0.5)
       } else if (c === 'p') {
         vent.publish('layerpanel.openproperties', this.currentLayer)
       } else {
-        console.log(kc, c)
+        prevent = false
+      }
+      if (prevent) {
+        e.preventDefault()
       }
     })
   }

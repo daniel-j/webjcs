@@ -37,6 +37,7 @@
     "dialog-polyfill": "^0.4.5",
     "file-saver": "^1.3.3",
     "is-electron": "^2.0.0",
+    "keycode": "^2.1.8",
     "mithril": "^1.0.0-rc.8",
     "pubsub-js": "^1.5.4",
     "raf-loop": "^1.1.3",
