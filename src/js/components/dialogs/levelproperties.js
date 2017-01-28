@@ -59,7 +59,7 @@ function rangeInput (name, value, min, max, {disabled, style, step = 1} = {}) {
       max,
       step,
       size: 5,
-      pattern: '\\d*',
+      pattern: '\\d*'
     })
   ]
 }
@@ -157,30 +157,31 @@ const LevelPropertiesDialog = {
         ]),
         m('tr', [
           m('td.textright', 'Next Level'),
-          m('td', {width: 120}, m('.flexwrapper', stringInput('NextLevel', state.prefs.NextLevel, {maxlength: 32}))),,
+          m('td', {width: 120}, m('.flexwrapper', stringInput('NextLevel', state.prefs.NextLevel, {maxlength: 32}))),
           m('td', {rowspan: 9, colspan: 2}, m('textarea', {
             name: 'HelpString.' + state.prefs.currentHelpString,
             value: state.prefs.HelpString && state.prefs.HelpString[state.prefs.currentHelpString],
             style: {
-              minHeight: '100px',
+              minHeight: '270px',
               height: '100%',
               width: '380px',
               whiteSpace: 'nowrap',
-              textAlign: 'center'
+              textAlign: 'center',
+              resize: 'none'
             }
           }))
         ]),
         m('tr', [
           m('td.textright', 'Secret Level'),
-          m('td', {width: 120}, m('.flexwrapper', stringInput('SecretLevel', state.prefs.SecretLevel, {maxlength: 32}))),
+          m('td', {width: 120}, m('.flexwrapper', stringInput('SecretLevel', state.prefs.SecretLevel, {maxlength: 32})))
         ]),
         m('tr', [
           m('td.textright', 'Bonus Level'),
-          m('td', {width: 120}, m('.flexwrapper', stringInput('BonusLevel', state.prefs.BonusLevel, {maxlength: 32}))),
+          m('td', {width: 120}, m('.flexwrapper', stringInput('BonusLevel', state.prefs.BonusLevel, {maxlength: 32})))
         ]),
         m('tr', [
           m('td.textright', 'Music File'),
-          m('td', {width: 120}, m('.flexwrapper', stringInput('MusicFile', state.prefs.MusicFile, {maxlength: 32}))),
+          m('td', {width: 120}, m('.flexwrapper', stringInput('MusicFile', state.prefs.MusicFile, {maxlength: 32})))
         ]),
         m('tr', [
           m('td.textright', {title: 'Hide level in Homecooked Levels in JJ2'}, 'Hide in HCL'),
