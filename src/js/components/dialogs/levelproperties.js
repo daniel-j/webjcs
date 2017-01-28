@@ -167,7 +167,8 @@ const LevelPropertiesDialog = {
               width: '380px',
               whiteSpace: 'nowrap',
               textAlign: 'center',
-              resize: 'none'
+              resize: 'none',
+              maxlength: 512
             }
           }))
         ]),
