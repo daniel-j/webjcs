@@ -70,6 +70,14 @@
 	content: " ";
 }
 
+.toggler input:focus + a {
+	box-shadow: 0 0 5px hsl(213, 65%, 50%);
+}
+
+.toggler input:disabled + a {
+	opacity: 0.3;
+}
+
 .toggler input ~ .toggle-on {
 	display: none;
 }

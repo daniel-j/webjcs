@@ -222,7 +222,7 @@ const LayerPropertiesDialog = {
           integerInput('textureParams.2', state.prefs.textureParams[2], {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {marginLeft: '5px'}})
         ]))) : null,
         +state.prefs.textureType < 3 ? m('tr', [
-          m('td', {colspan: 4}, boolInput(['Parallaxing stars', 'Spiral', 'Reverse gradients'][state.prefs.textureType], 'parallaxStars', state.prefs.parallaxStars))
+          m('td', {colspan: 4}, boolInput(['Parallaxing stars', 'Spiral', 'Reverse gradients'][state.prefs.textureType], 'parallaxStars', state.prefs.parallaxStars, {disabled: !state.prefs.textureMode}))
         ]) : null
       ]),
       m('.buttons.center', [

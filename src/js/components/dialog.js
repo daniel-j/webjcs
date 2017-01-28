@@ -22,10 +22,12 @@ const Dialog = {
     attrs.close = (val) => dom.close(val)
     state.onValueChange = (e) => {
       let t = e.target
-      console.log(t.type)
       if (e.type === 'input' && t.type.startsWith('select')) {
         e.redraw = false
         return
+      }
+      if (e.type === 'input' && t.type !== 'range') {
+        e.redraw = false
       }
       let val = t.value
       if (t.type === 'checkbox') val = t.checked

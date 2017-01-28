@@ -15,6 +15,7 @@ const Renderer = require('./renderer')
 const AboutDialog = require('./components/dialogs/about')
 const PreferencesDialog = require('./components/dialogs/preferences')
 const LayerPropertiesDialog = require('./components/dialogs/layerproperties')
+const LevelPropertiesDialog = require('./components/dialogs/levelproperties')
 
 const columns = [
   {
@@ -43,6 +44,7 @@ m.mount(document.getElementById('app'), {
       m(Renderer, m(panels, {columns: columns})),
       m(AboutDialog),
       m(PreferencesDialog),
+      m(LevelPropertiesDialog),
       m(LayerPropertiesDialog)
     )
     if (IS_ELECTRON) {
@@ -54,7 +56,7 @@ m.mount(document.getElementById('app'), {
 })
 
 require.ensure([], () => {
-  if (!IS_ELECTRON && DEVELOPMENT) {
+  if (DEVELOPMENT) {
     // const jj2Dir = path.join(__dirname, '/../data/')
     const levelBuffer = require('buffer-loader!../../data/ab17btl06.j2l')
     const tilesetBuffer = require('buffer-loader!../../data/DiambGarden.j2t')
