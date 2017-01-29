@@ -47,7 +47,6 @@ class TilesetPanel {
     let show = !this.showMask
     this.showMask = show
     this.maskTween.set(show ? 1 : 0)
-    vent.publish('tileset.togglemask', show)
   }
 
   toggleTileType (e) {

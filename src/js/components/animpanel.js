@@ -7,10 +7,12 @@ const Scrollbars = require('../scrollbars')
 const TileMap = require('../TileMap')
 const r = require('../renderer')
 const Tile = require('../Tile')
+const Tween = require('../util/tween')
 
 class AnimPanel {
   constructor () {
     this.showMask = false
+    this.maskTween = new Tween(0, 0.2)
   }
 
   activate (e) {
@@ -22,9 +24,7 @@ class AnimPanel {
   toggleMask () {
     let show = !this.showMask
     this.showMask = show
-    vent.publish('panel.anim', {
-      showMask: show
-    })
+    this.maskTween.set(show ? 1 : 0)
   }
 
   addScrollbars ({dom}) {
@@ -80,6 +80,7 @@ class AnimPanel {
 
     const gl = r.gl
     const ctx = r.ctx
+    const maskOpacity = this.maskTween.get()
     const canvasRect = r.canvas.getBoundingClientRect()
     const rect = this.panelEl.parentNode.getBoundingClientRect()
     const cw = this.scrollbars.getOffsetWidth()
@@ -106,7 +107,7 @@ class AnimPanel {
       repeatTilesX: 0,
       repeatTilesY: 0,
       map: this.framesMap.texture,
-      maskOpacity: 0,
+      maskOpacity: maskOpacity,
       backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
     })
     if (r.disableWebGL) {
@@ -131,7 +132,7 @@ class AnimPanel {
       repeatTilesX: 0,
       repeatTilesY: 0,
       map: this.animMap.texture,
-      maskOpacity: 0,
+      maskOpacity: maskOpacity,
       backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
     })
     if (r.disableWebGL) {
