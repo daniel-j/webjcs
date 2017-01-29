@@ -66,8 +66,6 @@ class J2T {
     this.tilesetCtx = this.tilesetCanvas.getContext('2d')
     this.tilesetCtx.imageSmoothingEnabled = false
 
-    document.body.appendChild(this.tilesetCanvas)
-
     this.maskCanvas = document.createElement('canvas')
     this.maskCanvas.className = 'tileset-mask'
     this.maskCanvas.width = 32
