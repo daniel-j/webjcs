@@ -31,9 +31,7 @@ module.exports = [
     label: '&View',
     submenu: [
       {label: 'Toggle &fullscreen', role: 'togglefullscreen'},
-      {label: 'Toggle Developer Tools', accelerator: 'Ctrl+Shift+I', click (item, win) {
-        if (win) win.webContents.toggleDevTools()
-      }, electronOnly: true}
+      {label: 'Toggle Developer Tools', accelerator: 'Ctrl+Shift+I', click (item, win) { if (win) win.webContents.toggleDevTools() }, electronOnly: true}
     ]
   },
   {
