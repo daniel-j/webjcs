@@ -2,7 +2,9 @@
 const m = require('mithril')
 const vent = require('../vent')
 const Scrollbars = require('../scrollbars')
+const Drag = require('../util/drag')
 const app = require('../app')
+const Tile = require('../Tile')
 const TileMap = require('../TileMap')
 const r = require('../renderer')
 const Tween = require('../util/tween')
@@ -21,9 +23,15 @@ class LayerPanel {
     this.zoomLevel = 1
     this.currentLayer = 3
     this.layers = []
+    this.selection = [[new Tile()]]
+    this.selectedArea = [0, 0, 0, 0]
+    this.selectStartX = 0
+    this.selectStartY = 0
+    this.mouseX = 0
+    this.mouseY = 0
 
-    vent.subscribe('window.keydown', (ev, {e, key, accel, dialogOpen, hasActiveElement}) => {
-      if (!this.isActive || dialogOpen || hasActiveElement) return
+    vent.subscribe('window.keydown', (ev, {e, key, accel, modalOpen, hasActiveElement}) => {
+      if (!this.isActive || modalOpen) return
       const isMacOS = navigator.platform.includes('Mac')
       const ctrlKey = isMacOS ? e.metaKey : e.ctrlKey
       let prevent = true
@@ -34,6 +42,8 @@ class LayerPanel {
         } else {
           vent.publish('layerpanel.openproperties', l)
         }
+      } else if (accel === 'Backspace') {
+        vent.publish('selectedtiles', [[new Tile()]])
       } else {
         prevent = false
         // console.log(kc, c)
@@ -42,8 +52,8 @@ class LayerPanel {
         e.preventDefault()
       }
     })
-    vent.subscribe('window.keypress', (ev, {e, dialogOpen, hasActiveElement}) => {
-      if (!this.isActive || dialogOpen || hasActiveElement) return
+    vent.subscribe('window.keypress', (ev, {e, modalOpen, hasActiveElement}) => {
+      if (!this.isActive || modalOpen || hasActiveElement) return
       const kc = e.keyCode
       const c = String.fromCharCode(kc)
       let prevent = true
@@ -53,6 +63,16 @@ class LayerPanel {
         this.setZoomLevel(this.zoomLevel * 0.5)
       } else if (c === 'p') {
         vent.publish('layerpanel.openproperties', this.currentLayer)
+      } else if (c === 'f') {
+        this.flipSelectionH()
+      } else if (c === 'i') {
+        this.flipSelectionV()
+      } else if (c === 'b') {
+        if (!this.select.active) {
+          this.select.start()
+        } else {
+          this.select.stop()
+        }
       } else {
         prevent = false
       }
@@ -104,8 +124,8 @@ class LayerPanel {
     let currentSpeedX = app.j2l.levelInfo.fields.LayerXSpeed[l] / 65536
     let currentSpeedY = app.j2l.levelInfo.fields.LayerYSpeed[l] / 65536
 
-    let currentAutoSpeedX = app.j2l.levelInfo.fields.LayerAutoXSpeed[l] / 65536
-    let currentAutoSpeedY = app.j2l.levelInfo.fields.LayerAutoYSpeed[l] / 65536
+    // let currentAutoSpeedX = app.j2l.levelInfo.fields.LayerAutoXSpeed[l] / 65536
+    // let currentAutoSpeedY = app.j2l.levelInfo.fields.LayerAutoYSpeed[l] / 65536
 
     for (let i = 0; i < 8; i++) {
       let layer = this.layers[i]
@@ -190,6 +210,58 @@ class LayerPanel {
     this.showEvents = show
   }
 
+  mousemove (e) {
+    this.mousePageX = e.pageX
+    this.mousePageY = e.pageY
+    this.updateSelectionPosition()
+  }
+  updateSelectionPosition () {
+    let rect = this.panelEl.parentNode.getBoundingClientRect()
+    let x = Math.max(0, Math.floor((this.mousePageX - rect.left - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel))
+    let y = Math.max(0, Math.floor((this.mousePageY - rect.top - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel))
+    this.mouseX = x
+    this.mouseY = y
+  }
+  paintSelection () {
+    let x = Math.floor((this.drag.x - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel)
+    let y = Math.floor((this.drag.y - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel)
+    if (x < this.layers[this.currentLayer].width && y < this.layers[this.currentLayer].height) {
+      this.layers[this.currentLayer].setTiles(x, y, this.selection)
+    }
+  }
+  flipSelectionH () {
+    this.selection.reverse()
+    for (let x = 0; x < this.selection.length; x++) {
+      for (let y = 0; y < this.selection[x].length; y++) {
+        let tile = this.selection[x][y]
+        if (tile && (tile.animated || tile.id > 0)) {
+          tile.flipped = !tile.flipped
+        }
+      }
+    }
+    this.selectionMap.setTiles(0, 0, this.selection)
+  }
+  flipSelectionV () {
+    for (let x = 0; x < this.selection.length; x++) {
+      this.selection[x].reverse()
+      for (let y = 0; y < this.selection[x].length; y++) {
+        let tile = this.selection[x][y]
+        if (tile && (tile.animated || tile.id > 0)) {
+          tile.vflipped = !tile.vflipped
+        }
+      }
+    }
+    this.selectionMap.setTiles(0, 0, this.selection)
+  }
+
+  calculateSelectedArea () {
+    let layer = this.layers[this.currentLayer]
+    this.selectedArea[0] = Math.max(0, Math.min(Math.floor(this.selectStartX / 32), Math.floor((this.select.x - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel)))
+    this.selectedArea[1] = Math.max(0, Math.min(Math.floor(this.selectStartY / 32), Math.floor((this.select.y - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel)))
+    this.selectedArea[2] = Math.min(layer.width, Math.max(Math.ceil(this.selectStartX / 32), Math.ceil((this.select.x - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel)))
+    this.selectedArea[3] = Math.min(layer.height, Math.max(Math.ceil(this.selectStartY / 32), Math.ceil((this.select.y - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel)))
+  }
+
   addScrollbars ({dom}) {
     this.panelEl = dom
     this.scrollbars = new Scrollbars({
@@ -201,11 +273,45 @@ class LayerPanel {
     this.scrollbars.update()
 
     vent.subscribe('panel.resize', () => this.scrollbars.update())
+    this.scrollbars.on('scroll', () => this.updateSelectionPosition())
+
+    this.drag = new Drag(dom.parentNode)
+    this.drag.on('start', (x, y) => this.paintSelection())
+    this.drag.on('move', (x, y) => this.paintSelection())
+    this.select = new Drag(dom.parentNode, true, true)
+    this.select.on('start', (x, y) => {
+      this.selectStartX = (x - this.scrollbars.smoothScroller.offsetLeft) / this.zoomLevel
+      this.selectStartY = (y - this.scrollbars.smoothScroller.offsetTop) / this.zoomLevel
+      this.calculateSelectedArea()
+    })
+    this.select.on('move', (x, y) => this.calculateSelectedArea())
+    this.select.on('stop', () => {
+      let selection = []
+      let layer = this.layers[this.currentLayer]
+      for (let x = 0; x < this.selectedArea[2] - this.selectedArea[0]; x++) {
+        selection[x] = []
+        for (let y = 0; y < this.selectedArea[3] - this.selectedArea[1]; y++) {
+          let tile = layer.map[this.selectedArea[0] + x + layer.width * (this.selectedArea[1] + y)]
+          if (tile) tile = new Tile(tile)
+          selection[x][y] = tile
+        }
+      }
+      vent.publish('selectedtiles', selection)
+    })
+    vent.subscribe('selectedtiles', (ev, selection) => {
+      this.selection = selection
+      this.selectionMap.setTexture(this.selection.length, this.selection[0].length)
+      this.selectionMap.setTiles(0, 0, this.selection)
+    })
 
     this.initialize()
   }
 
   initialize () {
+    this.selectionMap = new TileMap(1, 1)
+    this.selectionMap.setTexture(this.selection.length, this.selection[0].length)
+    this.selectionMap.setTiles(0, 0, this.selection)
+
     for (let i = 0; i < 8; i++) {
       this.layers[i] = new TileMap(1, 1)
     }
@@ -330,13 +436,28 @@ class LayerPanel {
         viewportSize: [cw, ch],
         maskOpacity: maskOpacity,
         viewOffset: viewOffset,
-        mapSize: [layer.width, layer.height],
-        textureSize: layer.textureSize,
         repeatTilesX: layer.repeatX,
         repeatTilesY: layer.repeatY,
-        map: layer.texture,
-        backgroundColor: [72 / 255, 48 / 255, 168 / 255, layer.backgroundOpacity * (1 + maskOpacity * 0.15)]
+        map: layer,
+        backgroundColor: [72 / 255, 48 / 255, 168 / 255, layer.backgroundOpacity * (1 + maskOpacity * 0.15)],
+        invertArea: i === this.currentLayer && this.select.active && this.selectedArea,
+        viewport: [0, 0, cw, ch]
       })
+
+      if (i === this.currentLayer && this.isActive && !this.select.active) {
+        r.drawTilemap({
+          ctx: this.fboCtx,
+          scale: this.zoomLevel,
+          viewportSize: [cw, ch],
+          maskOpacity: maskOpacity,
+          viewOffset: [viewOffset[0] - this.mouseX * 32, viewOffset[1] - this.mouseY * 32],
+          repeatTilesX: 0,
+          repeatTilesY: 0,
+          map: this.selectionMap,
+          opacity: 0.5,
+          backgroundColor: [72 / 255, 48 / 255, 168 / 255, (1 + maskOpacity * 0.15) * 0.8]
+        })
+      }
     }
 
     if (!r.disableWebGL) {
@@ -437,7 +558,7 @@ class LayerPanel {
         ]),
         m('button', {title: 'Toggle events', onclick: this.toggleEvents.bind(this), class: this.showEvents ? 'selected' : ''}, 'Events')
       ]),
-      m('.panelcontent', m('div', {oncreate: this.addScrollbars.bind(this)}))
+      m('.panelcontent', {onmousemove: (e) => this.mousemove(e)}, m('div', {oncreate: this.addScrollbars.bind(this)}))
     ])
   }
 }

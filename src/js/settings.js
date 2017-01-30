@@ -25,7 +25,7 @@ class Settings {
 }
 
 module.exports = new Settings({
-  disable_webgl: false,
+  renderer: 'webgl-advanced',
 
   paths: IS_ELECTRON && os.platform() === 'win32' ? ['C:\\Games\\Jazz2\\'] : [],
   jj2_exe: IS_ELECTRON && os.platform() === 'win32' ? 'C:\\Games\\Jazz2\\Jazz2+.exe' : '',

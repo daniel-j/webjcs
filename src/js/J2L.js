@@ -288,10 +288,10 @@ class J2L {
 
   export (version = this.version) {
     let maxTiles = 1024
-    let maxAnims = 128
+    // let maxAnims = 128
     if (version === J2L.VERSION_TSF) { // If it's TSF (1.24)
       maxTiles = 4096
-      maxAnims = 256
+      // maxAnims = 256
     }
     let animCount = this.levelInfo.fields.AnimCount
     let staticTiles = maxTiles - animCount

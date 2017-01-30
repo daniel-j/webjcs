@@ -3,7 +3,6 @@ const m = require('mithril')
 const Dialog = require('../dialog')
 const vent = require('../../vent')
 const settings = require('../../settings')
-const toggler = require('../misc').toggler
 
 function resetPreferences (prefs) {
   for (let key in prefs) {
@@ -11,13 +10,15 @@ function resetPreferences (prefs) {
   }
 }
 
-function boolInput (label, prefs, key, {disabled} = {}) {
-  return m(toggler, {
-    checked: !!prefs[key],
+function selectInput (name, value, items, {disabled, style} = {}) {
+  return m('select.flexfluid', {
+    name,
+    value,
     disabled: !!disabled,
-    onchange: m.withAttr('checked', (val) => { prefs[key] = val }),
-    style: {width: '100%'}
-  }, label)
+    style
+  }, Object.keys(items).map((key) => {
+    return m('option', {value: key}, items[key])
+  }))
 }
 
 const PreferencesDialog = {
@@ -32,10 +33,22 @@ const PreferencesDialog = {
         for (let key in state.prefs) {
           settings.set(key, state.prefs[key])
         }
+      },
+      onValueChange (e, ev, type, name, value) {
+        let p = state.prefs
+        let parts = name.split('.')
+        let o = p
+        let i = 0
+        while (i < parts.length - 1) {
+          o = o[parts[i]]
+          i++
+        }
+        let key = parts[i]
+        o[key] = value
       }
     }
     state.prefs = {
-      disable_webgl: settings.get('disable_webgl'),
+      renderer: settings.get('renderer'),
       paths: settings.get('paths')
     }
   },
@@ -46,7 +59,11 @@ const PreferencesDialog = {
     return m(Dialog, state.dialog, [
       m('.title', 'Preferences'),
       m('.content', [
-        m('div', boolInput('Disable WebGL', state.prefs, 'disable_webgl')),
+        m('div', 'Renderer (requires restart): ', selectInput('renderer', state.prefs.renderer, {
+          'canvas': '2D Canvas',
+          'webgl': 'WebGL',
+          'webgl-advanced': 'WebGL (advanced)'
+        })),
         IS_ELECTRON ? [
           m('label', 'Search paths'),
           state.prefs.paths.map((v, i, a) => {

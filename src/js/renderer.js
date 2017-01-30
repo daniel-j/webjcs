@@ -17,6 +17,10 @@ const tilemapShader = [
   require('../shaders/tilemap.vert.glsl'),
   require('../shaders/tilemap.frag.glsl')
 ]
+const tilemapAdvancedShader = [
+  require('../shaders/tilemap-texture.vert.glsl'),
+  require('../shaders/tilemap-texture.frag.glsl')
+]
 const fboShader = [
   require('../shaders/fbo.vert.glsl'),
   require('../shaders/fbo.frag.glsl')
@@ -27,6 +31,7 @@ r.canvas = null
 r.ctx = null
 r.twgl = null
 r.gl = null
+r.advancedShaders = true
 r.textures = {}
 r.shaders = {}
 r.buffers = {}
@@ -39,7 +44,9 @@ r.tilesetSize = [0, 0]
 r.oncreate = ({dom}) => {
   r.canvas = dom
   r.loop = rafLoop(r.redraw)
-  r.disableWebGL = settings.get('disable_webgl')
+  r.renderer = settings.get('renderer')
+  r.disableWebGL = r.renderer === 'canvas'
+  r.advancedShaders = r.renderer === 'webgl-advanced'
 
   vent.subscribe('window.resize', () => {
     r.canvas.width = r.canvas.parentNode.offsetWidth
@@ -111,17 +118,33 @@ r.initWebGLRenderer = () => {
     position: {numComponents: 2, data: new Float32Array([ 1, 1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1 ])}
   })
 
-  r.addShader('tilemap', tilemapShader)
-  r.buffers.tilemap = twgl.createBufferInfoFromArrays(gl, {
-    position: { numComponents: 2, data: new Float32Array([ -1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1 ]) },
-    texture: { numComponents: 2, data: new Float32Array([ 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0 ]) }
-  })
-  r.uniforms.tilemap = {
-    tilesetSize: r.tilesetSize,
-    tileCount: 0,
-    tileset: r.textures.tileset,
-    mask: r.textures.mask,
-    animMap: r.animMap.texture
+  if (r.advancedShaders) {
+    r.addShader('tilemapAdvanced', tilemapAdvancedShader)
+    r.buffers.tilemapAdvanced = twgl.createBufferInfoFromArrays(gl, {
+      position: { numComponents: 2, data: new Float32Array([ -1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1 ]) },
+      texture: { numComponents: 2, data: new Float32Array([ 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0 ]) }
+    })
+    r.uniforms.tilemapAdvanced = {
+      tilesetSize: r.tilesetSize,
+      tileCount: 0,
+      tileset: r.textures.tileset,
+      mask: r.textures.mask,
+      animMap: r.animMap.texture,
+      opacity: 1
+    }
+  } else {
+    r.addShader('tilemap', tilemapShader)
+    r.buffers.tilemap = twgl.createBufferInfoFromArrays(gl, {
+      position: { numComponents: 2, data: new Float32Array([]), drawType: gl.DYNAMIC_DRAW },
+      uvs: { numComponents: 2, data: new Float32Array([]), drawType: gl.DYNAMIC_DRAW }
+    })
+    r.uniforms.tilemap = {
+      tilesetSize: r.tilesetSize,
+      tileCount: 0,
+      tileset: r.textures.tileset,
+      mask: r.textures.mask,
+      opacity: 1
+    }
   }
 
   r.loop.start()
@@ -134,7 +157,11 @@ r.initWebGLRenderer = () => {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, app.j2t.maskCanvas)
     r.tilesetSize[0] = app.j2t.tilesetCanvas.width
     r.tilesetSize[1] = app.j2t.tilesetCanvas.height
-    r.uniforms.tilemap.tileCount = app.j2t.tilesetInfo.fields.TileCount
+    if (r.advancedShaders) {
+      r.uniforms.tilemapAdvanced.tileCount = app.j2t.tilesetInfo.fields.TileCount
+    } else {
+      r.uniforms.tilemap.tileCount = app.j2t.tilesetInfo.fields.TileCount
+    }
   })
 }
 
@@ -152,13 +179,92 @@ r.setDefaultTextureProperties = () => {
 }
 
 r.drawTilemap = (info) => {
+  info.textureSize = info.map.textureSize
+  info.mapSize = [info.map.width, info.map.height]
+
   if (!r.disableWebGL) {
     const gl = r.gl
-    gl.useProgram(r.shaders.tilemap.program)
-    twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, r.buffers.tilemap)
-    twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
-    twgl.setUniforms(r.shaders.tilemap, info)
-    twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap)
+    if (r.advancedShaders) {
+      gl.useProgram(r.shaders.tilemapAdvanced.program)
+      twgl.setBuffersAndAttributes(gl, r.shaders.tilemapAdvanced, r.buffers.tilemapAdvanced)
+      twgl.setUniforms(r.shaders.tilemapAdvanced, r.uniforms.tilemapAdvanced)
+      if (!info.invertArea) {
+        info.invertArea = [0, 0, 0, 0]
+      }
+      info.map = info.map.texture
+      twgl.setUniforms(r.shaders.tilemapAdvanced, info)
+      twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemapAdvanced)
+    } else {
+      gl.useProgram(r.shaders.tilemap.program)
+      for (let x = 0; x < info.map.width; x++) {
+        for (let y = 0; y < info.map.height; y++) {
+          let i = x + y * info.map.width
+          let tile = info.map.map[i]
+          if (!tile || !tile.animated) continue
+          tile = r.anims[tile.id]
+          let offset = (x + (y) * info.map.width) * 12
+          let uv = new Float32Array(12)
+          let tx0 = tile.id % 64
+          let ty0 = Math.floor(tile.id / 64)
+          let tx1 = tx0 + 1
+          let ty1 = ty0 + 1
+          if (tile.flipped) {
+            tx0 += 1
+            tx1 -= 1
+          }
+          if (tile.vflipped) {
+            ty0 += 1
+            ty1 -= 1
+          }
+          uv[0] = tx0
+          uv[1] = ty0
+          uv[2] = tx1
+          uv[3] = ty0
+          uv[4] = tx0
+          uv[5] = ty1
+
+          uv[6] = tx1
+          uv[7] = ty0
+          uv[8] = tx1
+          uv[9] = ty1
+          uv[10] = tx0
+          uv[11] = ty1
+
+          r.gl.bindBuffer(r.gl.ARRAY_BUFFER, info.map.buffers.attribs.uvs.buffer)
+          r.gl.bufferSubData(r.gl.ARRAY_BUFFER, offset * 4, uv)
+        }
+      }
+      twgl.setBuffersAndAttributes(gl, r.shaders.tilemap, info.map.buffers)
+      twgl.setUniforms(r.shaders.tilemap, r.uniforms.tilemap)
+      if (!info.invertArea) {
+        info.invertArea = [0, 0, 0, 0]
+      }
+      twgl.setUniforms(r.shaders.tilemap, info)
+
+      if (info.repeatTilesX || info.repeatTilesY) {
+        let left = Math.floor(Math.floor(info.viewOffset[0] / 32) / info.mapSize[0])
+        let top = Math.floor(Math.floor(info.viewOffset[1] / 32) / info.mapSize[1])
+        let right = Math.ceil(Math.ceil(Math.ceil(info.viewportSize[0] / info.scale + info.viewOffset[0]) / 32) / info.mapSize[0])
+        let bottom = Math.ceil(Math.ceil(Math.ceil(info.viewportSize[1] / info.scale + info.viewOffset[1]) / 32) / info.mapSize[1])
+
+        let offsetX = info.viewOffset[0]
+        let offsetY = info.viewOffset[1]
+
+        if (!info.repeatTilesX) right = left + 1
+        if (!info.repeatTilesY) bottom = top + 1
+
+        for (let mapx = left; mapx < right; mapx++) {
+          for (let mapy = top; mapy < bottom; mapy++) {
+            twgl.setUniforms(r.shaders.tilemap, {
+              viewOffset: [offsetX - mapx * info.mapSize[0] * 32, offsetY - mapy * info.mapSize[1] * 32]
+            })
+            twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap, info.mapSize[0] * info.mapSize[1] * 6)
+          }
+        }
+      } else {
+        twgl.drawBufferInfo(gl, gl.TRIANGLES, r.buffers.tilemap, info.mapSize[0] * info.mapSize[1] * 6)
+      }
+    }
     return
   }
   const ctx = info.ctx || r.ctx
@@ -170,6 +276,9 @@ r.drawTilemap = (info) => {
   ctx.imageSmoothingEnabled = false
 
   ctx.save()
+  if (info.opacity !== undefined) {
+    ctx.globalAlpha = info.opacity
+  }
   ctx.fillStyle = 'rgba(' + [info.backgroundColor[0] * 255, info.backgroundColor[1] * 255, info.backgroundColor[2] * 255, info.backgroundColor[3]].join(',') + ')'
 
   for (let mapx = left; mapx < right; mapx++) {
@@ -186,7 +295,7 @@ r.drawTilemap = (info) => {
         y = mod(y, info.mapSize[1])
       }
       const tileIndex = x + y * info.mapSize[0]
-      let tile = info.map[tileIndex]
+      let tile = info.map.map[tileIndex]
       if (!tile) continue
       let flipped = tile.flipped
       if (tile.animated) {
@@ -219,7 +328,30 @@ r.drawTilemap = (info) => {
       ctx.restore()
     }
   }
+  if (info.invertArea) {
+    let x = (info.viewport[0] - info.viewOffset[0] + info.invertArea[0] * 32) * info.scale
+    let y = (info.viewport[1] - info.viewOffset[1] + info.invertArea[1] * 32) * info.scale
+    let w = (info.invertArea[2] - info.invertArea[0]) * 32 * info.scale
+    let h = (info.invertArea[3] - info.invertArea[1]) * 32 * info.scale
+
+    let imageData = ctx.getImageData(x, y, w, h)
+    let data = imageData.data
+
+    for (let i = 0; i < data.length; i += 4) {
+      // red
+      data[i] = 255 - data[i]
+      // green
+      data[i + 1] = 255 - data[i + 1]
+      // blue
+      data[i + 2] = 255 - data[i + 2]
+    }
+
+    // overwrite original image
+    ctx.putImageData(imageData, x, y)
+  }
+
   ctx.restore()
+  ctx.globalAlpha = 1
 }
 
 r.calculateAnimTile = (id) => {

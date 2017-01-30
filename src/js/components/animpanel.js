@@ -102,11 +102,9 @@ class AnimPanel {
       scale: 1,
       viewportSize: [cw - (32 + 4), ch],
       viewOffset: [Math.floor(x), Math.floor(y)],
-      mapSize: [this.framesMap.width, this.framesMap.height],
-      textureSize: this.framesMap.textureSize,
       repeatTilesX: 0,
       repeatTilesY: 0,
-      map: this.framesMap.texture,
+      map: this.framesMap,
       maskOpacity: maskOpacity,
       backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
     })
@@ -127,11 +125,9 @@ class AnimPanel {
       scale: 1,
       viewportSize: [cw, ch],
       viewOffset: [0, Math.floor(y)],
-      mapSize: [this.animMap.width, this.animMap.height],
-      textureSize: this.animMap.textureSize,
       repeatTilesX: 0,
       repeatTilesY: 0,
-      map: this.animMap.texture,
+      map: this.animMap,
       maskOpacity: maskOpacity,
       backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
     })

@@ -2,6 +2,7 @@
 const m = require('mithril')
 const vent = require('../vent')
 const Scrollbars = require('../scrollbars')
+const Drag = require('../util/drag')
 const app = require('../app')
 const Tile = require('../Tile')
 const TileMap = require('../TileMap')
@@ -35,6 +36,9 @@ class TilesetPanel {
     this.maskTween = new Tween(0, 0.2)
     this.tileTypeMode = 0
     this.tilesetList = []
+    this.dragStartX = 0
+    this.dragStartY = 0
+    this.selectedArea = [0, 0, 0, 0]
   }
 
   activate (e) {
@@ -58,8 +62,16 @@ class TilesetPanel {
     e.currentTarget.firstChild.style.marginTop = (-mode * e.currentTarget.offsetHeight) + 'px'
   }
 
+  calculateSelectedArea () {
+    this.selectedArea[0] = Math.max(0, Math.min(Math.floor(this.dragStartX / 32), Math.floor((this.drag.x - this.scrollbars.smoothScroller.offsetLeft) / 32)))
+    this.selectedArea[1] = Math.max(0, Math.min(Math.floor(this.dragStartY / 32), Math.floor((this.drag.y - this.scrollbars.smoothScroller.offsetTop) / 32)))
+    this.selectedArea[2] = Math.min(this.scrollbars.contentWidth / 32, Math.max(Math.ceil(this.dragStartX / 32), Math.ceil((this.drag.x - this.scrollbars.smoothScroller.offsetLeft) / 32)))
+    this.selectedArea[3] = Math.min(this.scrollbars.contentHeight / 32, Math.max(Math.ceil(this.dragStartY / 32), Math.ceil((this.drag.y - this.scrollbars.smoothScroller.offsetTop) / 32)))
+  }
+
   addScrollbars ({dom}) {
     this.panelEl = dom
+
     this.scrollbars = new Scrollbars({
       element: dom,
       revealDistance: 64
@@ -68,6 +80,29 @@ class TilesetPanel {
     this.scrollbars.contentHeight = 100 * 32
     this.scrollbars.update()
     vent.subscribe('panel.resize', () => this.scrollbars.update())
+    this.scrollbars.on('scroll', () => this.calculateSelectedArea())
+
+    this.drag = new Drag(dom.parentNode)
+    this.drag.on('move', (x, y) => {
+      this.calculateSelectedArea()
+    })
+    this.drag.on('start', (x, y) => {
+      this.dragStartX = x - this.scrollbars.smoothScroller.offsetLeft
+      this.dragStartY = y - this.scrollbars.smoothScroller.offsetTop
+      this.calculateSelectedArea()
+    })
+    this.drag.on('stop', () => {
+      let selection = []
+      for (let x = 0; x < this.selectedArea[2] - this.selectedArea[0]; x++) {
+        selection[x] = []
+        for (let y = 0; y < this.selectedArea[3] - this.selectedArea[1]; y++) {
+          let tile = this.map.map[this.selectedArea[0] + x + 10 * (this.selectedArea[1] + y)]
+          if (tile) tile = new Tile(tile)
+          selection[x][y] = tile
+        }
+      }
+      vent.publish('selectedtiles', selection)
+    })
 
     this.initialize()
   }
@@ -110,13 +145,13 @@ class TilesetPanel {
       scale: 1,
       viewportSize: [cw, ch],
       viewOffset: [Math.floor(-this.scrollbars.smoothScroller.offsetLeft), Math.floor(-this.scrollbars.smoothScroller.offsetTop)],
-      mapSize: [this.map.width, this.map.height],
-      textureSize: this.map.textureSize,
       repeatTilesX: 0,
       repeatTilesY: 0,
-      map: this.map.texture,
+      map: this.map,
       maskOpacity: maskOpacity,
-      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
+      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0],
+      invertArea: this.drag.active && this.selectedArea,
+      viewport: [rect.left, rect.top - canvasRect.top, cw, ch]
     })
     if (r.disableWebGL) {
       ctx.restore()

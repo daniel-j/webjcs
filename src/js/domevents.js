@@ -41,6 +41,10 @@ window.addEventListener('keydown', function (e) {
   accel.push(key.substring(0, 1).toUpperCase() + key.substring(1))
   accel = accel.join('+')
   vent.publish('window.keydown', {e, key, accel, modalOpen: !!Dialog.currentModal, hasActiveElement: document.activeElement !== document.body || !document.activeElement})
+  if (!IS_ELECTRON && e.ctrlKey && (e.keyCode === 187 || e.keyCode === 189)) {
+    // prevent page zooming
+    e.preventDefault()
+  }
 }, false)
 
 window.addEventListener('keypress', function (e) {
