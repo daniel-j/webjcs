@@ -53,7 +53,7 @@ class LayerPanel {
       }
     })
     vent.subscribe('window.keypress', (ev, {e, modalOpen, hasActiveElement}) => {
-      if (!this.isActive || modalOpen || hasActiveElement) return
+      if (!this.isActive || modalOpen) return
       const kc = e.keyCode
       const c = String.fromCharCode(kc)
       let prevent = true
