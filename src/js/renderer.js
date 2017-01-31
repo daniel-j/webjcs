@@ -3,7 +3,6 @@ const m = require('mithril')
 const vent = require('./vent')
 const rafLoop = require('raf-loop')
 const twgl = require('twgl.js/dist/twgl')
-const TileMap = require('./TileMap')
 const Tile = require('./Tile')
 const app = require('./app')
 const settings = require('./settings')
@@ -101,6 +100,7 @@ r.initWebGLRenderer = () => {
 
   r.textures.tileset = gl.createTexture()
   r.textures.mask = gl.createTexture()
+  const TileMap = require('./TileMap')
   r.animMap = new TileMap(256, 1)
 
   gl.bindTexture(gl.TEXTURE_2D, r.textures.tileset)

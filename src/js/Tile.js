@@ -14,6 +14,7 @@ class Tile {
         this.flipped = !!tile.flipped
         this.vflipped = !!tile.vflipped
         this.animated = !!tile.animated
+        this.event = tile.event || 0
       }
     }
   }

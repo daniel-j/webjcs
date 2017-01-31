@@ -104,7 +104,7 @@ class J2L {
     )
   }
 
-  constructor () {
+  constructor ({renderable = false} = {}) {
     this.version = J2L.VERSION_123
     this.isTSF = false
 
@@ -115,6 +115,8 @@ class J2L {
     this.levelInfo.allocate()
     this.events = new Uint32Array(0)
     this.layers = null
+
+    this.renderable = renderable
 
     this.newLevel()
   }
@@ -160,40 +162,51 @@ class J2L {
   }
 
   initLayers (events) {
+    const TileMap = require('./TileMap')
     this.layers = []
     for (let l = 0; l < 8; l++) {
-      this.layers[l] = []
       let lw = this.levelInfo.fields.LayerWidth[l]
       let lh = this.levelInfo.fields.LayerHeight[l]
+      this.layers[l] = new TileMap(lw, lh, !this.renderable)
+      let tiles = []
       for (let x = 0; x < lw; x++) {
-        this.layers[l][x] = []
+        tiles[x] = []
         for (let y = 0; y < lh; y++) {
           let t = new Tile()
           if (l === 3) {
             t.event = events[x + lw * y]
           }
-          this.layers[l][x][y] = t
+          tiles[x][y] = t
         }
       }
+      this.layers[l].setTiles(0, 0, tiles)
     }
   }
 
   resizeLayer (l, w, h) {
-    let lw = this.levelInfo.fields.LayerWidth[l]
-    let lh = this.levelInfo.fields.LayerHeight[l]
-    if (lw !== w || lh !== h) {
-      lw = this.levelInfo.fields.LayerWidth[l] = w
-      lh = this.levelInfo.fields.LayerHeight[l] = h
+    let oldlw = this.levelInfo.fields.LayerWidth[l]
+    let oldlh = this.levelInfo.fields.LayerHeight[l]
+    if (oldlw !== w || oldlh !== h) {
+      let lw = this.levelInfo.fields.LayerWidth[l] = w
+      let lh = this.levelInfo.fields.LayerHeight[l] = h
+      let layer = this.layers[l]
+      let oldmap = layer.map
+      layer.setTexture(lw, lh)
 
-      this.layers[l].length = lw
+      let tiles = []
       for (let x = 0; x < lw; x++) {
-        this.layers[l][x] = this.layers[l][x] || []
-        this.layers[l][x].length = lh
+        tiles[x] = []
         for (let y = 0; y < lh; y++) {
-          let t = this.layers[l][x][y] || new Tile()
-          this.layers[l][x][y] = t
+          let t
+          if (x < oldlw && y < oldlh) {
+            t = oldmap[x + y * oldlw]
+          } else {
+            t = new Tile()
+          }
+          tiles[x][y] = t
         }
       }
+      layer.setTiles(0, 0, tiles)
     }
   }
 
@@ -273,16 +286,20 @@ class J2L {
         realWidth = Math.ceil(this.levelInfo.fields.LayerRealWidth[l] / 4)
       }
 
+      let tiles = []
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < realWidth; x++) {
           let wordId = wordMap[mapOffset]
           for (let t = 0; t < 4; t++) {
             if (x * 4 + t >= width) break
-            this.layers[l][x * 4 + t][y].fromNumber(dictionary[wordId * 4 + t], this.isTSF, animCount)
+            if (!tiles[x * 4 + t]) tiles[x * 4 + t] = []
+            this.layers[l].map[x * 4 + t + y * width].fromNumber(dictionary[wordId * 4 + t], this.isTSF, animCount)
+            tiles[x * 4 + t][y] = this.layers[l].map[x * 4 + t + y * width]
           }
           mapOffset++
         }
       }
+      this.layers[l].setTiles(0, 0, tiles)
     }
   }
 
@@ -330,7 +347,7 @@ class J2L {
           let wordIndex = -1
           let tmpWord = new Uint16Array(4)
           for (let k = 0; k < 4; k++) {
-            let tile = this.layers[l][(x + k) % lw][y]
+            let tile = this.layers[l].map[((x + k) % lw) + y * lw]
             if (tile.id === 0 && !tile.animated) tile.flipped = false
             let rawTile = tile.toNumber(version === J2L.VERSION_TSF, animCount)
 
@@ -430,7 +447,7 @@ class J2L {
     let lh = this.levelInfo.fields.LayerHeight[l]
     for (let x = 0; x < lw; x++) {
       for (let y = 0; y < lh; y++) {
-        let tile = this.layers[l][x][y]
+        let tile = this.layers[l].map[x + y * lw]
         if (tile.id > 0 || tile.animated) {
           return 1
         }

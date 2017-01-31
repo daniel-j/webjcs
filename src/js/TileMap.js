@@ -3,9 +3,10 @@ const Tile = require('./Tile')
 const npot = require('./util/next-power-of-two')
 
 class TileMap {
-  constructor (w = 1, h = 1) {
+  constructor (w = 1, h = 1, mapOnly = false) {
     this.map = null
-    if (!r.disableWebGL) {
+    this.mapOnly = mapOnly || r.disableWebGL
+    if (!r.disableWebGL && !this.mapOnly) {
       if (r.advancedShaders) {
         this.texture = r.gl.createTexture()
         r.gl.bindTexture(r.gl.TEXTURE_2D, this.texture)
@@ -29,7 +30,7 @@ class TileMap {
     this.width = w
     this.height = h
     this.map = new Array(w * h)
-    if (!r.disableWebGL) {
+    if (!r.disableWebGL && !this.mapOnly) {
       if (r.advancedShaders) {
         w = npot(w)
         h = npot(h)
@@ -67,14 +68,17 @@ class TileMap {
     this.textureSize[1] = h
   }
 
-  setTiles (x, y, selection, debug) {
+  setTiles (x, y, selection) {
+    if (!selection || !selection[0]) {
+      return
+    }
     x = Math.floor(x)
     y = Math.floor(y)
 
     let sw = Math.min(this.textureSize[0] - x, selection.length)
     let sh = Math.min(this.textureSize[1] - y, selection[0].length)
     let mapBuffer
-    if (!r.disableWebGL) {
+    if (!r.disableWebGL && !this.mapOnly) {
       if (r.advancedShaders) {
         mapBuffer = new Uint8Array(sw * sh * 4)
       }
@@ -89,7 +93,7 @@ class TileMap {
         }
         if (!tile) continue
         let tileId = tile.id
-        if (!r.disableWebGL) {
+        if (!r.disableWebGL && !this.mapOnly) {
           if (r.advancedShaders) {
             let i = (sx + sy * sw) * 4
             mapBuffer[i + 0] = (tileId % 256)
@@ -128,7 +132,7 @@ class TileMap {
           }
         }
       }
-      if (!r.disableWebGL && !r.advancedShaders) {
+      if (!r.disableWebGL && !r.advancedShaders && !this.mapOnly) {
         let offset = (x + (y + sy) * this.width) * 12
         r.gl.bindBuffer(r.gl.ARRAY_BUFFER, this.buffers.attribs.uvs.buffer)
         r.gl.bufferSubData(r.gl.ARRAY_BUFFER, offset * 4, this.uvs.subarray(offset, offset + sw * 12))
@@ -136,7 +140,7 @@ class TileMap {
       }
     }
 
-    if (!r.disableWebGL && r.advancedShaders) {
+    if (!r.disableWebGL && r.advancedShaders && !this.mapOnly) {
       r.gl.bindTexture(r.gl.TEXTURE_2D, this.texture)
       r.gl.texSubImage2D(r.gl.TEXTURE_2D, 0, x, y, sw, sh, r.gl.RGBA, r.gl.UNSIGNED_BYTE, mapBuffer)
     }

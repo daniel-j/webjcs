@@ -93,15 +93,19 @@ class TilesetPanel {
     })
     this.drag.on('stop', () => {
       let selection = []
+      let tilecount = 0
       for (let x = 0; x < this.selectedArea[2] - this.selectedArea[0]; x++) {
         selection[x] = []
         for (let y = 0; y < this.selectedArea[3] - this.selectedArea[1]; y++) {
           let tile = this.map.map[this.selectedArea[0] + x + 10 * (this.selectedArea[1] + y)]
           if (tile) tile = new Tile(tile)
           selection[x][y] = tile
+          tilecount++
         }
       }
-      vent.publish('selectedtiles', selection)
+      if (tilecount > 0) {
+        vent.publish('selectedtiles', selection)
+      }
     })
 
     this.initialize()

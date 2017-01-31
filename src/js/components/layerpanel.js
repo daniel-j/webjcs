@@ -312,14 +312,8 @@ class LayerPanel {
     this.selectionMap.setTexture(this.selection.length, this.selection[0].length)
     this.selectionMap.setTiles(0, 0, this.selection)
 
-    for (let i = 0; i < 8; i++) {
-      this.layers[i] = new TileMap(1, 1)
-    }
-
     vent.subscribe('layer.resize', (ev, [l, w, h]) => {
       app.j2l.resizeLayer(l, w, h)
-      this.layers[l].setTexture(w, h)
-      this.layers[l].setTiles(0, 0, app.j2l.layers[l])
     })
     vent.subscribe('layer.refresh', () => {
       this.setCurrentLayer(this.currentLayer)
@@ -327,13 +321,9 @@ class LayerPanel {
 
     vent.subscribe('level.load', () => {
       for (let i = 0; i < 8; i++) {
-        let lw = app.j2l.levelInfo.fields.LayerWidth[i]
-        let lh = app.j2l.levelInfo.fields.LayerHeight[i]
-        const layer = this.layers[i]
-        layer.setTexture(lw, lh)
+        const layer = this.layers[i] = app.j2l.layers[i]
         layer.speedX = app.j2l.levelInfo.fields.LayerXSpeed[i] / 65536
         layer.speedY = app.j2l.levelInfo.fields.LayerYSpeed[i] / 65536
-        layer.setTiles(0, 0, app.j2l.layers[i])
       }
 
       this.setCurrentLayer(app.j2l.levelInfo.fields.SecEnvAndLayer & 0xF)
