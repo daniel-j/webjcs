@@ -3,11 +3,12 @@ const Tile = require('./Tile')
 const npot = require('./util/next-power-of-two')
 
 class TileMap {
-  constructor (w = 1, h = 1, mapOnly = false) {
+  constructor (w = 1, h = 1, mapOnly = false, eventsOnly = false) {
     this.map = null
     this.mapOnly = mapOnly || r.disableWebGL
+    this.eventsOnly = eventsOnly
     if (!r.disableWebGL && !this.mapOnly) {
-      if (r.advancedShaders) {
+      if (r.advancedShaders && !this.eventsOnly) {
         this.texture = r.gl.createTexture()
         r.gl.bindTexture(r.gl.TEXTURE_2D, this.texture)
         // Map MUST be filtered with NEAREST or tile lookup fails
@@ -31,7 +32,7 @@ class TileMap {
     this.height = h
     this.map = new Array(w * h)
     if (!r.disableWebGL && !this.mapOnly) {
-      if (r.advancedShaders) {
+      if (r.advancedShaders && !this.eventsOnly) {
         w = npot(w)
         h = npot(h)
         r.gl.bindTexture(r.gl.TEXTURE_2D, this.texture)
@@ -68,15 +69,15 @@ class TileMap {
     this.textureSize[1] = h
   }
 
-  setTiles (x, y, selection) {
+  setTiles (x, y, selection, removeEvents = false) {
     if (!selection || !selection[0]) {
       return
     }
     x = Math.floor(x)
     y = Math.floor(y)
 
-    let sw = Math.min(this.textureSize[0] - x, selection.length)
-    let sh = Math.min(this.textureSize[1] - y, selection[0].length)
+    let sw = Math.min(this.width - x, selection.length)
+    let sh = Math.min(this.height - y, selection[0].length)
     let mapBuffer
     if (!r.disableWebGL && !this.mapOnly) {
       if (r.advancedShaders) {
@@ -87,11 +88,12 @@ class TileMap {
       for (let sx = 0; sx < sw; sx++) {
         let tile = selection[sx][sy]
         if (tile) {
-          this.map[x + sx + (y + sy) * this.width] = new Tile(tile)
+          tile = this.map[x + sx + (y + sy) * this.width] = new Tile(tile)
         } else {
           tile = this.map[x + sx + (y + sy) * this.width]
         }
         if (!tile) continue
+        if (removeEvents) tile.event = 0
         let tileId = tile.id
         if (!r.disableWebGL && !this.mapOnly) {
           if (r.advancedShaders) {
@@ -143,6 +145,62 @@ class TileMap {
     if (!r.disableWebGL && r.advancedShaders && !this.mapOnly) {
       r.gl.bindTexture(r.gl.TEXTURE_2D, this.texture)
       r.gl.texSubImage2D(r.gl.TEXTURE_2D, 0, x, y, sw, sh, r.gl.RGBA, r.gl.UNSIGNED_BYTE, mapBuffer)
+    }
+  }
+
+  setEvents (x, y, selection) {
+    if (!selection || !selection[0]) {
+      return
+    }
+    x = Math.floor(x)
+    y = Math.floor(y)
+
+    let sw = Math.min(this.width - x, selection.length)
+    let sh = Math.min(this.height - y, selection[0].length)
+
+    for (let sy = 0; sy < sh; sy++) {
+      for (let sx = 0; sx < sw; sx++) {
+        let tile = selection[sx][sy]
+        let event = tile.event
+        if (tile) {
+          this.map[x + sx + (y + sy) * this.width] = event
+        } else {
+          continue
+        }
+
+        let eventId = event & 0xFF
+        let generator = false
+        if (eventId === 216) {
+          generator = true
+          eventId = (event >> 12) & 0xFF
+        }
+        if (!r.disableWebGL && !this.mapOnly) {
+          let i = (x + sx + (y + sy) * this.width) * 12
+          let tx0 = (eventId % 16) + 16 * generator
+          let ty0 = Math.floor(eventId / 16)
+          let tx1 = tx0 + 1
+          let ty1 = ty0 + 1
+          let uvs = this.uvs
+          uvs[i + 0] = tx0
+          uvs[i + 1] = ty0
+          uvs[i + 2] = tx1
+          uvs[i + 3] = ty0
+          uvs[i + 4] = tx0
+          uvs[i + 5] = ty1
+
+          uvs[i + 6] = tx1
+          uvs[i + 7] = ty0
+          uvs[i + 8] = tx1
+          uvs[i + 9] = ty1
+          uvs[i + 10] = tx0
+          uvs[i + 11] = ty1
+        }
+      }
+      if (!r.disableWebGL && !this.mapOnly) {
+        let offset = (x + (y + sy) * this.width) * 12
+        r.gl.bindBuffer(r.gl.ARRAY_BUFFER, this.buffers.attribs.uvs.buffer)
+        r.gl.bufferSubData(r.gl.ARRAY_BUFFER, offset * 4, this.uvs.subarray(offset, offset + sw * 12))
+      }
     }
   }
 }

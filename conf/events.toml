@@ -1,0 +1,1992 @@
+
+[[Categories]]
+name = "Enemies"
+multiplayer = false
+[[Categories]]
+name = "Environment"
+multiplayer = true
+[[Categories]]
+name = "Gameplay"
+multiplayer = true
+[[Categories]]
+name = "Pickups"
+multiplayer = true
+
+
+[[Subcategories]]
+name = "Bad guys"
+category = "Enemy"
+parent = "Enemies"
+multiplayer = false
+hue = 0
+brightness = 30
+
+[[Subcategories]]
+name = "End bosses"
+category = "Boss"
+parent = "Enemies"
+multiplayer = false
+hue = 0
+brightness = 60
+
+[[Subcategories]]
+name = "Ambience"
+category = "Light"
+parent = "Environment"
+multiplayer = true
+hue = 200
+saturation = 0
+brightness = 100
+
+[[Subcategories]]
+name = "Objects"
+category = "Object"
+parent = "Environment"
+multiplayer = true
+hue = 200
+
+[[Subcategories]]
+name = "Pinball"
+category = "Pinball"
+parent = "Environment"
+multiplayer = true
+hue = 220
+
+[[Subcategories]]
+name = "Scenery"
+category = "Scenery"
+parent = "Environment"
+multiplayer = true
+hue = 280
+
+[[Subcategories]]
+name = "Springs"
+category = "Spring"
+parent = "Environment"
+multiplayer = true
+hue = 180
+
+[[Subcategories]]
+name = "Swinging platforms"
+category = "Platform"
+parent = "Environment"
+multiplayer = false
+hue = 200
+
+[[Subcategories]]
+name = "Area"
+category = "Area"
+parent = "Gameplay"
+multiplayer = true
+hue = 160
+
+[[Subcategories]]
+name = "Level"
+category = "SignPost"
+parent = "Gameplay"
+multiplayer = true
+hue = 140
+brightness = 80
+
+[[Subcategories]]
+name = "Modifier"
+category = "Modifier"
+parent = "Gameplay"
+multiplayer = true
+hue = 100
+
+[[Subcategories]]
+name = "Morph"
+category = "Morph"
+parent = "Gameplay"
+multiplayer = true
+hue = 100
+
+[[Subcategories]]
+name = "Triggers & Blocks"
+category = "Trigger"
+parent = "Gameplay"
+multiplayer = true
+hue = 85
+brightness = 70
+
+[[Subcategories]]
+name = "Ammunition"
+category = "Ammo"
+parent = "Pickups"
+multiplayer = true
+hue = 64
+brightness = 50
+
+[[Subcategories]]
+name = "Food"
+category = "Food"
+parent = "Pickups"
+multiplayer = true
+hue = 25
+
+[[Subcategories]]
+name = "Gems"
+category = "Gem"
+parent = "Pickups"
+multiplayer = true
+hue = 320
+
+[[Subcategories]]
+name = "Goodies"
+category = "Goodies"
+parent = "Pickups"
+multiplayer = true
+hue = 40
+brightness = 50
+
+[[Subcategories]]
+name = "Power Ups"
+category = "PowerUp"
+parent = "Pickups"
+multiplayer = true
+hue = 64
+brightness = 60
+
+[[Subcategories]]
+name = "Shields"
+category = "Shield"
+parent = "Pickups"
+multiplayer = true
+hue = 300
+brightness = 80
+
+#
+# The format of an event is as follows: ID=Verbose Name", "Multiplayer Compatible (+ or -)", "Subcategory", "Name top row", "Name bottom row", "zero or more parameters
+# A single parameter follows the format of name, then possible options, separated by a colon. Here are the various formats for possible options:
+#   Positive number x: any number between 0 and (2^x)-1 is allowed. Takes up x bits.
+#   Negative number x: any number between -(2^(x-1)) and (2^(x-1))-1 is allowed. Takes up x bits.
+#   c, followed by a number x: a checkbox. Takes up x bits, only the first of which will be written to.
+#   t, followed by a number x: a dropdown box of any of the first (2^x) text strings. Takes up x bits.
+#   s, followed by a number x: ambient sounds from the anims.j2a file. Takes up x bits.
+#   p, followed by a number x, a comma, and a number y: a dropdown box of the first (2^y-1) pipe-separated strings in text string (value of parameter x). Takes up y bits.
+#   A pair of curly braces {} with a comma-delimited list inside, followed by a number x: dropdown box of those options, of length (2^x). Takes up x bits.
+#
+
+[Events]
+
+[Events.1]
+name = "One Way Floor"
+multiplayer = true
+category = "Modifier"
+top = "One"
+bottom = "Way"
+
+[Events.2]
+name = "Hurt"
+multiplayer = true
+category = "Modifier"
+top = "Hurt"
+bottom = ""
+parameters = ["Up:c1", "Down:c1", "Left:c1", "Right:c1"]
+
+[Events.3]
+name = "Horizontal Vine"
+multiplayer = true
+category = "Modifier"
+top = "Vine"
+
+[Events.4]
+name = "Hook"
+multiplayer = true
+category = "Modifier"
+top = "Hook"
+
+[Events.5]
+name = "Slide"
+multiplayer = true
+category = "Modifier"
+top = "Slide"
+bottom = ""
+parameters = ["Strength:2"]
+
+[Events.6]
+name = "Pole (Vertical)"
+multiplayer = true
+category = "Modifier"
+top = "V"
+bottom = "Pole"
+
+[Events.7]
+name = "Pole (Horizontal)"
+multiplayer = true
+category = "Modifier"
+top = "H"
+bottom = "Pole"
+
+[Events.8]
+name = "Stop Flying"
+multiplayer = true
+category = "Area"
+top = "Fly"
+bottom = "Off"
+
+[Events.9]
+name = "Ricochet Wall"
+multiplayer = true
+category = "Modifier"
+top = "Rico"
+bottom = "chet"
+
+[Events.10]
+name = "Conveyor Belt (Right)"
+multiplayer = true
+category = "Modifier"
+top = "Belt"
+bottom = "Right"
+parameters = ["Speed:-8"]
+
+[Events.11]
+name = "Conveyor Belt (Left)"
+multiplayer = true
+category = "Modifier"
+top = "Belt"
+bottom = "Left"
+parameters = ["Speed:-8"]
+
+[Events.12]
+name = "Acceleration Belt (Right)"
+multiplayer = true
+category = "Modifier"
+top = "Belt"
+bottom = "AccR"
+parameters = ["Speed:-8"]
+
+[Events.13]
+name = "Acceleration Belt (Left)"
+multiplayer = true
+category = "Modifier"
+top = "Belt"
+bottom = "AccL"
+parameters = ["Speed:-8"]
+
+[Events.14]
+name = "Stop Enemies"
+multiplayer = true
+category = "Area"
+top = "Stop"
+bottom = "Enemy"
+
+[Events.15]
+name = "Wind (Left)"
+multiplayer = true
+category = "Modifier"
+top = "Wind"
+bottom = "Left"
+parameters = ["Speed:-8"]
+
+[Events.16]
+name = "Wind (Right)"
+multiplayer = true
+category = "Modifier"
+top = "Wind"
+bottom = "Right"
+parameters = ["Speed:-8"]
+
+[Events.17]
+name = "End of Level (Normal)"
+multiplayer = true
+category = "SignPost"
+top = "End"
+bottom = "Area"
+parameters = ["Secret:c1", "Fast:c1", "Text:t4", "Offset:p2,4"]
+
+[Events.18]
+name = "End of Level (Warp)"
+multiplayer = true
+category = "SignPost"
+top = "End"
+bottom = "Warp"
+parameters = ["Empty:1", "Fast:c1", "Text:t4", "Offset:p2,4"]
+
+[Events.19]
+name = "Revert Morph"
+multiplayer = true
+category = "Morph"
+top = "Revert"
+bottom = "Morph"
+
+[Events.20]
+name = "Float Up"
+multiplayer = true
+category = "Modifier"
+top = "Float"
+bottom = "Up"
+
+[Events.21]
+name = "Rolling Rock Trigger"
+multiplayer = false
+category = "Object"
+top = "Trig"
+bottom = "Rock"
+parameters = ["RockID:8"]
+
+[Events.22]
+name = "EMPTY"
+multiplayer = true
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.23]
+name = "Set Ambient Lighting"
+multiplayer = true
+category = "Light"
+top = "Set"
+bottom = "Light"
+parameters = ["Intensity:8"]
+
+[Events.24]
+name = "Limit Horizontal Scrolling"
+multiplayer = true
+category = "Area"
+top = "Stop"
+bottom = "Xscroll"
+parameters = ["Left:10", "Width:10"]
+
+[Events.25]
+name = "Reset Ambient Lighting"
+multiplayer = true
+category = "Light"
+top = "Reset"
+bottom = "Light"
+
+[Events.26]
+name = "Secret Level (coin warp)"
+multiplayer = false
+category = "SignPost"
+top = "Warp"
+bottom = "Secret"
+parameters = ["Coins:10", "Text:t4", "Offset:p1,4"]
+
+[Events.27]
+name = "Set Echo Value"
+multiplayer = true
+category = "Light"
+top = "Echo"
+bottom = ""
+parameters = ["Amount:8"]
+
+[Events.28]
+name = "Activate Boss"
+multiplayer = false
+category = "Boss"
+top = "Active"
+bottom = "Boss"
+parameters = ["Music:c1"]
+
+[Events.29]
+name = "Start Position (Jazz)"
+multiplayer = true
+category = "SignPost"
+top = "Jazz"
+bottom = "Start"
+
+[Events.30]
+name = "Start Position (Spaz)"
+multiplayer = true
+category = "SignPost"
+top = "Spaz"
+bottom = "Start"
+
+[Events.31]
+name = "Start Position (Multiplayer)"
+multiplayer = true
+category = "SignPost"
+top = "MP"
+bottom = "Start"
+parameters = ["Team:{Blue, Red}1"]
+
+[Events.32]
+name = "Start Position (Lori)"
+multiplayer = true
+category = "SignPost"
+top = "Lori"
+bottom = "Start"
+
+[Events.33]
+name = "Freezer Ammo (+3)"
+multiplayer = true
+category = "Ammo"
+top = "Freeze"
+bottom = "Ammo"
+
+[Events.34]
+name = "Bouncer Ammo (+3)"
+multiplayer = true
+category = "Ammo"
+top = "Bounce"
+bottom = "Ammo"
+
+[Events.35]
+name = "Seeker Ammo (+3)"
+multiplayer = true
+category = "Ammo"
+top = "Seek"
+bottom = "Ammo"
+
+[Events.36]
+name = "RF Ammo (+3)"
+multiplayer = true
+category = "Ammo"
+top = "RF"
+bottom = "Ammo"
+
+[Events.37]
+name = "Toaster Ammo (+3)"
+multiplayer = true
+category = "Ammo"
+top = "Toast"
+bottom = "Ammo"
+
+[Events.38]
+name = "TNT Ammo (+3)"
+multiplayer = true
+category = "Ammo"
+top = "TNT"
+bottom = "Ammo"
+
+[Events.39]
+name = "Pepperspray Ammo (+3)"
+multiplayer = true
+category = "Ammo"
+top = "Pepper"
+bottom = "Ammo"
+
+[Events.40]
+name = "Electro Ammo (+3)"
+multiplayer = true
+category = "Ammo"
+top = "Electro"
+bottom = "Ammo"
+
+[Events.41]
+name = "Turtle Shell"
+multiplayer = true
+category = "Object"
+top = "Turtle"
+bottom = "Shell"
+
+[Events.42]
+name = "Swinging Vine"
+multiplayer = false
+category = "Object"
+top = "Swing"
+bottom = "Vine"
+
+[Events.43]
+name = "Bomb"
+multiplayer = true
+category = "Object"
+top = "Bomb"
+
+[Events.44]
+name = "Coin Silver (+1)"
+multiplayer = true
+category = "Goodies"
+top = "Silver"
+bottom = "Coin"
+
+[Events.45]
+name = "Coin Gold (+5)"
+multiplayer = true
+category = "Goodies"
+top = "Gold"
+bottom = "Coin"
+
+[Events.46]
+name = "Mixed Ammo Crate"
+multiplayer = true
+category = "Ammo"
+top = "Gun"
+bottom = "Crate"
+parameters = ["ExtraEvent:8", "Amount:4"]
+
+[Events.47]
+name = "Carrot Crate"
+multiplayer = true
+category = "Goodies"
+top = "Carrot"
+bottom = "Crate"
+parameters = ["ExtraEvent:8", "Amount:4"]
+
+[Events.48]
+name = "Extra Life Crate"
+multiplayer = true
+category = "Goodies"
+top = "1Up"
+bottom = "Crate"
+parameters = ["ExtraEvent:8", "Amount:4"]
+
+[Events.49]
+name = "Gem Barrel"
+multiplayer = true
+category = "Gem"
+top = "Gem"
+bottom = "Barrel"
+parameters = ["Red:4", "Green:4", "Blue:4", "Purple:4"]
+
+[Events.50]
+name = "Carrot Barrel"
+multiplayer = true
+category = "Goodies"
+top = "Carrot"
+bottom = "Barrel"
+
+[Events.51]
+name = "Extra Life Barrel"
+multiplayer = true
+category = "Goodies"
+top = "1Up"
+bottom = "Barrel"
+
+[Events.52]
+name = "Bomb Crate"
+multiplayer = true
+category = "Goodies"
+top = "Bomb"
+bottom = "Crate"
+parameters = ["ExtraEvent:8", "Amount:4", "RandomFly:c1", "NoBomb:1"]
+
+[Events.53]
+name = "Freezer Ammo Crate (+15)"
+multiplayer = true
+category = "Ammo"
+top = "Freeze"
+bottom = "Box"
+
+[Events.54]
+name = "Bouncer Ammo Crate (+15)"
+multiplayer = true
+category = "Ammo"
+top = "Bounce"
+bottom = "Box"
+
+[Events.55]
+name = "Seeker Ammo Crate (+15)"
+multiplayer = true
+category = "Ammo"
+top = "Seek"
+bottom = "Box"
+
+[Events.56]
+name = "RF Ammo Crate (+15)"
+multiplayer = true
+category = "Ammo"
+top = "RF"
+bottom = "Box"
+
+[Events.57]
+name = "Toaster Ammo Crate (+15)"
+multiplayer = true
+category = "Ammo"
+top = "Toast"
+bottom = "Box"
+
+[Events.58]
+name = "Exploding TNT"
+multiplayer = true
+category = "Object"
+top = "TNT"
+
+[Events.59]
+name = "Airboard (generating)"
+multiplayer = true
+category = "Goodies"
+top = "Air"
+bottom = "Board"
+
+[Events.60]
+name = "Green Spring (Frozen)"
+multiplayer = true
+category = "Spring"
+top = "Frozen"
+bottom = "Spring"
+parameters = ["Ceiling:c1", "Keep X:c1", "Keep Y:c1", "Delay:4"]
+
+[Events.61]
+name = "Fast Fire"
+multiplayer = true
+category = "PowerUp"
+top = "Fast"
+bottom = "Fire"
+
+[Events.62]
+name = "Green Spring Crate"
+multiplayer = true
+category = "Spring"
+top = "Spring"
+bottom = "Crate"
+parameters = ["ExtraEvent:8", "Amount:4"]
+
+[Events.63]
+name = "Red Gem (+1)"
+multiplayer = true
+category = "Gem"
+top = "Red"
+bottom = "Gem"
+
+[Events.64]
+name = "Green Gem (+5)"
+multiplayer = true
+category = "Gem"
+top = "Green"
+bottom = "Gem"
+
+[Events.65]
+name = "Blue Gem (+10)"
+multiplayer = true
+category = "Gem"
+top = "Blue"
+bottom = "Gem"
+
+[Events.66]
+name = "Purple Gem (+1)"
+multiplayer = true
+category = "Gem"
+top = "Purple"
+bottom = "Gem"
+
+[Events.67]
+name = "Super Red Gem"
+multiplayer = true
+category = "Gem"
+top = "Super"
+bottom = "Gem"
+
+[Events.68]
+name = "Birdy"
+multiplayer = false
+category = "Goodies"
+top = "Bird"
+bottom = ""
+parameters = ["Type:{Shooting, Headbutting}1"]
+
+[Events.69]
+name = "Mixed Ammo Barrel"
+multiplayer = true
+category = "Ammo"
+top = "Gun"
+bottom = "Barrel"
+
+[Events.70]
+name = "Gem Crate"
+multiplayer = true
+category = "Gem"
+top = "Gem"
+bottom = "Crate"
+parameters = ["Red:4", "Green:4", "Blue:4", "Purple:4"]
+
+[Events.71]
+name = "Morph Box (Jazz/Spaz/Lori)"
+multiplayer = true
+category = "Morph"
+top = "Jazz"
+bottom = "Spaz"
+
+[Events.72]
+name = "Carrot Energy (+1)"
+multiplayer = true
+category = "Goodies"
+top = "Carrot"
+
+[Events.73]
+name = "Full Energy"
+multiplayer = true
+category = "Goodies"
+top = "Full"
+bottom = "NRG"
+
+[Events.74]
+name = "Fire Shield"
+multiplayer = true
+category = "Shield"
+top = "Shield"
+bottom = "Fire"
+
+[Events.75]
+name = "Water Shield"
+multiplayer = true
+category = "Shield"
+top = "Shield"
+bottom = "Water"
+
+[Events.76]
+name = "Plasma Shield"
+multiplayer = true
+category = "Shield"
+top = "Shield"
+bottom = "Plasma"
+
+[Events.77]
+name = "EMPTY"
+multiplayer = true
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.78]
+name = "EMPTY"
+multiplayer = true
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.79]
+name = "Fast Feet (does nothing)"
+multiplayer = true
+category = "Goodies"
+top = "Fast"
+bottom = "Feet"
+
+[Events.80]
+name = "Extra Life"
+multiplayer = true
+category = "Goodies"
+top = "Extra"
+bottom = "Life"
+
+[Events.81]
+name = "End of Level Signpost"
+multiplayer = false
+category = "SignPost"
+top = "End"
+bottom = "Sign"
+parameters = ["Secret:c1"]
+
+[Events.82]
+name = "EMPTY"
+multiplayer = false
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.83]
+name = "Checkpoint"
+multiplayer = true
+category = "SignPost"
+top = "Save"
+bottom = "Point"
+
+[Events.84]
+name = "Secret Level Signpost"
+multiplayer = false
+category = "SignPost"
+top = "Secret"
+bottom = "Sign"
+
+[Events.85]
+name = "Red Spring"
+multiplayer = true
+category = "Spring"
+top = "Red"
+bottom = "Spring"
+parameters = ["Ceiling:c1", "Keep X:c1", "Keep Y:c1", "Delay:4"]
+
+[Events.86]
+name = "Green Spring"
+multiplayer = true
+category = "Spring"
+top = "Green"
+bottom = "Spring"
+parameters = ["Ceiling:c1", "Keep X:c1", "Keep Y:c1", "Delay:4"]
+
+[Events.87]
+name = "Blue Spring"
+multiplayer = true
+category = "Spring"
+top = "Blue"
+bottom = "Spring"
+parameters = ["Ceiling:c1", "Keep X:c1", "Keep Y:c1", "Delay:4"]
+
+[Events.88]
+name = "Invincibility Carrot"
+multiplayer = true
+category = "Goodies"
+top = "Invinc"
+
+[Events.89]
+name = "Extra Time (player timer)"
+multiplayer = true
+category = "Goodies"
+top = "Extra"
+bottom = "Time"
+parameters = ["Seconds:7"]
+
+[Events.90]
+name = "Freeze Hourglass"
+multiplayer = true
+category = "Goodies"
+top = "Freeze"
+
+[Events.91]
+name = "Horizontal Red Spring"
+multiplayer = true
+category = "Spring"
+top = "H-Red"
+bottom = "Spring"
+parameters = ["Empty:2", "Keep Y:c1", "Delay:4", "Reverse:c1"]
+
+[Events.92]
+name = "Horizontal Green Spring"
+multiplayer = true
+category = "Spring"
+top = "H-Green"
+bottom = "Spring"
+parameters = ["Empty:2", "Keep Y:c1", "Delay:4", "Reverse:c1"]
+
+[Events.93]
+name = "Horizontal Blue Spring"
+multiplayer = true
+category = "Spring"
+top = "H-Blue"
+bottom = "Spring"
+parameters = ["Empty:2", "Keep Y:c1", "Delay:4", "Reverse:c1"]
+
+[Events.94]
+name = "Morph Box (Bird)"
+multiplayer = false
+category = "Morph"
+top = "Bird"
+bottom = "Morph"
+
+[Events.95]
+name = "Trigger Crate"
+multiplayer = true
+category = "Trigger"
+top = "Trig"
+bottom = "Crate"
+parameters = ["TriggerID:5", "Set to:{On,Off}1", "Switch:c1"]
+
+[Events.96]
+name = "Fly Carrot"
+multiplayer = false
+category = "Goodies"
+top = "Flyy"
+bottom = "Boyy"
+
+[Events.97]
+name = "RectGem Red"
+multiplayer = true
+category = "Gem"
+top = "Red"
+bottom = "Gem2"
+
+[Events.98]
+name = "RectGem Green"
+multiplayer = true
+category = "Gem"
+top = "Green"
+bottom = "Gem2"
+
+[Events.99]
+name = "RectGem Blue"
+multiplayer = true
+category = "Gem"
+top = "Blue"
+bottom = "Gem2"
+
+[Events.100]
+name = "Tuf Turtle"
+multiplayer = false
+category = "Enemy"
+top = "Tuf"
+bottom = "Turt"
+
+[Events.101]
+name = "Schwarzenguard"
+multiplayer = false
+category = "Boss"
+top = "Tuf"
+bottom = "Boss"
+parameters = ["EndText:t4"]
+
+[Events.102]
+name = "Lab Rat"
+multiplayer = false
+category = "Enemy"
+top = "Lab"
+bottom = "Rat"
+
+[Events.103]
+name = "Dragon"
+multiplayer = false
+category = "Enemy"
+top = "Dra-"
+bottom = "gon"
+
+[Events.104]
+name = "Lizard"
+multiplayer = false
+category = "Enemy"
+top = "Lizard"
+
+[Events.105]
+name = "Bee"
+multiplayer = false
+category = "Enemy"
+top = "Bum"
+bottom = "Bee"
+
+[Events.106]
+name = "Rapier Ghost"
+multiplayer = false
+category = "Enemy"
+top = "Rapier"
+
+[Events.107]
+name = "Sparks"
+multiplayer = false
+category = "Enemy"
+top = "Sparks"
+
+[Events.108]
+name = "Bat"
+multiplayer = false
+category = "Enemy"
+top = "Bat"
+
+[Events.109]
+name = "Sucker (Crawling)"
+multiplayer = false
+category = "Enemy"
+top = "Suckr"
+
+[Events.110]
+name = "Caterpillar"
+multiplayer = true
+category = "Object"
+top = "Cater"
+bottom = "Pillar"
+
+[Events.111]
+name = "Cheshire Cat"
+multiplayer = false
+category = "Scenery"
+top = "Chesh"
+bottom = "Cat"
+
+[Events.112]
+name = "Cheshire Cat Hook"
+multiplayer = false
+category = "Object"
+top = "Chesh"
+bottom = "Hook"
+parameters = ["Duration:8"]
+
+[Events.113]
+name = "Hatter"
+multiplayer = false
+category = "Enemy"
+top = "Hatter"
+
+[Events.114]
+name = "Bilsy"
+multiplayer = false
+category = "Boss"
+top = "Bilsy"
+bottom = ""
+parameters = ["EndText:t4"]
+
+[Events.115]
+name = "Skeleton"
+multiplayer = false
+category = "Enemy"
+top = "Skele-"
+bottom = "ton"
+
+[Events.116]
+name = "Dog"
+multiplayer = false
+category = "Enemy"
+top = "Doggy"
+bottom = "Dogg"
+
+[Events.117]
+name = "Normal Turtle"
+multiplayer = false
+category = "Enemy"
+top = "Norm"
+bottom = "Turt"
+
+[Events.118]
+name = "Helmut"
+multiplayer = false
+category = "Enemy"
+top = "Helmut"
+
+[Events.119]
+name = "EMPTY"
+multiplayer = false
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.120]
+name = "Demon"
+multiplayer = false
+category = "Enemy"
+top = "Demon"
+
+[Events.121]
+name = "EMPTY"
+multiplayer = false
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.122]
+name = "EMPTY"
+multiplayer = false
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.123]
+name = "Dragonfly"
+multiplayer = false
+category = "Enemy"
+top = "Dragon"
+bottom = "Fly"
+
+[Events.124]
+name = "Monkey"
+multiplayer = false
+category = "Enemy"
+top = "Mon-"
+bottom = "key"
+
+[Events.125]
+name = "Fat Chick"
+multiplayer = false
+category = "Enemy"
+top = "Fat"
+bottom = "Chick"
+
+[Events.126]
+name = "Fencer"
+multiplayer = false
+category = "Enemy"
+top = "Fencer"
+
+[Events.127]
+name = "Fish"
+multiplayer = false
+category = "Enemy"
+top = "Fish"
+
+[Events.128]
+name = "Moth"
+multiplayer = true
+category = "Scenery"
+top = "Moth"
+parameters = ["Type:{Pink,Gray,Tiny,Purple}2"]
+
+[Events.129]
+name = "Steam"
+multiplayer = true
+category = "Object"
+top = "Steam"
+
+[Events.130]
+name = "Rolling Rock"
+multiplayer = false
+category = "Object"
+top = "Roll"
+bottom = "Rock"
+parameters = ["RockID:8", "X-Speed:-4", "Y-Speed:-4"]
+
+[Events.131]
+name = "Blaster Power Up"
+multiplayer = true
+category = "PowerUp"
+top = "Blastr"
+bottom = "Power"
+
+[Events.132]
+name = "Bouncer Power Up"
+multiplayer = true
+category = "PowerUp"
+top = "Bounce"
+bottom = "Power"
+
+[Events.133]
+name = "Freezer Power Up"
+multiplayer = true
+category = "PowerUp"
+top = "Freeze"
+bottom = "Power"
+
+[Events.134]
+name = "Seeker Power Up"
+multiplayer = true
+category = "PowerUp"
+top = "Seek"
+bottom = "Power"
+
+[Events.135]
+name = "RF Power Up"
+multiplayer = true
+category = "PowerUp"
+top = "RF"
+bottom = "Power"
+
+[Events.136]
+name = "Toaster Power Up"
+multiplayer = true
+category = "PowerUp"
+top = "Toast"
+bottom = "Power"
+
+[Events.137]
+name = "Left Paddle"
+multiplayer = true
+category = "Pinball"
+top = "Left"
+bottom = "Paddle"
+
+[Events.138]
+name = "Right Paddle"
+multiplayer = true
+category = "Pinball"
+top = "Right"
+bottom = "Paddle"
+
+[Events.139]
+name = "500 Bumper"
+multiplayer = true
+category = "Pinball"
+top = "500"
+bottom = "Bump"
+
+[Events.140]
+name = "Carrot Bumper"
+multiplayer = true
+category = "Pinball"
+top = "Carrot"
+bottom = "Bump"
+
+[Events.141]
+name = "Apple"
+multiplayer = true
+category = "Food"
+top = "Apple"
+
+[Events.142]
+name = "Banana"
+multiplayer = true
+category = "Food"
+top = "Bana-"
+bottom = "na"
+
+[Events.143]
+name = "Cherry"
+multiplayer = true
+category = "Food"
+top = "Cherry"
+
+[Events.144]
+name = "Orange"
+multiplayer = true
+category = "Food"
+top = "Orange"
+
+[Events.145]
+name = "Pear"
+multiplayer = true
+category = "Food"
+top = "Pear"
+
+[Events.146]
+name = "Pretzel"
+multiplayer = true
+category = "Food"
+top = "Pretzel"
+
+[Events.147]
+name = "Strawberry"
+multiplayer = true
+category = "Food"
+top = "Straw"
+bottom = "Berry"
+
+[Events.148]
+name = "Steady Light"
+multiplayer = true
+category = "Light"
+top = "Steady"
+bottom = "Light"
+parameters = ["Type:{Normal,Point,Point2,Flicker,Bright,Laser,Ring,Ring2}3 ", "Size:7"]
+
+[Events.149]
+name = "Pulse Light"
+multiplayer = true
+category = "Light"
+top = "Pulse"
+bottom = "Light"
+parameters = ["Speed:8", "Sync:4", "Type:{Normal,Point,Point2,Flicker,Bright,Laser,Ring,Ring2}3", "Size:5"]
+
+[Events.150]
+name = "Flicker Light"
+multiplayer = true
+category = "Light"
+top = "Flick"
+bottom = "Light"
+parameters = ["Sample:s8"]
+
+[Events.151]
+name = "Queen"
+multiplayer = false
+category = "Boss"
+top = "Queen"
+bottom = ""
+parameters = ["EndText:t4"]
+
+[Events.152]
+name = "Sucker (Floating)"
+multiplayer = false
+category = "Enemy"
+top = "Float"
+bottom = "Sucker"
+
+[Events.153]
+name = "Bridge"
+multiplayer = true
+category = "Object"
+top = "Bridge"
+bottom = ""
+parameters = ["Width:4", "Type:{Plank,Stone,Vine,Coal,Log,Diamond,Sci-Fi,Plank}3", "Toughness:4"]
+
+[Events.154]
+name = "Lemon"
+multiplayer = true
+category = "Food"
+top = "Lemon"
+
+[Events.155]
+name = "Lime"
+multiplayer = true
+category = "Food"
+top = "Lime"
+
+[Events.156]
+name = "Thing"
+multiplayer = true
+category = "Food"
+top = "Thing"
+
+[Events.157]
+name = "Watermelon"
+multiplayer = true
+category = "Food"
+top = "Water"
+bottom = "Melon"
+
+[Events.158]
+name = "Peach"
+multiplayer = true
+category = "Food"
+top = "Peach"
+
+[Events.159]
+name = "Grapes"
+multiplayer = true
+category = "Food"
+top = "Grapes"
+
+[Events.160]
+name = "Lettuce"
+multiplayer = true
+category = "Food"
+top = "Let-"
+bottom = "tuce"
+
+[Events.161]
+name = "Eggplant"
+multiplayer = true
+category = "Food"
+top = "Egg"
+bottom = "Plant"
+
+[Events.162]
+name = "Cucumber"
+multiplayer = true
+category = "Food"
+top = "Cucumb"
+
+[Events.163]
+name = "Soft Drink"
+multiplayer = true
+category = "Food"
+top = "Soft"
+bottom = "Drink"
+
+[Events.164]
+name = "Soda Pop"
+multiplayer = true
+category = "Food"
+top = "Soda"
+bottom = "Pop"
+
+[Events.165]
+name = "Milk"
+multiplayer = true
+category = "Food"
+top = "Milk"
+
+[Events.166]
+name = "Pie"
+multiplayer = true
+category = "Food"
+top = "Pie"
+
+[Events.167]
+name = "Cake"
+multiplayer = true
+category = "Food"
+top = "Cake"
+
+[Events.168]
+name = "Donut"
+multiplayer = true
+category = "Food"
+top = "Donut"
+
+[Events.169]
+name = "Cupcake"
+multiplayer = true
+category = "Food"
+top = "Cup"
+bottom = "Cake"
+
+[Events.170]
+name = "Chips"
+multiplayer = true
+category = "Food"
+top = "Chips"
+
+[Events.171]
+name = "Candy"
+multiplayer = true
+category = "Food"
+top = "Candy"
+
+[Events.172]
+name = "Chocolate Bar"
+multiplayer = true
+category = "Food"
+top = "Choc"
+bottom = "Bar"
+
+[Events.173]
+name = "Ice Ceam"
+multiplayer = true
+category = "Food"
+top = "Ice"
+bottom = "Cream"
+
+[Events.174]
+name = "Burger"
+multiplayer = true
+category = "Food"
+top = "Burger"
+
+[Events.175]
+name = "Pizza"
+multiplayer = true
+category = "Food"
+top = "Pizza"
+
+[Events.176]
+name = "Fries"
+multiplayer = true
+category = "Food"
+top = "Fries"
+
+[Events.177]
+name = "Chicken Leg"
+multiplayer = true
+category = "Food"
+top = "Chickn"
+bottom = "Leg"
+
+[Events.178]
+name = "Sandwich"
+multiplayer = true
+category = "Food"
+top = "Sand"
+bottom = "Wich"
+
+[Events.179]
+name = "Taco"
+multiplayer = true
+category = "Food"
+top = "Taco"
+
+[Events.180]
+name = "Weenie"
+multiplayer = true
+category = "Food"
+top = "Weenie"
+
+[Events.181]
+name = "Ham"
+multiplayer = true
+category = "Food"
+top = "Ham"
+
+[Events.182]
+name = "Cheese"
+multiplayer = true
+category = "Food"
+top = "Cheese"
+
+[Events.183]
+name = "Lizard (Flying)"
+multiplayer = false
+category = "Enemy"
+top = "Float"
+bottom = "Lizard"
+parameters = ["Duration:8", "Copter:c1"]
+
+[Events.184]
+name = "Monkey (Immobile)"
+multiplayer = false
+category = "Enemy"
+top = "Stand"
+bottom = "Monkey"
+
+[Events.185]
+name = "Destruct Scenery"
+multiplayer = true
+category = "Trigger"
+top = "Dest"
+bottom = "Scen"
+parameters = ["Empty:10", "SpeedDestr:c5", "Weapon:{Any,Blaster,Bouncers,Ice,Seekers,RFs,Toaster,TNT,Gun8,Gun9}4"]
+
+[Events.186]
+name = "Destruct Scenery (TNT)"
+multiplayer = true
+category = "Trigger"
+top = "Bomb"
+bottom = "Scen"
+parameters = ["Event:8", "Delay Secs:8", "Initial Delay:c1"]
+
+[Events.187]
+name = "Collapsing Scenery"
+multiplayer = true
+category = "Trigger"
+top = "Collaps"
+bottom = "Scen"
+parameters = ["Wait:10", "FPS:5"]
+
+[Events.188]
+name = "Stomp Scenery"
+multiplayer = true
+category = "Trigger"
+top = "Stomp"
+bottom = "Scen"
+
+[Events.189]
+name = "Invisible Gem Stomp"
+multiplayer = true
+category = "Gem"
+top = "Gem"
+bottom = "Stomp"
+
+[Events.190]
+name = "Raven"
+multiplayer = false
+category = "Enemy"
+top = "Raven"
+
+[Events.191]
+name = "Tube Turtle"
+multiplayer = false
+category = "Enemy"
+top = "Tube"
+bottom = "Turt"
+
+[Events.192]
+name = "Gem Ring"
+multiplayer = true
+category = "Gem"
+top = "Gem"
+bottom = "Ring"
+
+[Events.193]
+name = "Shootable Pole (Diamondus Tree)"
+multiplayer = true
+category = "Object"
+top = "Small"
+bottom = "Tree"
+parameters = ["Adjust Y:5", "Adjust X:-6"]
+
+[Events.194]
+name = "Ambient Sound"
+multiplayer = true
+category = "Light"
+top = "Ambient"
+bottom = "Sound"
+parameters = ["Sample:s8", "Amplify:8", "Fade:c1", "Sine:c1"]
+
+[Events.195]
+name = "Uterus"
+multiplayer = false
+category = "Boss"
+top = "Uterus"
+bottom = ""
+parameters = ["EndText:t4"]
+
+[Events.196]
+name = "Crab"
+multiplayer = false
+category = "Enemy"
+top = "Crab"
+
+[Events.197]
+name = "Witch"
+multiplayer = false
+category = "Enemy"
+top = "Witch"
+
+[Events.198]
+name = "Rocket Turtle"
+multiplayer = false
+category = "Boss"
+top = "Rock"
+bottom = "Turt"
+parameters = ["EndText:t4", "Velocity:6", "Angle:{E,SE,S,SW,W,NW,N,NE}3"]
+
+[Events.199]
+name = "Bubba"
+multiplayer = false
+category = "Boss"
+top = "Bubba"
+bottom = ""
+parameters = ["EndText:t4"]
+
+[Events.200]
+name = "Devil Devan"
+multiplayer = false
+category = "Boss"
+top = "Devil"
+bottom = "Devan"
+parameters = ["EndText:t4"]
+
+[Events.201]
+name = "Robot Boss (Devan)"
+multiplayer = false
+category = "Boss"
+top = "Devan"
+bottom = "Boss"
+parameters = ["IntroText:t4", "EndText:t4"]
+
+[Events.202]
+name = "Robot Boss (Robot)"
+multiplayer = false
+category = "Boss"
+top = "Robot"
+bottom = "Boss"
+
+[Events.203]
+name = "Shootable Pole (Carrotus)"
+multiplayer = true
+category = "Object"
+top = "Carr"
+bottom = "Pole"
+parameters = ["Adjust Y:5", "Adjust X:-6"]
+
+[Events.204]
+name = "Shootable Pole (Psych)"
+multiplayer = true
+category = "Object"
+top = "Psych"
+bottom = "Pole"
+parameters = ["Adjust Y:5", "Adjust X:-6"]
+
+[Events.205]
+name = "Shootable Pole (Diamondus)"
+multiplayer = true
+category = "Object"
+top = "Diam"
+bottom = "Pole"
+parameters = ["Adjust Y:5", "Adjust X:-6"]
+
+[Events.206]
+name = "Sucker Tube"
+multiplayer = true
+category = "Modifier"
+top = "Suck"
+bottom = ""
+parameters = ["X-Speed:-7", "Y-Speed:-7", "Trig Sample:1", "BecomeNoclip:1", "Noclip Only:1", "WaitTime:3"]
+
+[Events.207]
+name = "Text"
+multiplayer = true
+category = "Area"
+top = "Text"
+bottom = ""
+parameters = ["Text:t4", "Empty:4", "Vanish:c1", "AngelScript:c1", "Offset:8"]
+
+[Events.208]
+name = "Set Water Level"
+multiplayer = true
+category = "Area"
+top = "Water"
+bottom = ""
+parameters = ["Height (Tiles):8", "Instant:c1", "Lighting:{Off, On, ???, Lagunicus}2"]
+
+[Events.209]
+name = "Fruit Platform"
+multiplayer = false
+category = "Platform"
+top = "Fruit"
+bottom = "Plat"
+parameters = ["Sync:2", "Speed:-6", "Length:4", "Swing:{Circle,Pendulum}1"]
+
+[Events.210]
+name = "Ball Platform"
+multiplayer = false
+category = "Platform"
+top = "Ball"
+bottom = "Plat"
+parameters = ["Sync:2", "Speed:-6", "Length:4", "Swing:{Circle,Pendulum}1"]
+
+[Events.211]
+name = "Grass Platform"
+multiplayer = false
+category = "Platform"
+top = "Grass"
+bottom = "Plat"
+parameters = ["Sync:2", "Speed:-6", "Length:4", "Swing:{Circle,Pendulum}1"]
+
+[Events.212]
+name = "Pink Platform"
+multiplayer = false
+category = "Platform"
+top = "Pink"
+bottom = "Plat"
+parameters = ["Sync:2", "Speed:-6", "Length:4", "Swing:{Circle,Pendulum}1"]
+
+[Events.213]
+name = "Sonic Platform"
+multiplayer = false
+category = "Platform"
+top = "Sonic"
+bottom = "Plat"
+parameters = ["Sync:2", "Speed:-6", "Length:4", "Swing:{Circle,Pendulum}1"]
+
+[Events.214]
+name = "Spike Platform"
+multiplayer = false
+category = "Platform"
+top = "Spike"
+bottom = "Plat"
+parameters = ["Sync:2", "Speed:-6", "Length:4", "Swing:{Circle,Pendulum}1"]
+
+[Events.215]
+name = "Spike Ball (2D)"
+multiplayer = false
+category = "Object"
+top = "Spike"
+bottom = "Ball"
+parameters = ["Sync:2", "Speed:-6", "Length:4", "Swing:{Circle,Pendulum}1"]
+
+[Events.216]
+name = "Generator"
+multiplayer = true
+category = ""
+top = "Gene-"
+bottom = "rator"
+parameters = ["Event:8", "Delay Secs:8", "Initial Delay:c1"]
+
+[Events.217]
+name = "Eva Earlong"
+multiplayer = true
+category = "Morph"
+top = "Eva"
+
+[Events.218]
+name = "Water Bubbler"
+multiplayer = true
+category = "Scenery"
+top = "Bubb"
+bottom = "ler"
+parameters = ["Speed:4"]
+
+[Events.219]
+name = "TNT Power Up (doesn't work)"
+multiplayer = true
+category = "PowerUp"
+top = "TNT"
+bottom = "Power"
+
+[Events.220]
+name = "Pepperspray Power Up"
+multiplayer = true
+category = "PowerUp"
+top = "Pepper"
+bottom = "Power"
+
+[Events.221]
+name = "Electro Blaster Power Up"
+multiplayer = true
+category = "PowerUp"
+top = "Electro"
+bottom = "Power"
+
+[Events.222]
+name = "Frog Morph"
+multiplayer = false
+category = "Morph"
+top = "Morph"
+bottom = "Frog"
+
+[Events.223]
+name = "Spike Ball (3D)"
+multiplayer = false
+category = "Object"
+top = "3D"
+bottom = "Ball"
+parameters = ["Sync:2", "Speed:-6", "Length:4", "Swing:{Circle,Pendulum}1", "Shaded:c1"]
+
+[Events.224]
+name = "EMPTY"
+multiplayer = false
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.225]
+name = "Bees (doesn't work)"
+multiplayer = false
+category = "Enemy"
+top = "Bees"
+
+[Events.226]
+name = "Copter"
+multiplayer = true
+category = "Object"
+top = "Copter"
+bottom = ""
+parameters = ["Duration:8"]
+
+[Events.227]
+name = "Laser Shield"
+multiplayer = false
+category = "Shield"
+top = "Shield"
+bottom = "Laser"
+
+[Events.228]
+name = "Stopwatch"
+multiplayer = false
+category = "Shield"
+top = "Stop"
+bottom = "Watch"
+
+[Events.229]
+name = "Shootable Pole (Jungle)"
+multiplayer = true
+category = "Object"
+top = "Jung"
+bottom = "Pole"
+parameters = ["Adjust Y:5", "Adjust X:-6"]
+
+[Events.230]
+name = "Warp"
+multiplayer = true
+category = "Modifier"
+top = "Warp"
+bottom = ""
+parameters = ["ID:8", "Coins:8", "SetLap:c1", "ShowAnim:c1", "Fast:c1"]
+
+[Events.231]
+name = "Pushable Rock"
+multiplayer = true
+category = "Object"
+top = "Big"
+bottom = "Rock"
+
+[Events.232]
+name = "Pushable Box"
+multiplayer = true
+category = "Object"
+top = "Big"
+bottom = "Box"
+
+[Events.233]
+name = "Water Block"
+multiplayer = true
+category = "Scenery"
+top = "Water"
+bottom = "Block"
+parameters = ["Adjust Y:-8"]
+
+[Events.234]
+name = "Trigger Scenery"
+multiplayer = true
+category = "Trigger"
+top = "Trig"
+bottom = "Scen"
+parameters = ["TriggerID:5"]
+
+[Events.235]
+name = "Bolly"
+multiplayer = false
+category = "Boss"
+top = "Bolly"
+bottom = ""
+parameters = ["EndText:t4"]
+
+[Events.236]
+name = "Butterfly"
+multiplayer = false
+category = "Enemy"
+top = "Butter"
+bottom = "Fly"
+parameters = ["Velocity:6", "Angle:{E,SE,S,SW,W,NW,N,NE}3"]
+
+[Events.237]
+name = "Bee Swarm"
+multiplayer = false
+category = "Enemy"
+top = "Bee"
+bottom = "Boy"
+
+[Events.238]
+name = "Activate Snow Effect"
+multiplayer = false
+category = "Scenery"
+top = "Snow"
+
+[Events.239]
+name = "EMPTY"
+multiplayer = false
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.240]
+name = "Warp Target"
+multiplayer = true
+category = "Modifier"
+top = "Warp"
+bottom = "Target"
+parameters = ["ID:8"]
+
+[Events.241]
+name = "Tweedle (doesn't work)"
+multiplayer = false
+category = "Boss"
+top = "Tweedle"
+
+[Events.242]
+name = "Path"
+multiplayer = false
+category = "Area"
+top = "Path"
+bottom = ""
+parameters = ["Velocity:6", "Angle:{E,SE,S,SW,W,NW,N,NE}3", "Relative:c1", "RandRev:c1", "WaitTime:3"]
+
+[Events.243]
+name = "Airboard (SP only)"
+multiplayer = false
+category = "Goodies"
+top = "SP"
+bottom = "Board"
+
+[Events.244]
+name = "CTF Base"
+multiplayer = true
+category = "Object"
+top = "CTF"
+bottom = "Base"
+parameters = ["Team:{Blue,Red}1", "Direction:{Right,Left}1"]
+
+[Events.245]
+name = "No Fire Zone"
+multiplayer = true
+category = "Area"
+top = "No Fire"
+bottom = "Zone"
+parameters = ["Set To:{Local, Off, On, Toggle}2", "Var:{No Fire, Anti-Grav}1"]
+
+[Events.246]
+name = "Trigger Zone"
+multiplayer = true
+category = "Trigger"
+top = "Trigger"
+bottom = "Zone"
+parameters = ["TriggerID:5", "Set to:{Off,On}1", "Switch:c1"]
+
+[Events.247]
+name = "EMPTY"
+multiplayer = true
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.248]
+name = "Xmas Normal Turtle"
+multiplayer = false
+category = "Enemy"
+top = "XMNorm"
+bottom = "Turt"
+
+[Events.249]
+name = "Xmas Lizard"
+multiplayer = false
+category = "Enemy"
+top = "XMLizard"
+
+[Events.250]
+name = "Xmas Lizard (Flying)"
+multiplayer = false
+category = "Enemy"
+top = "XMFloat"
+bottom = "Lizard"
+parameters = ["Duration:8", "Copter:c1"]
+
+[Events.251]
+name = "Xmas Bilsy"
+multiplayer = false
+category = "Boss"
+top = "XMBilsy"
+bottom = ""
+parameters = ["EndText:t4"]
+
+[Events.252]
+name = "Cat"
+multiplayer = false
+category = "Enemy"
+top = "Kitty"
+bottom = "Catt"
+
+[Events.253]
+name = "Pacman Ghost"
+multiplayer = false
+category = "Enemy"
+top = "Pacman"
+bottom = "Ghost"
+
+[Events.254]
+name = "EMPTY"
+multiplayer = true
+category = ""
+top = "DON'T"
+bottom = "USE"
+
+[Events.255]
+name = "MCE Event"
+multiplayer = true
+category = "Area"
+top = "MCE"
+bottom = "Event"
+parameters = ["Event:8", "Delay Secs:8", "Initial Delay:c1"]

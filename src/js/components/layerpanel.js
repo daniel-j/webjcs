@@ -23,6 +23,7 @@ class LayerPanel {
     this.zoomLevel = 1
     this.currentLayer = 3
     this.layers = []
+    this.eventMap = null
     this.selection = [[new Tile()]]
     this.selectedArea = [0, 0, 0, 0]
     this.selectStartX = 0
@@ -226,7 +227,8 @@ class LayerPanel {
     let x = Math.floor((this.drag.x - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel)
     let y = Math.floor((this.drag.y - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel)
     if (x < this.layers[this.currentLayer].width && y < this.layers[this.currentLayer].height) {
-      this.layers[this.currentLayer].setTiles(x, y, this.selection)
+      this.layers[this.currentLayer].setTiles(x, y, this.selection, this.currentLayer !== 3)
+      if (this.currentLayer === 3 && this.eventMap) this.eventMap.setEvents(x, y, this.selection)
     }
   }
   flipSelectionH () {
@@ -260,6 +262,20 @@ class LayerPanel {
     this.selectedArea[1] = Math.max(0, Math.min(Math.floor(this.selectStartY / 32), Math.floor((this.select.y - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel)))
     this.selectedArea[2] = Math.min(layer.width, Math.max(Math.ceil(this.selectStartX / 32), Math.ceil((this.select.x - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel)))
     this.selectedArea[3] = Math.min(layer.height, Math.max(Math.ceil(this.selectStartY / 32), Math.ceil((this.select.y - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel)))
+  }
+
+  fillEventMap () {
+    let lw = this.layers[3].width
+    let lh = this.layers[3].height
+    this.eventMap.setTexture(lw, lh)
+    let tiles = []
+    for (let x = 0; x < lw; x++) {
+      tiles[x] = []
+      for (let y = 0; y < lh; y++) {
+        tiles[x][y] = app.j2l.layers[3].map[x + y * lw]
+      }
+    }
+    this.eventMap.setEvents(0, 0, tiles)
   }
 
   addScrollbars ({dom}) {
@@ -312,8 +328,15 @@ class LayerPanel {
     this.selectionMap.setTexture(this.selection.length, this.selection[0].length)
     this.selectionMap.setTiles(0, 0, this.selection)
 
+    if (!r.disableWebGL) {
+      this.eventMap = new TileMap(1, 1, false, true)
+    }
+
     vent.subscribe('layer.resize', (ev, [l, w, h]) => {
       app.j2l.resizeLayer(l, w, h)
+      if (this.eventMap && l === 3) {
+        this.fillEventMap()
+      }
     })
     vent.subscribe('layer.refresh', () => {
       this.setCurrentLayer(this.currentLayer)
@@ -331,6 +354,10 @@ class LayerPanel {
       this.scrollbars.scrollPosition[1] = app.j2l.levelInfo.fields.JCSVerticalOffset * this.zoomLevel
       this.scrollbars.disableTransition()
       this.scrollbars.update(true)
+
+      if (this.eventMap) {
+        this.fillEventMap()
+      }
     })
 
     vent.subscribe('j2l.preexport', () => {
@@ -437,9 +464,21 @@ class LayerPanel {
         repeatTilesY: layer.repeatY,
         map: layer,
         backgroundColor: [72 / 255, 48 / 255, 168 / 255, layer.backgroundOpacity * (1 + maskOpacity * 0.15)],
-        invertArea: i === this.currentLayer && this.select.active && this.selectedArea,
+        invertArea: i === this.currentLayer && (i !== 3 || !r.disableWebGL) && this.select.active && this.selectedArea,
         viewport: [0, 0, cw, ch]
       })
+
+      if (i === 3 && this.showEvents) {
+        r.drawEventmap({
+          ctx: this.fboCtx,
+          scale: this.zoomLevel,
+          viewportSize: [cw, ch],
+          viewOffset: viewOffset,
+          map: this.eventMap || layer,
+          invertArea: i === this.currentLayer && this.select.active && this.selectedArea,
+          viewport: [0, 0, cw, ch]
+        })
+      }
 
       if (i === this.currentLayer && this.isActive && !this.select.active) {
         r.drawTilemap({
@@ -452,7 +491,7 @@ class LayerPanel {
           repeatTilesY: 0,
           map: this.selectionMap,
           opacity: 0.5,
-          backgroundColor: [72 / 255, 48 / 255, 168 / 255, (1 + maskOpacity * 0.15) * 0.8]
+          backgroundColor: [68 / 255, 42 / 255, 147 / 255, (1 + maskOpacity * 0.15) * 0.8]
         })
       }
     }
