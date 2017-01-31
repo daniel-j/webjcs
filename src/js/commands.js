@@ -101,6 +101,7 @@ vent.subscribe('loadlevel', (ev, {data, name, dir}) => {
 })
 
 vent.subscribe('menuclick.savelevel', () => {
+  vent.publish('j2l.preexport')
   app.j2l.export().then((buffer) => {
     if (!IS_ELECTRON) {
       const saveAs = require('file-saver').saveAs

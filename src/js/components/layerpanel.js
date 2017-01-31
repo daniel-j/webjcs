@@ -333,6 +333,13 @@ class LayerPanel {
       this.scrollbars.update(true)
     })
 
+    vent.subscribe('j2l.preexport', () => {
+      app.j2l.levelInfo.fields.JCSHorizontalOffset = this.scrollbars.scrollPosition[0] / this.zoomLevel
+      app.j2l.levelInfo.fields.JCSVerticalOffset = this.scrollbars.scrollPosition[1] / this.zoomLevel
+      app.j2l.levelInfo.fields.SecEnvAndLayer &= -1 << 4
+      app.j2l.levelInfo.fields.SecEnvAndLayer |= this.currentLayer & 0xF
+    })
+
     if (!r.disableWebGL) {
       this.fboAttachments = [
         {format: r.gl.RGBA, type: r.gl.UNSIGNED_BYTE, min: r.gl.NEAREST, wrap: r.gl.CLAMP_TO_EDGE}
