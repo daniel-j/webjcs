@@ -324,6 +324,10 @@ r.drawTilemap = (info) => {
         ctx.translate(outPos[2], 0)
         ctx.scale(-1, 1)
       }
+      if (tile.vflipped) {
+        ctx.translate(0, outPos[3])
+        ctx.scale(1, -1)
+      }
       ctx.drawImage(info.maskOpacity < 0.5 ? r.textures.tileset : r.textures.mask, tilesetPos[0], tilesetPos[1], 32, 32, 0, 0, outPos[2], outPos[3])
       ctx.restore()
     }

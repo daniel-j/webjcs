@@ -37,8 +37,9 @@ void main (void) {
 	vec2 spriteOffset = floor(tile.xy * 255.);
 	float tileId = floor(spriteOffset.r) + floor(spriteOffset.g * 256.0);
 	float extra = floor(tile.b * 256.);
-	bool flipped = extra == 1. || extra == 3.;
-	bool animated = extra == 2.;
+	bool flipped = extra == 1. || extra == 3. || extra == 5. || extra == 7.;
+	bool animated = extra == 2. || extra == 3. || extra == 6. || extra == 7.;
+	bool vflipped = extra >= 4.;
 
 	vec4 outColor = vec4(1.0, 0.0, 1.0, 1.0); // Render magenta color
 	if (animated) {
@@ -46,14 +47,18 @@ void main (void) {
 		spriteOffset = floor(tile.xy * 255.);
 		tileId = floor(spriteOffset.r) + floor(spriteOffset.g * 256.);
 		extra = floor(tile.b * 256.);
-		flipped = extra == 1. || extra == 3.;
-		animated = extra == 2.;
+		flipped = extra == 1. || extra == 3. || extra == 5. || extra == 7.;
+		animated = extra == 2. || extra == 3. || extra == 6. || extra == 7.;
+		vflipped = extra >= 4.;
 	}
 
 	if (tileId < tileCount && !animated) {
 		vec2 spriteCoord = mod(floor(pixelCoord), 32.0);
 		if (flipped) {
 			spriteCoord.x = 31. - spriteCoord.x;
+		}
+		if (vflipped) {
+			spriteCoord.y = 31. - spriteCoord.y;
 		}
 		vec2 tilesetPos = vec2(
 			mod(float(tileId), 64.0) * 32.0,

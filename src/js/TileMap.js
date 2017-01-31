@@ -94,7 +94,7 @@ class TileMap {
             let i = (sx + sy * sw) * 4
             mapBuffer[i + 0] = (tileId % 256)
             mapBuffer[i + 1] = Math.floor(tileId / 256)
-            mapBuffer[i + 2] = (tile.flipped * 1 + tile.animated * 2)
+            mapBuffer[i + 2] = (tile.flipped * 1 + tile.animated * 2 + tile.vflipped * 4)
             mapBuffer[i + 3] = 255
           } else {
             if (tile.animated) continue
