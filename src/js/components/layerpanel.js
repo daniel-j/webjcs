@@ -73,6 +73,8 @@ class LayerPanel {
         } else {
           this.select.stop()
         }
+      } else if (c === 'm') {
+        this.setShowMask(!this.showMask)
       } else {
         prevent = false
       }
@@ -191,14 +193,13 @@ class LayerPanel {
   }
   setTileMode (mode) {
     this.tileMode = mode
-    this.setShowMask(mode === 1)
-    this.showParallax = mode === 2
-    this.showClassic = mode === 3
+    this.showParallax = mode === 1
+    this.showClassic = mode === 2
     this.setCurrentLayer(this.currentLayer)
   }
   toggleTileMode (e) {
     let mode = this.tileMode + 1
-    if (mode > 3) {
+    if (mode > 2) {
       mode = 0
     }
     e.currentTarget.firstChild.style.marginTop = (-mode * e.currentTarget.offsetHeight) + 'px'
@@ -206,8 +207,7 @@ class LayerPanel {
   }
 
   toggleEvents () {
-    let show = !this.showEvents
-    this.showEvents = show
+    this.showEvents = !this.showEvents
   }
 
   mousemove (e) {
@@ -552,10 +552,10 @@ class LayerPanel {
         m('.spacer'),
         m('button.tile-modes.right', {title: 'Toggle tile modes', onclick: this.toggleTileMode.bind(this)}, [
           m('div', 'X-Ray'),
-          m('div', 'Mask'),
           m('div', 'Parallax'),
           m('div', 'Classic')
         ]),
+        m('button', {title: 'Toggle mask', onclick: () => this.setShowMask(!this.showMask), class: this.showMask ? 'selected' : ''}, 'Mask'),
         m('button', {title: 'Toggle events', onclick: this.toggleEvents.bind(this), class: this.showEvents ? 'selected' : ''}, 'Events')
       ]),
       m('.panelcontent', {onmousemove: (e) => this.mousemove(e)}, m('div', {oncreate: this.addScrollbars.bind(this)}))
