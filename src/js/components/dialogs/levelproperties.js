@@ -151,9 +151,9 @@ const LevelPropertiesDialog = {
           m('td.textright', 'Level Name'),
           m('td', {width: 120}, m('.flexwrapper', stringInput('LevelName', state.prefs.LevelName, {maxlength: 32}))),
           m('td.textright', 'Text'),
-          m('td', selectInput('currentHelpString', state.prefs.currentHelpString, state.prefs.HelpString && state.prefs.HelpString.map((s, id) => {
-            return id + ': ' + s.replace(/\n/g, ' ').trim().substring(0, 30)
-          })))
+          m('td', m('.flexwrapper', selectInput('currentHelpString', state.prefs.currentHelpString, state.prefs.HelpString && state.prefs.HelpString.map((s, id) => {
+            return id + ': ' + s.replace(/\n/g, ' ').replace(/§./g, '').trim().substring(0, 30)
+          }))))
         ]),
         m('tr', [
           m('td.textright', 'Next Level'),
