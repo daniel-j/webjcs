@@ -219,6 +219,7 @@ r.drawTilemap = (info) => {
             let tile = info.map.map[i]
             if (!tile || !tile.animated) continue
             tile = r.anims[tile.id]
+            if (!tile) continue
             let offset = (x + (y) * info.map.width) * 12
             let uv = new Float32Array(12)
             let tx0 = tile.id % 64
