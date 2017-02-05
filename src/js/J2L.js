@@ -1,10 +1,4 @@
 
-/*
-selectedTiles = [[{'id': 0, 'animated': false, 'flipped': false, 'event': 0}]]
-selectedSource = 'tileset'
-animSelection =  false
-*/
-
 const zlib = require('zlib')
 const crc = require('crc')
 const Struct = require('struct')
@@ -33,16 +27,15 @@ class J2L {
     )
   }
 
-  static LevelInfoStruct (version = J2L.VERSION_123, buffer) {
+  static LevelInfoStruct (version = J2L.VERSION_123, buffer, animCount = 0) {
     // 1.20 or 1.23
     let maxTiles = 1024
-    let maxAnims = 128
+    // let maxAnims = 128
     if (version === J2L.VERSION_TSF) { // If it's TSF (1.24)
       maxTiles = 4096
-      maxAnims = 256
+      // maxAnims = 256
     }
 
-    let animCount = maxAnims
     if (buffer) {
       // Anim list can be of variable size (MLLE)
       animCount = buffer.readUInt16LE(11)
@@ -68,14 +61,15 @@ class J2L {
       .charsnt('MusicFile', 32, 'binary')
       .array('HelpString', 16, 'charsnt', 512, 'binary')
       .array('LayerMiscProperties', 8, 'word32Ule') // Each property is a bit in the following order: Tile Width, Tile Height, Limit Visible Region, Texture Mode, Parallax Stars. This leaves 27 (32-5) unused bits for each layer?
-      .array('Type', 8, 'word8') // unused
+      .array('Type', 8, 'word8') // unknown
       .array('DoesLayerHaveAnyTiles', 8, 'word8')
       .array('LayerWidth', 8, 'word32Ule')
       .array('LayerRealWidth', 8, 'word32Ule')
       .array('LayerHeight', 8, 'word32Ule')
-      .array('LayerZAxis', 8, 'word32Sle') // unused
-      .array('DetailLevel', 8, 'word32Sle') // unused
-      .array('WaveXY', 10, 'word32Sle') // unused
+      .array('LayerZAxis', 8, 'word32Sle') // nothing happens when you change these
+      .array('DetailLevel', 8, 'word8') // is set to 02 for layer 5 in Battle1 and Battle3, but is 00 the rest of the time, at least for JJ2 levels. No clear effect of altering.
+      .array('LayerXOffset', 8, 'word32Sle') // Divide by 65536 to get layer offset in pixels (does not affect mask or events)
+      .array('LayerYOffset', 8, 'word32Sle') // Divide by 65536 to get layer offset in pixels (does not affect mask or events)
       .array('LayerXSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
       .array('LayerYSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
       .array('LayerAutoXSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
@@ -110,20 +104,23 @@ class J2L {
 
     this.name = ''
 
-    this.header = J2L.HeaderStruct()
-    this.levelInfo = J2L.LevelInfoStruct(this.version)
-    this.levelInfo.allocate()
+    this.header = null
+    this.levelInfo = null
     this.events = new Uint32Array(0)
     this.layers = null
 
     this.renderable = renderable
-
-    this.newLevel()
   }
 
   newLevel () {
+    this.levelInfo = J2L.LevelInfoStruct(this.version)
+    this.levelInfo.setBuffer(Buffer.alloc(this.levelInfo.length()))
+
     this.levelInfo.fields.MinLight = 64
     this.levelInfo.fields.StartLight = 64
+
+    this.header = J2L.HeaderStruct()
+    this.header.setBuffer(Buffer.alloc(this.header.length()))
 
     /*
     this.anims = []
@@ -224,13 +221,14 @@ class J2L {
         reject(new Error('J2L has an invalid checksum'))
         return
       }
+
       if (header.fields.Version !== J2L.VERSION_123 && header.fields.Version !== J2L.VERSION_TSF) {
         reject(new Error('J2L is of an unknown version: ' + header.fields.Version))
         return
       }
+      this.header = header
       this.version = header.fields.Version
       this.isTSF = this.version === J2L.VERSION_TSF
-      this.header.setBuffer(headerBuffer)
 
       let dataId = 0
       let offset = 262
@@ -303,7 +301,10 @@ class J2L {
     }
   }
 
-  export (version = this.version) {
+  export (version = this.version, modifier = null) {
+    if (version !== J2L.VERSION_123 && version !== J2L.VERSION_TSF) {
+      return Promise.reject('Invalid version')
+    }
     let maxTiles = 1024
     // let maxAnims = 128
     if (version === J2L.VERSION_TSF) { // If it's TSF (1.24)
@@ -312,6 +313,67 @@ class J2L {
     }
     let animCount = this.levelInfo.fields.AnimCount
     let staticTiles = maxTiles - animCount
+
+    let header = J2L.HeaderStruct()
+    header.setBuffer(Buffer.alloc(header.length()))
+    header.set('Copyright', J2L.HEADER_NOTICE)
+    header.set('Magic', J2L.IDENTIFIER)
+    header.get('PasswordHash').set(0, this.header.get('PasswordHash').get(0))
+    header.get('PasswordHash').set(1, this.header.get('PasswordHash').get(1))
+    header.get('PasswordHash').set(2, this.header.get('PasswordHash').get(2))
+    header.set('HideLevel', this.header.get('HideLevel'))
+    header.set('LevelName', this.levelInfo.get('LevelName'))
+    header.set('Version', version)
+
+    let info = J2L.LevelInfoStruct(version, null, animCount)
+    info.setBuffer(Buffer.alloc(info.length()))
+    info.fields.BufferSize = info.buffer().length
+    info.fields.AnimOffset = staticTiles
+
+    let copyFields = [
+      'JCSHorizontalOffset', 'JCSVerticalOffset',
+      'SecurityEnvelope1', 'SecurityEnvelope2', 'SecEnvAndLayer',
+      'MinLight', 'StartLight',
+      'AnimCount',
+      'VerticalSplitscreen', 'IsLevelMultiplayer',
+      'LevelName', 'Tileset', 'NextLevel', 'BonusLevel', 'SecretLevel', 'MusicFile'
+    ]
+    copyFields.forEach((field) => {
+      info.set(field, this.levelInfo.get(field))
+    })
+
+    let copyArrays = [
+      'HelpString',
+      'LayerMiscProperties',
+      'LayerWidth', 'LayerHeight',
+      'LayerXOffset', 'LayerYOffset',
+      'LayerXSpeed', 'LayerYSpeed',
+      'LayerAutoXSpeed', 'LayerAutoYSpeed',
+      'LayerTextureMode', 'LayerTextureParams',
+      'TilesetEvents', 'TileTypes', 'IsEachTileFlipped'
+    ]
+    copyArrays.forEach((arr) => {
+      let fields = info.get(arr).fields
+      for (let i in fields) {
+        let val = 0
+        try {
+          val = this.levelInfo.get(arr).get(i)
+        } catch (err) {}
+        info.get(arr).set(i, val)
+      }
+    })
+
+    info.get('LayerZAxis').set(0, -300)
+    info.get('LayerZAxis').set(1, -200)
+    info.get('LayerZAxis').set(2, -100)
+    info.get('LayerZAxis').set(3, 0)
+    info.get('LayerZAxis').set(4, 100)
+    info.get('LayerZAxis').set(5, 200)
+    info.get('LayerZAxis').set(6, 300)
+    info.get('LayerZAxis').set(7, 400)
+
+    // copy animations
+    this.levelInfo.buffer().copy(info.buffer(), info.getOffset('Anim'), this.levelInfo.getOffset('Anim'))
 
     let tileNeedsFlip = new Set()
     let animNeedsFlip = new Set()
@@ -322,24 +384,24 @@ class J2L {
     let events
 
     for (let l = 0; l < 8; l++) {
-      let lw = this.levelInfo.fields.LayerWidth[l]
-      let lh = this.levelInfo.fields.LayerHeight[l]
+      let lw = info.fields.LayerWidth[l]
+      let lh = info.fields.LayerHeight[l]
       if (l === 3) {
         events = new Uint32Array(lw * lh)
       }
-      let tileWidth = (this.levelInfo.fields.LayerMiscProperties[l] & 1) === 1
-      this.levelInfo.fields.DoesLayerHaveAnyTiles[l] = this.checkIfLayerHasTiles(l)
-      this.levelInfo.fields.LayerRealWidth[l] = lw
+      let tileWidth = (info.fields.LayerMiscProperties[l] & 1) === 1
+      info.fields.DoesLayerHaveAnyTiles[l] = this.checkIfLayerHasTiles(l, info)
+      info.fields.LayerRealWidth[l] = lw
       if (tileWidth) {
         switch (lw % 4) {
           case 0: break
-          case 2: this.levelInfo.fields.LayerRealWidth[l] *= 2; break
-          default: this.levelInfo.fields.LayerRealWidth[l] *= 4; break
+          case 2: info.fields.LayerRealWidth[l] *= 2; break
+          default: info.fields.LayerRealWidth[l] *= 4; break
         }
       }
-      if (!this.levelInfo.fields.DoesLayerHaveAnyTiles[l]) continue
+      if (!info.fields.DoesLayerHaveAnyTiles[l]) continue
 
-      let realWidth = Math.ceil(this.levelInfo.fields.LayerRealWidth[l] / 4) * 4
+      let realWidth = Math.ceil(info.fields.LayerRealWidth[l] / 4) * 4
 
       for (let y = 0; y < lh; y++) {
         for (let x = 0; x < realWidth; x += 4) {
@@ -391,7 +453,7 @@ class J2L {
     wordMap = Uint16Array.from(wordMap)
 
     for (let i = 0; i < staticTiles; i++) {
-      this.levelInfo.fields.IsEachTileFlipped[i] = tileNeedsFlip.has(i) ? 1 : 0
+      info.fields.IsEachTileFlipped[i] = tileNeedsFlip.has(i) ? 1 : 0
     }
 
     /*
@@ -417,34 +479,37 @@ class J2L {
     console.log(wordMap)
     */
 
-    let data1 = this.levelInfo.buffer()
+    if (typeof modifier === 'function') {
+      modifier(header, info)
+    }
 
-    this.header.fields.StreamSize[0 * 2 + 1] = data1.byteLength
-    this.header.fields.StreamSize[1 * 2 + 1] = events.byteLength
-    this.header.fields.StreamSize[2 * 2 + 1] = dictionary.byteLength
-    this.header.fields.StreamSize[3 * 2 + 1] = wordMap.byteLength
+    let data1 = info.buffer()
+
+    header.fields.StreamSize[0 * 2 + 1] = data1.byteLength
+    header.fields.StreamSize[1 * 2 + 1] = events.byteLength
+    header.fields.StreamSize[2 * 2 + 1] = dictionary.byteLength
+    header.fields.StreamSize[3 * 2 + 1] = wordMap.byteLength
 
     return this.compressBuffers([data1, Buffer.from(events.buffer), Buffer.from(dictionary.buffer), Buffer.from(wordMap.buffer)]).then((streams) => {
-      this.header.fields.StreamSize[0 * 2] = streams[0].length
-      this.header.fields.StreamSize[1 * 2] = streams[1].length
-      this.header.fields.StreamSize[2 * 2] = streams[2].length
-      this.header.fields.StreamSize[3 * 2] = streams[3].length
+      header.fields.StreamSize[0 * 2] = streams[0].length
+      header.fields.StreamSize[1 * 2] = streams[1].length
+      header.fields.StreamSize[2 * 2] = streams[2].length
+      header.fields.StreamSize[3 * 2] = streams[3].length
 
       let streamBuffer = Buffer.concat(streams)
 
-      this.header.fields.Checksum = crc.crc32(streamBuffer)
-      this.header.fields.FileSize = this.header.length() + streamBuffer.length
-      this.header.fields.Version = version
+      header.set('Checksum', crc.crc32(streamBuffer))
+      header.set('FileSize', header.length() + streamBuffer.length)
 
-      let fileBuffer = Buffer.concat([this.header.buffer(), streamBuffer])
+      let fileBuffer = Buffer.concat([header.buffer(), streamBuffer])
       return fileBuffer
     })
   }
 
-  checkIfLayerHasTiles (l) {
+  checkIfLayerHasTiles (l, info) {
     if (l === 3) return 1
-    let lw = this.levelInfo.fields.LayerWidth[l]
-    let lh = this.levelInfo.fields.LayerHeight[l]
+    let lw = info.fields.LayerWidth[l]
+    let lh = info.fields.LayerHeight[l]
     for (let x = 0; x < lw; x++) {
       for (let y = 0; y < lh; y++) {
         let tile = this.layers[l].map[x + y * lw]

@@ -2,12 +2,18 @@
 const Tile = require('./Tile')
 const npot = require('./util/next-power-of-two')
 
+let r
+
 class TileMap {
   constructor (w = 1, h = 1, mapOnly = false, eventsOnly = false) {
     this.map = null
-    this.mapOnly = mapOnly || r.disableWebGL
+    this.mapOnly = mapOnly
     this.eventsOnly = eventsOnly
-    if (!r.disableWebGL && !this.mapOnly) {
+    if (!this.mapOnly) {
+      r = require('./renderer')
+      if (r.disableWebGL) this.mapOnly = true
+    }
+    if (!this.mapOnly && !r.disableWebGL) {
       if (r.advancedShaders && !this.eventsOnly) {
         this.texture = r.gl.createTexture()
         r.gl.bindTexture(r.gl.TEXTURE_2D, this.texture)
@@ -31,7 +37,7 @@ class TileMap {
     this.width = w
     this.height = h
     this.map = new Array(w * h)
-    if (!r.disableWebGL && !this.mapOnly) {
+    if (!this.mapOnly && !r.disableWebGL) {
       if (r.advancedShaders && !this.eventsOnly) {
         w = npot(w)
         h = npot(h)
@@ -79,7 +85,7 @@ class TileMap {
     let sw = Math.min(this.width - x, selection.length)
     let sh = Math.min(this.height - y, selection[0].length)
     let mapBuffer
-    if (!r.disableWebGL && !this.mapOnly) {
+    if (!this.mapOnly && !r.disableWebGL) {
       if (r.advancedShaders) {
         mapBuffer = new Uint8Array(sw * sh * 4)
       }
@@ -95,7 +101,7 @@ class TileMap {
         if (!tile) continue
         if (removeEvents) tile.event = 0
         let tileId = tile.id
-        if (!r.disableWebGL && !this.mapOnly) {
+        if (!this.mapOnly && !r.disableWebGL) {
           if (r.advancedShaders) {
             let i = (sx + sy * sw) * 4
             mapBuffer[i + 0] = (tileId % 256)
@@ -134,7 +140,7 @@ class TileMap {
           }
         }
       }
-      if (!r.disableWebGL && !r.advancedShaders && !this.mapOnly) {
+      if (!this.mapOnly && !r.disableWebGL && !r.advancedShaders) {
         let offset = (x + (y + sy) * this.width) * 12
         r.gl.bindBuffer(r.gl.ARRAY_BUFFER, this.buffers.attribs.uvs.buffer)
         r.gl.bufferSubData(r.gl.ARRAY_BUFFER, offset * 4, this.uvs.subarray(offset, offset + sw * 12))
@@ -142,7 +148,7 @@ class TileMap {
       }
     }
 
-    if (!r.disableWebGL && r.advancedShaders && !this.mapOnly) {
+    if (!this.mapOnly && !r.disableWebGL && r.advancedShaders) {
       r.gl.bindTexture(r.gl.TEXTURE_2D, this.texture)
       r.gl.texSubImage2D(r.gl.TEXTURE_2D, 0, x, y, sw, sh, r.gl.RGBA, r.gl.UNSIGNED_BYTE, mapBuffer)
     }
@@ -174,7 +180,7 @@ class TileMap {
           generator = true
           eventId = (event >> 12) & 0xFF
         }
-        if (!r.disableWebGL && !this.mapOnly) {
+        if (!this.mapOnly && !r.disableWebGL) {
           let i = (x + sx + (y + sy) * this.width) * 12
           let tx0 = (eventId % 16) + 16 * generator
           let ty0 = Math.floor(eventId / 16)
@@ -196,7 +202,7 @@ class TileMap {
           uvs[i + 11] = ty1
         }
       }
-      if (!r.disableWebGL && !this.mapOnly) {
+      if (!this.mapOnly && !r.disableWebGL) {
         let offset = (x + (y + sy) * this.width) * 12
         r.gl.bindBuffer(r.gl.ARRAY_BUFFER, this.buffers.attribs.uvs.buffer)
         r.gl.bufferSubData(r.gl.ARRAY_BUFFER, offset * 4, this.uvs.subarray(offset, offset + sw * 12))
@@ -206,6 +212,3 @@ class TileMap {
 }
 
 module.exports = TileMap
-
-// down here because circular dependency
-const r = require('./renderer')
