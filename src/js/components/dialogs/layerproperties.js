@@ -63,6 +63,7 @@ function floatInput (name, value, {min = -Infinity, max = Infinity, disabled, st
     size: 10,
     min,
     max,
+    autocomplete: 'off',
     required: true,
     pattern: '-?\\d*?.?\\d*?',
     value,
@@ -184,7 +185,7 @@ const LayerPropertiesDialog = {
       m('table.content', {style: {width: '100%', borderSpacing: '5px', borderCollapse: 'separate'}}, [
         m('tr', [
           m('td.textright', 'X-Offset'),
-          m('td', {width: 120}, m('.flexwrapper', floatInput('offsetX', state.prefs.offsetX, {min: -1024, max: 1023, disabled: state.currentLayer === 3}))),
+          m('td', {width: 120}, m('.flexwrapper', floatInput('offsetX', state.prefs.offsetX, {min: -1024, max: 1023}))),
           m('td.textright', 'X-Speed'),
           m('td', {width: 120}, m('.flexwrapper', floatInput('speedX', state.prefs.speedX, {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
           m('td.textright', 'Auto X-Speed'),
@@ -192,7 +193,7 @@ const LayerPropertiesDialog = {
         ]),
         m('tr', [
           m('td.textright', 'Y-Offset'),
-          m('td', m('.flexwrapper', floatInput('offsetY', state.prefs.offsetY, {min: -1024, max: 1023, disabled: state.currentLayer === 3}))),
+          m('td', m('.flexwrapper', floatInput('offsetY', state.prefs.offsetY, {min: -1024, max: 1023}))),
           m('td.textright', 'Y-Speed'),
           m('td', m('.flexwrapper', floatInput('speedY', state.prefs.speedY, {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
           m('td.textright', 'Auto Y-Speed'),

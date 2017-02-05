@@ -32,6 +32,7 @@ function stringInput (name, value, {disabled, style, maxlength} = {}) {
     type: 'text',
     value,
     maxlength,
+    autocomplete: 'off',
     size: 32,
     disabled: !!disabled,
     style
