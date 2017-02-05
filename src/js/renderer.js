@@ -440,7 +440,7 @@ r.redraw = (dt) => {
   */
 
   // Update current animation frames
-  let animCount = app.j2l.levelInfo.fields.AnimCount || 0
+  let animCount = app.j2l.levelInfo ? app.j2l.levelInfo.fields.AnimCount : 0
   r.anims.length = []
   for (let i = 0; i < animCount; i++) {
     r.anims[i] = r.calculateAnimTile(i)

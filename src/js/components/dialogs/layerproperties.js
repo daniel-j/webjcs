@@ -10,7 +10,10 @@ function clamp (n, min, max) {
 }
 
 function reset (p, l) {
+  if (!app.j2l.levelInfo) return
   let f = app.j2l.levelInfo.fields
+  p.offsetX = f.LayerXOffset[l] / (32 * 65536)
+  p.offsetY = f.LayerYOffset[l] / (32 * 65536)
   p.speedX = f.LayerXSpeed[l] / 65536
   p.speedY = f.LayerYSpeed[l] / 65536
   p.autoSpeedX = f.LayerAutoXSpeed[l] / 65536
@@ -125,6 +128,8 @@ const LayerPropertiesDialog = {
           }
           vent.publish('layer.resize', [this.currentLayer, p.layerWidth, p.layerHeight])
         }
+        f.LayerXOffset[l] = clamp(p.offsetX, -1024, 1023) * 65536 * 32
+        f.LayerYOffset[l] = clamp(p.offsetY, -1024, 1023) * 65536 * 32
         f.LayerXSpeed[l] = clamp(p.speedX, -32768, 32767) * 65536
         f.LayerYSpeed[l] = clamp(p.speedY, -32768, 32767) * 65536
         f.LayerAutoXSpeed[l] = clamp(p.autoSpeedX, -32768, 32767) * 65536
@@ -178,12 +183,16 @@ const LayerPropertiesDialog = {
       m('.title', 'Layer Properties for layer #' + (state.currentLayer + 1)),
       m('table.content', {style: {width: '100%', borderSpacing: '5px', borderCollapse: 'separate'}}, [
         m('tr', [
+          m('td.textright', 'X-Offset'),
+          m('td', {width: 120}, m('.flexwrapper', floatInput('offsetX', state.prefs.offsetX, {min: -1024, max: 1023, disabled: state.currentLayer === 3}))),
           m('td.textright', 'X-Speed'),
           m('td', {width: 120}, m('.flexwrapper', floatInput('speedX', state.prefs.speedX, {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
           m('td.textright', 'Auto X-Speed'),
           m('td', {width: 120}, m('.flexwrapper', floatInput('autoSpeedX', state.prefs.autoSpeedX, {min: -32768, max: 32768, disabled: state.currentLayer === 3})))
         ]),
         m('tr', [
+          m('td.textright', 'Y-Offset'),
+          m('td', m('.flexwrapper', floatInput('offsetY', state.prefs.offsetY, {min: -1024, max: 1023, disabled: state.currentLayer === 3}))),
           m('td.textright', 'Y-Speed'),
           m('td', m('.flexwrapper', floatInput('speedY', state.prefs.speedY, {min: -32768, max: 32768, disabled: state.currentLayer === 3}))),
           m('td.textright', 'Auto Y-Speed'),
@@ -197,23 +206,21 @@ const LayerPropertiesDialog = {
         ]),
         m('tr', [
           m('td', {colspan: 2}, boolInput('Tile Width', 'tileWidth', state.prefs.tileWidth)),
-          m('td', {colspan: 2}, boolInput('Tile Height', 'tileHeight', state.prefs.tileHeight))
+          m('td', {colspan: 2}, boolInput('Tile Height', 'tileHeight', state.prefs.tileHeight)),
+          m('td', {colspan: 2}, boolInput('Limit Visible Region', 'limitVisibleRegion', state.prefs.limitVisibleRegion))
         ]),
         m('tr', [
-          m('td', {colspan: 4}, boolInput('Limit Visible Region', 'limitVisibleRegion', state.prefs.limitVisibleRegion))
-        ]),
-        m('tr', [
-          m('td', {colspan: 4}, boolInput('Texture mode', 'textureMode', state.prefs.textureMode))
+          m('td', {colspan: 6}, boolInput('Texture mode', 'textureMode', state.prefs.textureMode))
         ]),
         m('tr', [
           m('td.textright', 'Texture type '),
           m('td', m('.flexwrapper', selectInput('textureType', state.prefs.textureType, ['Warp Horizon', 'Tunnel', 'Menu', 'Tile Menu'], {disabled: !state.prefs.textureMode}))),
           +state.prefs.textureType < 2 ? [
-            m('td.textright', 'Fade Color'),
-            m('td', colorInput('textureParams', state.prefs.textureParams, {disabled: !state.prefs.textureMode, style: {marginLeft: '5px'}}))
+            m('td.textright', {colspan: 2}, 'Fade Color'),
+            m('td', {colspan: 2}, colorInput('textureParams', state.prefs.textureParams, {disabled: !state.prefs.textureMode, style: {marginLeft: '5px'}}))
           ] : null
         ]),
-        +state.prefs.textureType === 2 ? m('tr', m('td', {colspan: 4}, m('.flexwrapper.alignitemscenter', [
+        +state.prefs.textureType === 2 ? m('tr', m('td', {colspan: 6}, m('.flexwrapper.alignitemscenter', [
           'Palrow 16',
           integerInput('textureParams.0', state.prefs.textureParams[0], {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {margin: '0 5px'}}),
           'Palrow 32',
@@ -222,7 +229,7 @@ const LayerPropertiesDialog = {
           integerInput('textureParams.2', state.prefs.textureParams[2], {disabled: !state.prefs.textureMode, min: 0, max: 255, style: {marginLeft: '5px'}})
         ]))) : null,
         +state.prefs.textureType < 3 ? m('tr', [
-          m('td', {colspan: 4}, boolInput(['Parallaxing stars', 'Spiral', 'Reverse gradients'][state.prefs.textureType], 'parallaxStars', state.prefs.parallaxStars, {disabled: !state.prefs.textureMode}))
+          m('td', {colspan: 6}, boolInput(['Parallaxing stars', 'Spiral', 'Reverse gradients'][state.prefs.textureType], 'parallaxStars', state.prefs.parallaxStars, {disabled: !state.prefs.textureMode}))
         ]) : null
       ]),
       m('.buttons.center', [

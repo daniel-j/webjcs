@@ -115,33 +115,45 @@ class LayerPanel {
   }
 
   setCurrentLayer (l) {
+    let lastLayerOffsetX = app.j2l.levelInfo.fields.LayerXOffset[this.currentLayer] / 65536
+    let lastLayerOffsetY = app.j2l.levelInfo.fields.LayerYOffset[this.currentLayer] / 65536
     this.currentLayer = l
     let lw = app.j2l.levelInfo.fields.LayerWidth[l]
     let lh = app.j2l.levelInfo.fields.LayerHeight[l]
 
-    this.scrollbars.contentWidth = lw * 32 * this.zoomLevel
-    this.scrollbars.contentHeight = lh * 32 * this.zoomLevel
-    this.scrollbars.disableTransition()
-    this.scrollbars.update()
-
+    let currentOffsetX = app.j2l.levelInfo.fields.LayerXOffset[l] / 65536
+    let currentOffsetY = app.j2l.levelInfo.fields.LayerYOffset[l] / 65536
     let currentSpeedX = app.j2l.levelInfo.fields.LayerXSpeed[l] / 65536
     let currentSpeedY = app.j2l.levelInfo.fields.LayerYSpeed[l] / 65536
+
+    this.scrollbars.contentWidth = lw * 32 * this.zoomLevel
+    this.scrollbars.contentHeight = lh * 32 * this.zoomLevel
+    this.scrollbars.scrollPosition[0] += (currentOffsetX - lastLayerOffsetX) * this.zoomLevel
+    this.scrollbars.scrollPosition[1] += (currentOffsetY - lastLayerOffsetY) * this.zoomLevel
+    this.scrollbars.disableTransition()
+    this.scrollbars.update(true)
 
     // let currentAutoSpeedX = app.j2l.levelInfo.fields.LayerAutoXSpeed[l] / 65536
     // let currentAutoSpeedY = app.j2l.levelInfo.fields.LayerAutoYSpeed[l] / 65536
 
     for (let i = 0; i < 8; i++) {
       let layer = this.layers[i]
+      let offsetX = app.j2l.levelInfo.fields.LayerXOffset[i] / 65536
+      let offsetY = app.j2l.levelInfo.fields.LayerYOffset[i] / 65536
       let speedX = app.j2l.levelInfo.fields.LayerXSpeed[i] / 65536
       let speedY = app.j2l.levelInfo.fields.LayerYSpeed[i] / 65536
       let autoSpeedX = app.j2l.levelInfo.fields.LayerAutoXSpeed[i] / 65536
       let autoSpeedY = app.j2l.levelInfo.fields.LayerAutoYSpeed[i] / 65536
       if (i === l) {
+        layer.offsetX = 0
+        layer.offsetY = 0
         layer.speedX = 1
         layer.speedY = 1
         layer.autoSpeedX = 0
         layer.autoSpeedY = 0
       } else {
+        layer.offsetX = currentOffsetX - offsetX
+        layer.offsetY = currentOffsetY - offsetY
         layer.speedX = speedX / currentSpeedX
         layer.speedY = speedY / currentSpeedY
         layer.autoSpeedX = autoSpeedX
@@ -176,7 +188,7 @@ class LayerPanel {
     if (z !== 1) {
       s += ' [' + z * 100 + '%]'
     }
-    let layerMisc = app.j2l.levelInfo.fields.LayerMiscProperties[l]
+    let layerMisc = app.j2l.levelInfo ? app.j2l.levelInfo.fields.LayerMiscProperties[l] : 0
     let repeatX = layerMisc & 1
     let repeatY = (layerMisc >> 1) & 1
     if (repeatX) {
@@ -284,8 +296,8 @@ class LayerPanel {
       element: dom,
       revealDistance: 64
     })
-    this.scrollbars.contentWidth = app.j2l.levelInfo.fields.LayerWidth[this.currentLayer] * 32 * this.zoomLevel
-    this.scrollbars.contentHeight = app.j2l.levelInfo.fields.LayerHeight[this.currentLayer] * 32 * this.zoomLevel
+    this.scrollbars.contentWidth = 0
+    this.scrollbars.contentHeight = 0
     this.scrollbars.update()
 
     vent.subscribe('panel.resize', () => this.scrollbars.update())
@@ -343,12 +355,7 @@ class LayerPanel {
     })
 
     vent.subscribe('level.load', () => {
-      for (let i = 0; i < 8; i++) {
-        const layer = this.layers[i] = app.j2l.layers[i]
-        layer.speedX = app.j2l.levelInfo.fields.LayerXSpeed[i] / 65536
-        layer.speedY = app.j2l.levelInfo.fields.LayerYSpeed[i] / 65536
-      }
-
+      this.layers = app.j2l.layers
       this.setCurrentLayer(app.j2l.levelInfo.fields.SecEnvAndLayer & 0xF)
       this.scrollbars.scrollPosition[0] = app.j2l.levelInfo.fields.JCSHorizontalOffset * this.zoomLevel
       this.scrollbars.scrollPosition[1] = app.j2l.levelInfo.fields.JCSVerticalOffset * this.zoomLevel
@@ -426,7 +433,7 @@ class LayerPanel {
     for (let i = this.layers.length - 1; i >= 0; i--) {
       const layer = this.layers[i]
       if (layer.hidden) continue
-      let viewOffset = [Math.floor(x * layer.speedX + mod(layer.autoSpeedX * now, layer.width) * 32) || 0, Math.floor(y * layer.speedY + mod(layer.autoSpeedY * now, layer.height) * 32) || 0]
+      let viewOffset = [Math.floor((x) * layer.speedX - layer.offsetX + mod(layer.autoSpeedX * now, layer.width) * 32) || 0, Math.floor((y) * layer.speedY - layer.offsetY + mod(layer.autoSpeedY * now, layer.height) * 32) || 0]
       if ((zIndexLast === null || zIndexLast !== layer.zIndex)) {
         if (zIndexLast !== null) {
           if (!r.disableWebGL) {
