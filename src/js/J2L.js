@@ -528,8 +528,6 @@ class J2L {
 
     wordMap = Uint16Array.from(wordMap)
 
-    console.log(animNoFlip, animNeedsFlip)
-
     animNoFlip.forEach((animId) => {
       Anim.findFlipped(this.anims, this.anims[animId], false, tileNeedsFlip)
     })
@@ -537,10 +535,7 @@ class J2L {
       Anim.findFlipped(this.anims, this.anims[animId], true, tileNeedsFlip)
     })
 
-    console.log(tileNeedsFlip)
-
     let isTileFlipped = Buffer.alloc(maxTiles)
-
     for (let i = 0; i < staticTiles; i++) {
       isTileFlipped[i] = tileNeedsFlip.has(i) ? 1 : 0
     }

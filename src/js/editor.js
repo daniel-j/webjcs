@@ -77,6 +77,9 @@ require.ensure([], () => {
       console.error(err)
       alert(err)
     })
+  } else {
+    app.j2l.newLevel()
+    vent.publish('level.load')
   }
 })
 

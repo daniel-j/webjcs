@@ -5,6 +5,7 @@ const app = require('./app')
 const settings = require('./settings')
 const findFile = require('./util/findFile')
 const fs = require('fs')
+const J2L = require('./J2L')
 
 if (IS_ELECTRON) {
   const {ipcRenderer} = require('electron')
@@ -102,7 +103,7 @@ vent.subscribe('loadlevel', (ev, {data, name, dir}) => {
 
 vent.subscribe('menuclick.savelevel', () => {
   vent.publish('j2l.preexport')
-  app.j2l.export().then((buffer) => {
+  app.j2l.export(J2L.VERSION_123).then((buffer) => {
     if (!IS_ELECTRON) {
       const saveAs = require('file-saver').saveAs
       const file = new File([buffer.buffer], 'webjcs.j2l', {type: 'application/x-jazz2-level'})
