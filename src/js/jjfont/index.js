@@ -30,6 +30,7 @@ module.exports = {
     let sinusY
     let supercolored = false
     let rowOffset = 0
+    let totalWidth = 0 // unknown
 
     for (let j = 0; j < strText.length; j++) {
       if (strText.charAt(j) === '§') {
