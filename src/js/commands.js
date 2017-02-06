@@ -111,3 +111,13 @@ vent.subscribe('menuclick.savelevel', () => {
     vent.publish('loadlevel', {data: buffer})
   })
 })
+
+vent.subscribe('menuclick.newlevel', () => {
+  app.j2l.newLevel()
+  vent.publish('level.load')
+})
+
+vent.subscribe('menuclick.openlevelpassword', () => {
+  let password = prompt('Set level password')
+  if (password !== null) app.j2l.setPassword(password)
+})

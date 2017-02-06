@@ -3,6 +3,7 @@ const zlib = require('zlib')
 const crc = require('crc')
 const Struct = require('struct')
 const Tile = require('./Tile')
+const Anim = require('./Anim')
 
 function wrapStruct (buffer, struct) {
   if (buffer) {
@@ -27,20 +28,7 @@ class J2L {
     )
   }
 
-  static LevelInfoStruct (version = J2L.VERSION_123, buffer, animCount = 0) {
-    // 1.20 or 1.23
-    let maxTiles = 1024
-    // let maxAnims = 128
-    if (version === J2L.VERSION_TSF) { // If it's TSF (1.24)
-      maxTiles = 4096
-      // maxAnims = 256
-    }
-
-    if (buffer) {
-      // Anim list can be of variable size (MLLE)
-      animCount = buffer.readUInt16LE(11)
-    }
-
+  static LevelInfoStruct (buffer) {
     let s = Struct()
       .word16Ule('JCSHorizontalOffset')
       .word16Ule('SecurityEnvelope1') // 0xBA00 if passworded, 0x0000 otherwise
@@ -68,8 +56,8 @@ class J2L {
       .array('LayerHeight', 8, 'word32Ule')
       .array('LayerZAxis', 8, 'word32Sle') // nothing happens when you change these
       .array('DetailLevel', 8, 'word8') // is set to 02 for layer 5 in Battle1 and Battle3, but is 00 the rest of the time, at least for JJ2 levels. No clear effect of altering.
-      .array('LayerXOffset', 8, 'word32Sle') // Divide by 65536 to get layer offset in pixels (does not affect mask or events)
-      .array('LayerYOffset', 8, 'word32Sle') // Divide by 65536 to get layer offset in pixels (does not affect mask or events)
+      .array('LayerXOffset', 8, 'word32Sle') // Divide by 65536 to get layer offset in pixels (does not affect mask or events. Plus only!)
+      .array('LayerYOffset', 8, 'word32Sle') // Divide by 65536 to get layer offset in pixels (does not affect mask or events. Plus only!)
       .array('LayerXSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
       .array('LayerYSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
       .array('LayerAutoXSpeed', 8, 'word32Sle') // Divide by 65536 to get value seen in JCS
@@ -77,11 +65,13 @@ class J2L {
       .array('LayerTextureMode', 8, 'word8')
       .array('LayerTextureParams', 24, 'word8')
       .word16Ule('AnimOffset') // MAX_TILES minus AnimCount, also called StaticTiles
+      /*
       .array('TilesetEvents', maxTiles, 'word32Ule')
       .array('IsEachTileFlipped', maxTiles, 'word8') // set to 1 if a tile appears flipped anywhere in the level
       .array('TileTypes', maxTiles, 'word8') // translucent=1 or caption=4, basically. Doesn't work on animated tiles.
       .array('XMask', maxTiles, 'word8') // unused
       .array('Anim', animCount, J2L.AnimatedTileStruct())
+      */
 
     return wrapStruct(buffer, s)
   }
@@ -99,78 +89,104 @@ class J2L {
   }
 
   constructor ({renderable = false} = {}) {
-    this.version = J2L.VERSION_123
-    this.isTSF = false
-
     this.name = ''
 
     this.header = null
     this.levelInfo = null
     this.events = new Uint32Array(0)
-    this.layers = null
+    this.layers = new Array(8)
+    this.TilesetEvents = new Uint32Array(4096)
+    // this.IsEachTileFlipped = new Uint8Array(4096)
+    this.TileTypes = Buffer.alloc(4096)
+    this.anims = []
 
     this.renderable = renderable
+    this.isLoading = false
+    this.isProtected = false
   }
 
   newLevel () {
-    this.levelInfo = J2L.LevelInfoStruct(this.version)
-    this.levelInfo.setBuffer(Buffer.alloc(this.levelInfo.length()))
-
-    this.levelInfo.fields.MinLight = 64
-    this.levelInfo.fields.StartLight = 64
+    this.name = 'Untitled.j2l'
+    this.isProtected = false
 
     this.header = J2L.HeaderStruct()
     this.header.setBuffer(Buffer.alloc(this.header.length()))
 
-    /*
-    this.anims = []
-    this.maxTiles = 1024
-    this.isTSF = false
+    this.levelInfo = J2L.LevelInfoStruct()
+    this.levelInfo.setBuffer(Buffer.alloc(this.levelInfo.length()))
 
-    this.events = new Uint32Array(this.levelInfo.LayerWidth[3] * this.levelInfo.LayerHeight[3])
+    this.TilesetEvents.fill(0)
+    this.TileTypes.fill(0)
+    this.anims.length = 0
 
-    this.level = []
-    for (let l = 0; l < 8; l++) {
-      this.level[l] = []
-      let w = this.levelInfo.LayerWidth[l]
-      let h = this.levelInfo.LayerHeight[l]
-      for (let x = 0; x < w; x++) {
-        this.level[l][x] = []
-        for (let y = 0; y < h; y++) {
-          this.level[l][x][y] = {'flipped': false, 'animated': false, 'id': 0}
-        }
-      }
-    }
+    this.header.get('PasswordHash').set(0, 0x00)
+    this.header.get('PasswordHash').set(1, 0xBA)
+    this.header.get('PasswordHash').set(2, 0xBE)
 
-    this.tilesetProperties = {
-      'TileEvent': [],
-      'TileUnknown1': [],
-      'TileType': [],
-      'TileUnknown2': []
-    }
+    this.levelInfo.set('SecEnvAndLayer', 3)
 
-    for (let i = 0; i < this.maxTiles; i++) {
-      this.tilesetProperties.TileEvent[i] = 0
-      this.tilesetProperties.TileUnknown1[i] = 0
-      this.tilesetProperties.TileType[i] = 0
-      this.tilesetProperties.TileUnknown2[i] = 0
-    }
-    */
+    this.levelInfo.set('MinLight', 64)
+    this.levelInfo.set('StartLight', 64)
+
+    this.levelInfo.set('LevelName', 'Untitled')
+
+    // Default layer sizes
+    this.levelInfo.get('LayerWidth').set(0, 864)
+    this.levelInfo.get('LayerHeight').set(0, 216)
+    this.levelInfo.get('LayerWidth').set(1, 576)
+    this.levelInfo.get('LayerHeight').set(1, 144)
+    this.levelInfo.get('LayerWidth').set(2, 256)
+    this.levelInfo.get('LayerHeight').set(2, 64)
+    this.levelInfo.get('LayerWidth').set(3, 256)
+    this.levelInfo.get('LayerHeight').set(3, 64)
+    this.levelInfo.get('LayerWidth').set(4, 171)
+    this.levelInfo.get('LayerHeight').set(4, 43)
+    this.levelInfo.get('LayerWidth').set(5, 114)
+    this.levelInfo.get('LayerHeight').set(5, 29)
+    this.levelInfo.get('LayerWidth').set(6, 76)
+    this.levelInfo.get('LayerHeight').set(6, 19)
+    this.levelInfo.get('LayerWidth').set(7, 8)
+    this.levelInfo.get('LayerHeight').set(7, 8)
+
+    // Default layer speeds
+    this.levelInfo.get('LayerXSpeed').set(0, 3.375 * 65536)
+    this.levelInfo.get('LayerYSpeed').set(0, 3.375 * 65536)
+    this.levelInfo.get('LayerXSpeed').set(1, 2.25 * 65536)
+    this.levelInfo.get('LayerYSpeed').set(1, 2.25 * 65536)
+    this.levelInfo.get('LayerXSpeed').set(2, 1 * 65536)
+    this.levelInfo.get('LayerYSpeed').set(2, 1 * 65536)
+    this.levelInfo.get('LayerXSpeed').set(3, 1 * 65536)
+    this.levelInfo.get('LayerYSpeed').set(3, 1 * 65536)
+    this.levelInfo.get('LayerXSpeed').set(4, 0.6666717529296875 * 65536)
+    this.levelInfo.get('LayerYSpeed').set(4, 0.6666717529296875 * 65536)
+    this.levelInfo.get('LayerXSpeed').set(5, 0.4444580078125 * 65536)
+    this.levelInfo.get('LayerYSpeed').set(5, 0.4444580078125 * 65536)
+    this.levelInfo.get('LayerXSpeed').set(6, 0.2963104248046875 * 65536)
+    this.levelInfo.get('LayerYSpeed').set(6, 0.2963104248046875 * 65536)
+    this.levelInfo.get('LayerXSpeed').set(7, 0 * 65536)
+    this.levelInfo.get('LayerYSpeed').set(7, 0 * 65536)
+
+    this.levelInfo.get('LayerMiscProperties').set(7, 0x3) // tile width & tile height
+
+    this.initLayers()
   }
 
-  initLayers (events) {
+  initLayers (events = null) {
     const TileMap = require('./TileMap')
-    this.layers = []
     for (let l = 0; l < 8; l++) {
-      let lw = this.levelInfo.fields.LayerWidth[l]
-      let lh = this.levelInfo.fields.LayerHeight[l]
-      this.layers[l] = new TileMap(lw, lh, !this.renderable)
+      let lw = this.levelInfo.fields.LayerWidth[l] || 1
+      let lh = this.levelInfo.fields.LayerHeight[l] || 1
+      if (!this.layers[l]) {
+        this.layers[l] = new TileMap(lw, lh, !this.renderable)
+      } else {
+        this.layers[l].setTexture(lw, lh)
+      }
       let tiles = []
       for (let x = 0; x < lw; x++) {
         tiles[x] = []
         for (let y = 0; y < lh; y++) {
           let t = new Tile()
-          if (l === 3) {
+          if (l === 3 && events) {
             t.event = events[x + lw * y]
           }
           tiles[x][y] = t
@@ -207,8 +223,35 @@ class J2L {
     }
   }
 
-  loadFromBuffer (buffer, name = '') {
-    this.name = name
+  setPassword (password = '') {
+    let hash = crc.crc32(password) & 0xffffff
+    if (hash === 0) hash = 0xBABE
+    let ph = this.header.get('PasswordHash')
+    ph.set(0, (hash >> 16) & 0xFF)
+    ph.set(1, (hash >> 8) & 0xFF)
+    ph.set(2, hash & 0xFF)
+    this.isProtected = hash !== 0 && hash !== 0xBABE
+  }
+
+  loadLevelInfo (data, isTSF) {
+    this.levelInfo = J2L.LevelInfoStruct(data)
+    let maxTiles = isTSF ? 4096 : 1024
+    let offset = this.levelInfo.length()
+    for (let i = 0; i < maxTiles; i++) {
+      this.TilesetEvents[i] = data.readUInt32LE(offset + i * 4)
+    }
+    data.copy(this.TileTypes, 0, offset + maxTiles * 5, offset + maxTiles * 6)
+    let animCount = this.levelInfo.fields.AnimCount
+    this.anims.length = 0
+    for (let i = 0; i < animCount; i++) {
+      let anim = new Anim()
+      anim.fromBuffer(data.slice(offset + maxTiles * 7 + i * 137), isTSF, animCount)
+      this.anims[i] = anim
+    }
+  }
+
+  loadFromBuffer (buffer, name, handlePassword) {
+    this.name = name || ''
     return new Promise((resolve, reject) => {
       let headerBuffer = buffer.slice(0, 262)
       let header = J2L.HeaderStruct(headerBuffer)
@@ -226,48 +269,70 @@ class J2L {
         reject(new Error('J2L is of an unknown version: ' + header.fields.Version))
         return
       }
-      this.header = header
-      this.version = header.fields.Version
-      this.isTSF = this.version === J2L.VERSION_TSF
+      let ph = header.get('PasswordHash')
+      let passwordHash = ph.get(0) << 16 | ph.get(1) << 8 | ph.get(2)
+      this.isProtected = passwordHash !== 0xBABE && passwordHash !== 0
 
-      let dataId = 0
-      let offset = 262
-
-      let events
-      let dictionary
-      let wordMap
-
-      let inflateNext = () => {
-        if (offset >= buffer.length) {
-          this.initLayers(events)
-          this.loadLayersFromDictMap(dictionary, wordMap)
-          resolve()
-          return
+      let p = this.isProtected && handlePassword ? new Promise(handlePassword) : Promise.resolve()
+      p.then((password = '') => {
+        if (this.isProtected && handlePassword) {
+          password = crc.crc32(password) & 0xffffff
+          if (passwordHash !== password) {
+            reject(new Error('Wrong password'))
+            return
+          }
         }
 
-        zlib.inflate(buffer.slice(offset, offset + this.header.fields.StreamSize[2 * dataId]), (err, data) => {
-          if (err) {
-            reject(err)
+        this.isLoading = true
+
+        this.header = header
+        let version = header.fields.Version
+        let isTSF = version === J2L.VERSION_TSF
+
+        let dataId = 0
+        let offset = 262
+
+        let events
+        let dictionary
+        let wordMap
+
+        let inflateNext = () => {
+          if (offset >= buffer.length) {
+            this.initLayers(events)
+            this.loadLayersFromDictMap(dictionary, wordMap, isTSF)
+            this.isLoading = false
+            resolve()
             return
           }
 
-          switch (dataId) {
-            case 0: this.levelInfo = J2L.LevelInfoStruct(this.version, data); break
-            case 1: events = new Uint32Array(data.buffer, data.byteOffset, data.length / Uint32Array.BYTES_PER_ELEMENT); break
-            case 2: dictionary = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
-            case 3: wordMap = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
-          }
+          zlib.inflate(buffer.slice(offset, offset + this.header.fields.StreamSize[2 * dataId]), (err, data) => {
+            if (err) {
+              this.isLoading = false
+              reject(err)
+              return
+            }
 
-          offset += this.header.fields.StreamSize[2 * dataId]
-          dataId++
-          inflateNext()
-        })
-      }
-      inflateNext()
+            switch (dataId) {
+              case 0: this.loadLevelInfo(data, isTSF); break
+              case 1: events = new Uint32Array(data.buffer, data.byteOffset, data.length / Uint32Array.BYTES_PER_ELEMENT); break
+              case 2: dictionary = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
+              case 3: wordMap = new Uint16Array(data.buffer, data.byteOffset, data.length / Uint16Array.BYTES_PER_ELEMENT); break
+            }
+
+            offset += this.header.fields.StreamSize[2 * dataId]
+            dataId++
+            inflateNext()
+          })
+        }
+        inflateNext()
+      }).catch((err) => {
+        this.isLoading = false
+        return reject(err)
+      })
     })
   }
 
-  loadLayersFromDictMap (dictionary, wordMap) {
+  loadLayersFromDictMap (dictionary, wordMap, isTSF) {
     let animCount = this.levelInfo.fields.AnimCount
     let mapOffset = 0
 
@@ -291,7 +356,7 @@ class J2L {
           for (let t = 0; t < 4; t++) {
             if (x * 4 + t >= width) break
             if (!tiles[x * 4 + t]) tiles[x * 4 + t] = []
-            this.layers[l].map[x * 4 + t + y * width].fromNumber(dictionary[wordId * 4 + t], this.isTSF, animCount)
+            this.layers[l].map[x * 4 + t + y * width].fromNumber(dictionary[wordId * 4 + t], isTSF, animCount)
             tiles[x * 4 + t][y] = this.layers[l].map[x * 4 + t + y * width]
           }
           mapOffset++
@@ -301,38 +366,50 @@ class J2L {
     }
   }
 
-  export (version = this.version, modifier = null) {
+  export (version, modifier = null) {
+    if (typeof version !== 'number') {
+      version = this.header.fields.Version
+    }
     if (version !== J2L.VERSION_123 && version !== J2L.VERSION_TSF) {
       return Promise.reject('Invalid version')
     }
     let maxTiles = 1024
-    // let maxAnims = 128
-    if (version === J2L.VERSION_TSF) { // If it's TSF (1.24)
+    let maxAnims = 128
+    let isTSF = version === J2L.VERSION_TSF
+    if (isTSF) {
       maxTiles = 4096
-      // maxAnims = 256
+      maxAnims = 256
     }
-    let animCount = this.levelInfo.fields.AnimCount
+    let animCount = this.anims.length
+    if (animCount > maxAnims) return Promise.reject('Too many animations')
     let staticTiles = maxTiles - animCount
+
+    let ph = this.header.get('PasswordHash')
+    let passwordHash = ph.get(0) << 16 | ph.get(1) << 8 | ph.get(2)
+    let isProtected = passwordHash !== 0xBABE && passwordHash !== 0
 
     let header = J2L.HeaderStruct()
     header.setBuffer(Buffer.alloc(header.length()))
     header.set('Copyright', J2L.HEADER_NOTICE)
     header.set('Magic', J2L.IDENTIFIER)
-    header.get('PasswordHash').set(0, this.header.get('PasswordHash').get(0))
-    header.get('PasswordHash').set(1, this.header.get('PasswordHash').get(1))
-    header.get('PasswordHash').set(2, this.header.get('PasswordHash').get(2))
+    header.get('PasswordHash').set(0, ph.get(0))
+    header.get('PasswordHash').set(1, ph.get(1))
+    header.get('PasswordHash').set(2, ph.get(2))
     header.set('HideLevel', this.header.get('HideLevel'))
     header.set('LevelName', this.levelInfo.get('LevelName'))
     header.set('Version', version)
 
-    let info = J2L.LevelInfoStruct(version, null, animCount)
+    let info = J2L.LevelInfoStruct()
     info.setBuffer(Buffer.alloc(info.length()))
-    info.fields.BufferSize = info.buffer().length
+    info.fields.BufferSize = info.buffer().length + maxTiles * 7 + animCount * 137
     info.fields.AnimOffset = staticTiles
+
+    info.set('SecEnvAndLayer', (isProtected ? 0xF0 : 0) | (this.levelInfo.get('SecEnvAndLayer') & 0xF))
+    info.set('SecurityEnvelope1', isProtected ? 0xBA : 0)
+    info.set('SecurityEnvelope2', isProtected ? 0xBE : 0)
 
     let copyFields = [
       'JCSHorizontalOffset', 'JCSVerticalOffset',
-      'SecurityEnvelope1', 'SecurityEnvelope2', 'SecEnvAndLayer',
       'MinLight', 'StartLight',
       'AnimCount',
       'VerticalSplitscreen', 'IsLevelMultiplayer',
@@ -349,8 +426,7 @@ class J2L {
       'LayerXOffset', 'LayerYOffset',
       'LayerXSpeed', 'LayerYSpeed',
       'LayerAutoXSpeed', 'LayerAutoYSpeed',
-      'LayerTextureMode', 'LayerTextureParams',
-      'TilesetEvents', 'TileTypes', 'IsEachTileFlipped'
+      'LayerTextureMode', 'LayerTextureParams'
     ]
     copyArrays.forEach((arr) => {
       let fields = info.get(arr).fields
@@ -371,9 +447,6 @@ class J2L {
     info.get('LayerZAxis').set(5, 200)
     info.get('LayerZAxis').set(6, 300)
     info.get('LayerZAxis').set(7, 400)
-
-    // copy animations
-    this.levelInfo.buffer().copy(info.buffer(), info.getOffset('Anim'), this.levelInfo.getOffset('Anim'))
 
     let tileNeedsFlip = new Set()
     let animNeedsFlip = new Set()
@@ -452,8 +525,10 @@ class J2L {
 
     wordMap = Uint16Array.from(wordMap)
 
+    let isTileFlipped = Buffer.alloc(maxTiles)
+
     for (let i = 0; i < staticTiles; i++) {
-      info.fields.IsEachTileFlipped[i] = tileNeedsFlip.has(i) ? 1 : 0
+      isTileFlipped[i] = tileNeedsFlip.has(i) ? 1 : 0
     }
 
     /*
@@ -483,7 +558,19 @@ class J2L {
       modifier(header, info)
     }
 
-    let data1 = info.buffer()
+    let animBuffers = []
+    for (let i = 0; i < animCount; i++) {
+      animBuffers.push(this.anims[i].toBuffer(isTSF, animCount))
+    }
+
+    let data1 = Buffer.concat([
+      info.buffer(),
+      Buffer.from(this.TilesetEvents.buffer, 0, maxTiles * 4),
+      isTileFlipped,
+      this.TileTypes.slice(0, maxTiles),
+      Buffer.alloc(maxTiles), // XMask
+      Buffer.concat(animBuffers)
+    ])
 
     header.fields.StreamSize[0 * 2 + 1] = data1.byteLength
     header.fields.StreamSize[1 * 2 + 1] = events.byteLength

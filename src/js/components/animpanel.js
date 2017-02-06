@@ -44,16 +44,16 @@ class AnimPanel {
     this.framesMap = new TileMap(64, 256)
 
     vent.subscribe('level.load', () => {
-      let animCount = app.j2l.levelInfo.fields.AnimCount
+      let animCount = app.j2l.anims.length
 
       let animTiles = []
       let longestAnim = 0
       for (let i = 0; i < animCount; i++) {
-        let anim = app.j2l.levelInfo.fields.Anim[i]
+        let anim = app.j2l.anims[i]
         animTiles.push(new Tile({id: i, animated: true}))
         let frames = []
-        for (let j = 0; j < anim.FrameCount; j++) {
-          frames.push([new Tile(anim.Frame[j])])
+        for (let j = 0; j < anim.frames.length; j++) {
+          frames.push([new Tile(anim.frames[j])])
         }
 
         this.framesMap.setTiles(0, i, frames)

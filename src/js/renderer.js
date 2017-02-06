@@ -3,7 +3,6 @@ const m = require('mithril')
 const vent = require('./vent')
 const rafLoop = require('raf-loop')
 const twgl = require('twgl.js/dist/twgl')
-const Tile = require('./Tile')
 const app = require('./app')
 const settings = require('./settings')
 const mod = require('./util/helpers').mod
@@ -406,15 +405,17 @@ r.drawEventmap = function (info) {
 
 r.calculateAnimTile = (id) => {
   let currentFrame = 0
-  let anim = app.j2l.levelInfo.fields.Anim[id]
-  currentFrame = Math.floor(anim.Speed * (Date.now() / 1000) % anim.FrameCount)
-  let tile = new Tile(anim.Frame[currentFrame])
+  let anim = app.j2l.anims[id]
+  currentFrame = Math.floor(anim.speed * (Date.now() / 1000) % anim.frames.length)
+  let tile = anim.frames[currentFrame]
   return tile
 }
 
 r.redraw = (dt) => {
   const gl = r.gl
   const ctx = r.ctx
+
+  if (app.j2l.isLoading) return
 
   if (!r.disableWebGL) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
@@ -441,7 +442,7 @@ r.redraw = (dt) => {
   */
 
   // Update current animation frames
-  let animCount = app.j2l.levelInfo ? app.j2l.levelInfo.fields.AnimCount : 0
+  let animCount = app.j2l.anims.length
   r.anims.length = []
   for (let i = 0; i < animCount; i++) {
     r.anims[i] = r.calculateAnimTile(i)

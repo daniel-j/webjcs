@@ -22,7 +22,7 @@ class LayerPanel {
     this.showEvents = true
     this.zoomLevel = 1
     this.currentLayer = 3
-    this.layers = []
+    this.layers = app.j2l.layers
     this.eventMap = null
     this.selection = [[new Tile()]]
     this.selectedArea = [0, 0, 0, 0]
@@ -355,7 +355,6 @@ class LayerPanel {
     })
 
     vent.subscribe('level.load', () => {
-      this.layers = app.j2l.layers
       this.setCurrentLayer(app.j2l.levelInfo.fields.SecEnvAndLayer & 0xF)
       this.scrollbars.scrollPosition[0] = app.j2l.levelInfo.fields.JCSHorizontalOffset * this.zoomLevel
       this.scrollbars.scrollPosition[1] = app.j2l.levelInfo.fields.JCSVerticalOffset * this.zoomLevel
