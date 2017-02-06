@@ -102,9 +102,10 @@ vent.subscribe('loadlevel', (ev, {data, name, dir}) => {
 })
 
 vent.subscribe('menuclick.savelevel', () => {
+  app.j2l.levelInfo.set('Tileset', app.j2t.name)
   vent.publish('j2l.preexport')
   app.j2l.export(J2L.VERSION_123).then((buffer) => {
-    if (!IS_ELECTRON) {
+    if (!IS_ELECTRON || true) {
       const saveAs = require('file-saver').saveAs
       const file = new File([buffer.buffer], 'webjcs.j2l', {type: 'application/x-jazz2-level'})
       saveAs(file)
@@ -114,8 +115,10 @@ vent.subscribe('menuclick.savelevel', () => {
 })
 
 vent.subscribe('menuclick.newlevel', () => {
-  app.j2l.newLevel()
-  vent.publish('level.load')
+  if (confirm('Are you sure?')) {
+    app.j2l.newLevel()
+    vent.publish('level.load')
+  }
 })
 
 vent.subscribe('menuclick.openlevelpassword', () => {
