@@ -431,7 +431,7 @@ class LayerPanel {
 
     for (let i = this.layers.length - 1; i >= 0; i--) {
       const layer = this.layers[i]
-      if (layer.hidden) continue
+      if (!layer || layer.hidden) continue
       let viewOffset = [Math.floor((x) * layer.speedX - layer.offsetX + mod(layer.autoSpeedX * now, layer.width) * 32) || 0, Math.floor((y) * layer.speedY - layer.offsetY + mod(layer.autoSpeedY * now, layer.height) * 32) || 0]
       if ((zIndexLast === null || zIndexLast !== layer.zIndex)) {
         if (zIndexLast !== null) {
