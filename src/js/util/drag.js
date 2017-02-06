@@ -35,8 +35,8 @@ class Drag extends EventEmitter {
   mouseup (e) {
     this.stop()
   }
-  stop () {
-    if (this.active) {
+  stop (cancel = false) {
+    if (this.active && !cancel) {
       this.emit('stop')
     }
     this.active = false

@@ -15,6 +15,7 @@ const Renderer = require('./renderer')
 const AboutDialog = require('./components/dialogs/about')
 const PreferencesDialog = require('./components/dialogs/preferences')
 const LayerPropertiesDialog = require('./components/dialogs/layerproperties')
+const AnimPropertiesDialog = require('./components/dialogs/animproperties')
 const LevelPropertiesDialog = require('./components/dialogs/levelproperties')
 
 const columns = [
@@ -45,7 +46,8 @@ m.mount(document.getElementById('app'), {
       m(AboutDialog),
       m(PreferencesDialog),
       m(LevelPropertiesDialog),
-      m(LayerPropertiesDialog)
+      m(LayerPropertiesDialog),
+      m(AnimPropertiesDialog)
     )
     if (IS_ELECTRON) {
       return R

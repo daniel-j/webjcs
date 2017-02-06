@@ -8,11 +8,16 @@ const TileMap = require('../TileMap')
 const r = require('../renderer')
 const Tile = require('../Tile')
 const Tween = require('../util/tween')
+const Drag = require('../util/drag')
 
 class AnimPanel {
   constructor () {
     this.showMask = false
     this.maskTween = new Tween(0, 0.2)
+    this.selectingFrame = false
+    this.selectStartX = 0
+    this.selectStartY = 0
+    this.selectedArea = [0, 0, 0, 0]
   }
 
   activate (e) {
@@ -27,6 +32,27 @@ class AnimPanel {
     this.maskTween.set(show ? 1 : 0)
   }
 
+  oncontextmenu (e) {
+    let rect = this.panelEl.parentNode.getBoundingClientRect()
+    let x = e.pageX - rect.left
+    let y = e.pageY - rect.top
+    if (x >= 32 + 4) return
+    x = Math.floor(x / 32)
+    y = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
+    console.log(y)
+    if (y >= 0 && y < app.j2l.anims.length) {
+      e.preventDefault()
+      vent.publish('animpanel.openproperties', y)
+    }
+  }
+
+  calculateSelectedArea () {
+    this.selectedArea[0] = this.selectStartX
+    this.selectedArea[1] = this.selectStartY
+    this.selectedArea[2] = this.selectedArea[0] + 1
+    this.selectedArea[3] = this.selectedArea[1] + 1
+  }
+
   addScrollbars ({dom}) {
     this.panelEl = dom
     this.scrollbars = new Scrollbars({
@@ -35,6 +61,44 @@ class AnimPanel {
     })
 
     vent.subscribe('panel.resize', () => this.scrollbars.update())
+
+    this.select = new Drag(dom.parentNode)
+    this.select.on('start', (x, y) => {
+      if (x >= 32 + 4) {
+        this.selectingFrame = true
+        this.selectStartX = Math.floor((x - this.scrollbars.smoothScroller.offsetLeft - (32 + 4)) / 32)
+        this.selectStartY = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
+      } else {
+        this.selectingFrame = false
+        this.selectStartX = Math.floor(x / 32)
+        this.selectStartY = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
+      }
+      this.calculateSelectedArea()
+    })
+    this.select.on('move', (x, y) => {
+      if (this.selectingFrame) {
+        x = Math.floor((x - this.scrollbars.smoothScroller.offsetLeft - (32 + 4)) / 32)
+        y = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
+      } else {
+        x = Math.floor(x / 32)
+        y = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
+      }
+      if (x !== this.selectStartX || y !== this.selectStartY) {
+        this.select.stop(true)
+      }
+    })
+    this.select.on('stop', (x, y) => {
+      let selection = null
+      if (!this.selectingFrame) {
+        let tile = this.animMap.map[this.selectStartY]
+        if (tile) {
+          selection = [[new Tile(tile)]]
+        }
+      }
+      if (selection) {
+        vent.publish('selectedtiles', selection)
+      }
+    })
 
     this.initialize()
   }
@@ -106,7 +170,9 @@ class AnimPanel {
       repeatTilesY: 0,
       map: this.framesMap,
       maskOpacity: maskOpacity,
-      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
+      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0],
+      invertArea: this.selectingFrame && this.selectedArea,
+      viewport: [rect.left + 32 + 4, rect.top - canvasRect.top, cw - (32 + 4), ch]
     })
     if (r.disableWebGL) {
       ctx.restore()
@@ -129,7 +195,9 @@ class AnimPanel {
       repeatTilesY: 0,
       map: this.animMap,
       maskOpacity: maskOpacity,
-      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0]
+      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0],
+      invertArea: this.select.active && !this.selectingFrame && this.selectedArea,
+      viewport: [rect.left, rect.top - canvasRect.top, cw, ch]
     })
     if (r.disableWebGL) {
       ctx.restore()
@@ -143,7 +211,7 @@ class AnimPanel {
 
         m('button', {title: 'Toggle tile mask', onclick: this.toggleMask.bind(this), class: this.showMask ? 'selected' : ''}, 'Mask')
       ]),
-      m('.panelcontent', m('div', {oncreate: this.addScrollbars.bind(this)}))
+      m('.panelcontent', {oncontextmenu: (e) => this.oncontextmenu(e)}, m('div', {oncreate: this.addScrollbars.bind(this)}))
     ])
   }
 }
