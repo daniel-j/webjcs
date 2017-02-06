@@ -47,9 +47,9 @@ void main (void) {
 		spriteOffset = floor(tile.xy * 255.);
 		tileId = floor(spriteOffset.r) + floor(spriteOffset.g * 256.);
 		extra = floor(tile.b * 256.);
-		flipped = extra == 1. || extra == 3. || extra == 5. || extra == 7.;
+		flipped = (extra == 1. || extra == 3. || extra == 5. || extra == 7.) ? !flipped : flipped;
 		animated = extra == 2. || extra == 3. || extra == 6. || extra == 7.;
-		vflipped = extra >= 4.;
+		vflipped = (extra >= 4.) ? !vflipped : vflipped;
 	}
 
 	if (tileId < tileCount && !animated) {

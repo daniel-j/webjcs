@@ -217,19 +217,23 @@ r.drawTilemap = (info) => {
             let i = x + y * info.map.width
             let tile = info.map.map[i]
             if (!tile || !tile.animated) continue
+            let flipped = tile.flipped
+            let vflipped = tile.vflipped
             tile = r.anims[tile.id]
             if (!tile) continue
+            flipped = !!(tile.flipped ^ flipped)
+            vflipped = !!(tile.vflipped ^ vflipped)
             let offset = (x + (y) * info.map.width) * 12
             let uv = new Float32Array(12)
             let tx0 = tile.id % 64
             let ty0 = Math.floor(tile.id / 64)
             let tx1 = tx0 + 1
             let ty1 = ty0 + 1
-            if (tile.flipped) {
+            if (flipped) {
               tx0 += 1
               tx1 -= 1
             }
-            if (tile.vflipped) {
+            if (vflipped) {
               ty0 += 1
               ty1 -= 1
             }
@@ -330,10 +334,12 @@ r.drawTilemap = (info) => {
       if (!tile) continue
       if (!eventsOnly) {
         let flipped = tile.flipped
+        let vflipped = tile.vflipped
         if (tile.animated) {
           tile = r.anims[tile.id]
           if (!tile) continue
-          if (flipped) tile.flipped = !tile.flipped
+          flipped = !!(tile.flipped ^ flipped)
+          vflipped = !!(tile.vflipped ^ vflipped)
         }
 
         const tileId = tile.id
@@ -346,11 +352,11 @@ r.drawTilemap = (info) => {
         if (tileId === 0) continue
         ctx.save()
         ctx.translate(outPos[0], outPos[1])
-        if (tile.flipped) {
+        if (flipped) {
           ctx.translate(outPos[2], 0)
           ctx.scale(-1, 1)
         }
-        if (tile.vflipped) {
+        if (vflipped) {
           ctx.translate(0, outPos[3])
           ctx.scale(1, -1)
         }

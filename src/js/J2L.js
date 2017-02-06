@@ -450,6 +450,7 @@ class J2L {
 
     let tileNeedsFlip = new Set()
     let animNeedsFlip = new Set()
+    let animNoFlip = new Set()
 
     let dictArray = [new Uint16Array(4)] // data3
     let wordMap = [] // data4
@@ -497,8 +498,10 @@ class J2L {
             }
             if (tile.flipped && !tile.animated) {
               tileNeedsFlip.add(tile.id)
-            } else if (tile.flipped) {
+            } else if (tile.flipped && tile.animated) {
               animNeedsFlip.add(tile.id)
+            } else if (tile.animated) {
+              animNoFlip.add(tile.id)
             }
           }
           if (!hasAnimAndEvent) {
@@ -524,6 +527,17 @@ class J2L {
     }
 
     wordMap = Uint16Array.from(wordMap)
+
+    console.log(animNoFlip, animNeedsFlip)
+
+    animNoFlip.forEach((animId) => {
+      Anim.findFlipped(this.anims, this.anims[animId], false, tileNeedsFlip)
+    })
+    animNeedsFlip.forEach((animId) => {
+      Anim.findFlipped(this.anims, this.anims[animId], true, tileNeedsFlip)
+    })
+
+    console.log(tileNeedsFlip)
 
     let isTileFlipped = Buffer.alloc(maxTiles)
 

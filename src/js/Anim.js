@@ -45,6 +45,26 @@ class Anim {
     }
     return a.buffer()
   }
+
+  static findFlipped (anims, anim, invertFlip, found = new Set(), processedAnims = new Set()) {
+    anim.frames.forEach((tile) => {
+      let flip = !!(tile.flipped ^ invertFlip)
+      if (tile.animated) {
+        if (!processedAnims.has(tile.id)) {
+          // only process every anim once
+          processedAnims.add(tile.id)
+          Anim.findFlipped(anims, anims[tile.id], flip, found, processedAnims)
+        }
+        return
+      } else {
+        if (flip) {
+          // frame appears flipped in level
+          found.add(tile.id)
+        }
+      }
+    })
+    return found
+  }
 }
 
 module.exports = Anim
