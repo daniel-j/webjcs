@@ -324,6 +324,7 @@ class LayerPanel {
           selection[x][y] = tile
         }
       }
+      selection.source = 'layer'
       vent.publish('selectedtiles', selection)
     })
     vent.subscribe('selectedtiles', (ev, selection) => {

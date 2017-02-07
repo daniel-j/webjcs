@@ -93,11 +93,15 @@ class TileMap {
     for (let sy = 0; sy < sh; sy++) {
       for (let sx = 0; sx < sw; sx++) {
         let tile = selection[sx][sy]
+        if (tile === null) {
+          tile = {id: 0}
+        }
         if (tile) {
           tile = this.map[x + sx + (y + sy) * this.width] = new Tile(tile)
         } else {
           tile = this.map[x + sx + (y + sy) * this.width]
         }
+
         if (!tile) continue
         if (removeEvents) tile.event = 0
         let tileId = tile.id

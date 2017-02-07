@@ -21,23 +21,23 @@ class Drag extends EventEmitter {
     // e.preventDefault && e.preventDefault()
     this.lastX = e.pageX
     this.lastY = e.pageY
-    this.start()
+    this.start(e)
   }
-  start () {
+  start (e) {
     this.active = true
     let rect = this.dom.getBoundingClientRect()
     let x = this.lastX - rect.left
     let y = this.lastY - rect.top
     this.x = x
     this.y = y
-    this.emit('start', x, y)
+    this.emit('start', x, y, e)
   }
   mouseup (e) {
-    this.stop()
+    this.stop(false, e)
   }
-  stop (cancel = false) {
+  stop (cancel = false, e) {
     if (this.active && !cancel) {
-      this.emit('stop')
+      this.emit('stop', e)
     }
     this.active = false
   }
@@ -50,7 +50,7 @@ class Drag extends EventEmitter {
     let y = e.pageY - rect.top
     this.x = x
     this.y = y
-    this.emit('move', x, y)
+    this.emit('move', x, y, e)
   }
 }
 module.exports = Drag

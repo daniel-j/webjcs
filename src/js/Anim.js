@@ -3,7 +3,7 @@ const Tile = require('./Tile')
 
 class Anim {
   constructor (a) {
-    this.speed = 70
+    this.speed = 10
     this.frameWait = 0
     this.pingPongWait = 0
     this.randomWait = 0

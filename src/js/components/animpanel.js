@@ -9,19 +9,58 @@ const r = require('../renderer')
 const Tile = require('../Tile')
 const Tween = require('../util/tween')
 const Drag = require('../util/drag')
+const Anim = require('../Anim')
 
 class AnimPanel {
   constructor () {
+    this.isActive
     this.showMask = false
     this.maskTween = new Tween(0, 0.2)
     this.selectingFrame = false
     this.selectStartX = 0
     this.selectStartY = 0
     this.selectedArea = [0, 0, 0, 0]
+    this.hasSelection = false
+
+    vent.subscribe('window.keydown', (ev, {e, key, accel, modalOpen, hasActiveElement}) => {
+      console.log(this.isActive)
+      if (!this.isActive || modalOpen) return
+      const isMacOS = navigator.platform.includes('Mac')
+      const ctrlKey = isMacOS ? e.metaKey : e.ctrlKey
+      let prevent = true
+      console.log(accel, key)
+      if (accel === 'Delete' && this.hasSelection) {
+        let animId = this.selectStartY
+        let anim = app.j2l.anims[animId]
+        console.log(anim, animId)
+        if (anim) {
+          if (!this.selectingFrame) {
+            app.j2l.anims.splice(animId, 1)
+            this.updateAnimMap()
+          } else {
+            let frame = this.selectStartX
+            if (anim.frames.length > 1) {
+              anim.frames.splice(frame, 1)
+              this.updateAnimMap()
+            }
+            if (this.selectStartX === anim.frames.length) {
+              this.selectStartX--
+              this.calculateSelectedArea()
+            }
+          }
+        }
+      } else {
+        prevent = false
+      }
+      if (prevent) {
+        e.preventDefault()
+      }
+    })
   }
 
   activate (e) {
     if (e.which === 0) {
+      this.isActive = true
       vent.publish('panel.active', this)
     }
   }
@@ -39,7 +78,6 @@ class AnimPanel {
     if (x >= 32 + 4) return
     x = Math.floor(x / 32)
     y = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
-    console.log(y)
     if (y >= 0 && y < app.j2l.anims.length) {
       e.preventDefault()
       vent.publish('animpanel.openproperties', y)
@@ -51,6 +89,37 @@ class AnimPanel {
     this.selectedArea[1] = this.selectStartY
     this.selectedArea[2] = this.selectedArea[0] + 1
     this.selectedArea[3] = this.selectedArea[1] + 1
+  }
+
+  updateAnimMap () {
+    let animCount = app.j2l.anims.length
+    this.animMap.setTexture(1, Math.min(animCount + 1, 256))
+    this.framesMap.setTexture(64, Math.max(1, animCount))
+
+    let animTiles = []
+    for (let i = 0; i < animCount; i++) {
+      let anim = app.j2l.anims[i]
+      animTiles.push(new Tile({id: i, animated: true}))
+      let frames = []
+      for (let j = 0; j < anim.frames.length; j++) {
+        frames.push([new Tile(anim.frames[j])])
+      }
+      if (anim.frames.length < 64) {
+        frames.push([null])
+      }
+
+      this.framesMap.setTiles(0, i, frames, false, true)
+    }
+    if (animCount < 256) {
+      animTiles.push(null)
+    }
+
+    this.animMap.setTiles(0, 0, [animTiles])
+    this.scrollbars.contentWidth = (32 + 4) + 64 * 32
+    this.scrollbars.contentHeight = Math.min(256, animCount + 2) * 32
+    // TODO: Fix scrollbars.update so it doesn't have to be called twice
+    this.scrollbars.update()
+    this.scrollbars.update()
   }
 
   addScrollbars ({dom}) {
@@ -68,11 +137,22 @@ class AnimPanel {
         this.selectingFrame = true
         this.selectStartX = Math.floor((x - this.scrollbars.smoothScroller.offsetLeft - (32 + 4)) / 32)
         this.selectStartY = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
+        if (this.selectStartY >= app.j2l.anims.length || this.selectStartX > app.j2l.anims[this.selectStartY].frames.length) {
+          this.select.stop(true)
+          this.hasSelection = false
+          return
+        }
       } else {
         this.selectingFrame = false
         this.selectStartX = Math.floor(x / 32)
         this.selectStartY = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
+        if (this.selectStartY > app.j2l.anims.length) {
+          this.select.stop(true)
+          this.hasSelection = false
+          return
+        }
       }
+      this.hasSelection = true
       this.calculateSelectedArea()
     })
     this.select.on('move', (x, y) => {
@@ -96,6 +176,7 @@ class AnimPanel {
         }
       }
       if (selection) {
+        selection.source = 'anim'
         vent.publish('selectedtiles', selection)
       }
     })
@@ -104,35 +185,42 @@ class AnimPanel {
   }
 
   initialize () {
-    this.animMap = new TileMap(1, 256)
-    this.framesMap = new TileMap(64, 256)
+    this.animMap = new TileMap(1, 1)
+    this.framesMap = new TileMap(64, 1)
+
+    vent.subscribe('anim.addframe', (ev, tile) => {
+      if (!this.hasSelection) return
+      let animId = this.selectStartY
+      let anim = app.j2l.anims[animId]
+      tile = new Tile(tile)
+      if (!anim && !this.selectingFrame && this.selectStartY === app.j2l.anims.length) {
+        anim = new Anim()
+        app.j2l.anims.push(anim)
+      }
+      if (!anim || anim.frames.length === 64) {
+        return
+      }
+      let position = this.selectingFrame ? this.selectStartX : anim.frames.length
+
+      anim.frames.splice(position, 0, tile)
+      if (this.selectingFrame && position >= anim.frames.length - 1) {
+        this.selectStartX++
+        if (this.selectStartX >= 64) {
+          this.selectStartX = 63
+        }
+        this.calculateSelectedArea()
+      }
+      this.updateAnimMap()
+    })
+
+    vent.subscribe('selectedtiles', (ev, selection) => {
+      let source = selection.source
+      if (source !== 'tileset' || source === 'anim') return
+      this.hasSelection = false
+    })
 
     vent.subscribe('level.load', () => {
-      let animCount = app.j2l.anims.length
-
-      let animTiles = []
-      let longestAnim = 0
-      for (let i = 0; i < animCount; i++) {
-        let anim = app.j2l.anims[i]
-        animTiles.push(new Tile({id: i, animated: true}))
-        let frames = []
-        for (let j = 0; j < anim.frames.length; j++) {
-          frames.push([new Tile(anim.frames[j])])
-        }
-
-        this.framesMap.setTiles(0, i, frames)
-        if (anim.FrameCount > longestAnim) {
-          longestAnim = anim.FrameCount
-        }
-      }
-
-      this.animMap.setTiles(0, 0, [animTiles])
-      this.scrollbars.contentWidth = (32 + 4) + 64 * 32
-      this.scrollbars.contentHeight = Math.min(256, animCount + 1) * 32
-
-      // TODO: Fix scrollbars.update so it doesn't have to be called twice
-      this.scrollbars.update()
-      this.scrollbars.update()
+      this.updateAnimMap()
     })
     vent.subscribe('renderer.draw', () => this.redraw())
   }
@@ -153,29 +241,31 @@ class AnimPanel {
     let x = -scrollLeft
     let y = -scrollTop
 
-    if (!r.disableWebGL) {
-      gl.viewport(rect.left + 32 + 4, r.canvas.height - (rect.top - canvasRect.top + ch), cw - (32 + 4), ch)
-    } else {
-      ctx.save()
-      ctx.beginPath()
-      ctx.rect(rect.left + 32 + 4, rect.top - canvasRect.top, cw - (32 + 4), ch)
-      ctx.clip()
-      ctx.translate(rect.left + 32 + 4, rect.top - canvasRect.top)
-    }
-    r.drawTilemap({
-      scale: 1,
-      viewportSize: [cw - (32 + 4), ch],
-      viewOffset: [Math.floor(x), Math.floor(y)],
-      repeatTilesX: 0,
-      repeatTilesY: 0,
-      map: this.framesMap,
-      maskOpacity: maskOpacity,
-      backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0],
-      invertArea: this.selectingFrame && this.selectedArea,
-      viewport: [rect.left + 32 + 4, rect.top - canvasRect.top, cw - (32 + 4), ch]
-    })
-    if (r.disableWebGL) {
-      ctx.restore()
+    if (app.j2l.anims.length > 0) {
+      if (!r.disableWebGL) {
+        gl.viewport(rect.left + 32 + 4, r.canvas.height - (rect.top - canvasRect.top + ch), cw - (32 + 4), ch)
+      } else {
+        ctx.save()
+        ctx.beginPath()
+        ctx.rect(rect.left + 32 + 4, rect.top - canvasRect.top, cw - (32 + 4), ch)
+        ctx.clip()
+        ctx.translate(rect.left + 32 + 4, rect.top - canvasRect.top)
+      }
+      r.drawTilemap({
+        scale: 1,
+        viewportSize: [cw - (32 + 4), ch],
+        viewOffset: [Math.floor(x), Math.floor(y)],
+        repeatTilesX: 0,
+        repeatTilesY: 0,
+        map: this.framesMap,
+        maskOpacity: maskOpacity,
+        backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0],
+        invertArea: this.hasSelection && this.selectingFrame && this.selectedArea,
+        viewport: [rect.left + 32 + 4, rect.top - canvasRect.top, cw - (32 + 4), ch]
+      })
+      if (r.disableWebGL) {
+        ctx.restore()
+      }
     }
 
     if (!r.disableWebGL) {
@@ -196,7 +286,7 @@ class AnimPanel {
       map: this.animMap,
       maskOpacity: maskOpacity,
       backgroundColor: [72 / 255, 48 / 255, 168 / 255, 1.0],
-      invertArea: this.select.active && !this.selectingFrame && this.selectedArea,
+      invertArea: this.hasSelection && !this.selectingFrame && this.selectedArea,
       viewport: [rect.left, rect.top - canvasRect.top, cw, ch]
     })
     if (r.disableWebGL) {
@@ -205,6 +295,7 @@ class AnimPanel {
   }
 
   view ({fluid, oncreate, active}) {
+    this.isActive = active
     return m('#animpanel.panel', {class: ((fluid ? 'flexfluid' : '') + ' ' + (active ? 'active' : '')).trim(), oncreate, onmouseover: this.activate.bind(this)}, [
       m('.toolbar', [
         m('.title.flexfluid', 'Animations'),
