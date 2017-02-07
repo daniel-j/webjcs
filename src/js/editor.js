@@ -3,6 +3,8 @@ const m = require('mithril')
 const app = require('./app')
 const vent = require('./vent')
 
+require('./session')
+
 require('./domevents')
 require('./commands')
 
@@ -38,8 +40,9 @@ const columns = [
   }
 ]
 
-m.mount(document.getElementById('app'), {
-  view: () => {
+const Main = {
+  view: ({attrs}) => {
+    vent.publish('session.id', attrs.session)
     const R = m(
       '#editor',
       m(Renderer, m(panels, {columns: columns})),
@@ -55,19 +58,22 @@ m.mount(document.getElementById('app'), {
       return m(require('./components/menu'), R)
     }
   }
+}
+
+m.route(document.getElementById('app'), '/', {
+  '/': Main,
+  '/:session': Main
 })
 
 require.ensure([], () => {
   if (DEVELOPMENT) {
-    // const jj2Dir = path.join(__dirname, '/../data/')
     const levelBuffer = require('buffer-loader!../../data/ab17btl06.j2l')
     const tilesetBuffer = require('buffer-loader!../../data/DiambGarden.j2t')
-    // console.log('Loading ' + path.join(jj2Dir, levelFile))
-    app.j2l.loadFromBuffer(levelBuffer, null, (resolve) => resolve(prompt('Enter level password', ''))).then(() => {
+
+    app.j2l.loadFromBuffer(levelBuffer).then(() => {
       console.log('Level loaded')
       vent.publish('level.load')
 
-      // console.log('Loading ' + path.join(jj2Dir, app.j2l.levelInfo.fields.Tileset))
       return app.j2t.loadFromBuffer(tilesetBuffer).then(() => {
         console.log('Tileset loaded')
         vent.publish('tileset.load')

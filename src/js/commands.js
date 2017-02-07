@@ -64,7 +64,7 @@ if (!IS_ELECTRON) {
 }
 
 vent.subscribe('loadlevel', (ev, {data, name, dir}) => {
-  app.j2l.loadFromBuffer(data, name).then(() => {
+  app.j2l.loadFromBuffer(data, name, (resolve) => resolve(prompt('Enter level password', ''))).then(() => {
     const tilesetName = app.j2l.levelInfo.fields.Tileset
 
     if (IS_ELECTRON) {

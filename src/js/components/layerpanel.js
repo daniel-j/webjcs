@@ -30,6 +30,8 @@ class LayerPanel {
     this.selectStartY = 0
     this.mouseX = 0
     this.mouseY = 0
+    this.lastPaintX = 0
+    this.lastPaintY = 0
 
     vent.subscribe('window.keydown', (ev, {e, key, accel, modalOpen, hasActiveElement}) => {
       if (!this.isActive || modalOpen) return
@@ -235,13 +237,24 @@ class LayerPanel {
     this.mouseX = x
     this.mouseY = y
   }
-  paintSelection () {
+  paintSelection (overrideCheck) {
     let x = Math.floor((this.drag.x - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel)
     let y = Math.floor((this.drag.y - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel)
-    if (x < this.layers[this.currentLayer].width && y < this.layers[this.currentLayer].height) {
-      this.layers[this.currentLayer].setTiles(x, y, this.selection, this.currentLayer !== 3)
-      if (this.currentLayer === 3 && this.eventMap) this.eventMap.setEvents(x, y, this.selection)
+    if (!overrideCheck) {
+      if (x === this.lastPaintX && y === this.lastPaintY) return
     }
+
+    if (x < this.layers[this.currentLayer].width && y < this.layers[this.currentLayer].height) {
+      vent.publish('session.send', {
+        type: 'layer.settiles',
+        layer: this.currentLayer,
+        x,
+        y,
+        tiles: this.selection
+      })
+    }
+    this.lastPaintX = x
+    this.lastPaintY = y
   }
   flipSelectionH () {
     this.selection.reverse()
@@ -304,7 +317,7 @@ class LayerPanel {
     this.scrollbars.on('scroll', () => this.updateSelectionPosition())
 
     this.drag = new Drag(dom.parentNode)
-    this.drag.on('start', (x, y) => this.paintSelection())
+    this.drag.on('start', (x, y) => this.paintSelection(true))
     this.drag.on('move', (x, y) => this.paintSelection())
     this.select = new Drag(dom.parentNode, true, true)
     this.select.on('start', (x, y) => {
@@ -385,6 +398,11 @@ class LayerPanel {
       this.fboCtx = this.fbo.getContext('2d')
       this.fboCtx.imageSmoothingEnabled = false
     }
+
+    vent.subscribe('session.update.layer.settiles', (ev, data) => {
+      this.layers[data.layer].setTiles(data.x, data.y, data.tiles, data.layer !== 3)
+      if (data.layer === 3 && this.eventMap) this.eventMap.setEvents(data.x, data.y, data.tiles)
+    })
 
     vent.subscribe('renderer.draw', () => this.redraw())
   }

@@ -1,0 +1,10 @@
+{
+	"port": 8010,
+
+	"game": {
+		"max": 4,
+		"port_base": 10060,
+		"jj2_linux": "/home/djazz/jj2-linux"
+	}
+	
+}

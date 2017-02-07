@@ -1,0 +1,14 @@
+{
+  "name": "webjcs-server",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node ."
+  },
+  "dependencies": {
+    "express": "^4.14.1",
+    "socket.io": "^1.7.2",
+    "uuid": "^3.0.1"
+  }
+}
