@@ -125,3 +125,15 @@ vent.subscribe('menuclick.openlevelpassword', () => {
   let password = prompt('Set level password')
   if (password !== null) app.j2l.setPassword(password)
 })
+
+vent.subscribe('updatetitle', () => {
+  let levelName = app.j2l.levelInfo && app.j2l.levelInfo.get('LevelName')
+  let filename = app.j2l.name
+  if (app.j2l.levelInfo) {
+    document.title = (filename ? filename + ' - ' : '') + levelName + ' - WebJCS'
+  } else {
+    document.title = 'WebJCS'
+  }
+})
+
+vent.subscribe('level.load', () => vent.publish('updatetitle'))

@@ -115,6 +115,7 @@ const LevelPropertiesDialog = {
         for (let i = 0; i < 16; i++) {
           f.HelpString[i] = p.HelpString[i].replace(/\n/g, '@')
         }
+        vent.publish('updatetitle')
       },
       onValueChange (e, ev, type, name, value) {
         let t = e.target
