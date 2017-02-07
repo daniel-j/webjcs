@@ -62,7 +62,7 @@ io.origins('*:*')
         session.users.splice(session.users.indexOf(user), 1)
         io.sockets.in(sessionId).emit('leave', 'a user left room')
         if (session.users.length === 0) {
-          GameManager.removeSession(sessionId)
+          // GameManager.removeSession(sessionId)
           sessions.delete(sessionId)
         }
       })
