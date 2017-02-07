@@ -32,6 +32,7 @@ function createTileArray (w, h) {
 
 class TilesetPanel {
   constructor () {
+    this.isActive = false
     this.showMask = false
     this.maskTween = new Tween(0, 0.2)
     this.tileTypeMode = 0
@@ -40,10 +41,36 @@ class TilesetPanel {
     this.selectStartY = 0
     this.selectedArea = [0, 0, 0, 0]
     this.isHoldingCtrl = false
+    this.isHFlipping = false
+    this.isVFlipping = false
+
+    vent.subscribe('window.keydown', (ev, {e, key, accel, modalOpen, hasActiveElement}) => {
+      if (!this.isActive || modalOpen) return
+      let prevent = true
+      if (key === 'f') {
+        this.isHFlipping = true
+      } else if (key === 'i') {
+        this.isVFlipping = true
+      } else {
+        prevent = false
+      }
+      if (prevent) {
+        e.preventDefault()
+      }
+    })
+    vent.subscribe('window.keyup', (ev, {e, key, accel, modalOpen, hasActiveElement}) => {
+      if (!this.isActive || modalOpen) return
+      if (key === 'f') {
+        this.isHFlipping = false
+      } else if (key === 'i') {
+        this.isVFlipping = false
+      }
+    })
   }
 
   activate (e) {
     if (e.which === 0) {
+      this.isActive = true
       vent.publish('panel.active', this)
     }
   }
@@ -84,20 +111,22 @@ class TilesetPanel {
     this.scrollbars.on('scroll', () => this.calculateSelectedArea())
 
     this.select = new Drag(dom.parentNode)
-    this.select.on('move', (x, y, e) => {
-      if (!e.ctrlKey) {
-        this.calculateSelectedArea()
-      }
-    })
     this.select.on('start', (x, y, e) => {
       this.selectStartX = Math.floor((x - this.scrollbars.smoothScroller.offsetLeft) / 32)
       this.selectStartY = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
       this.calculateSelectedArea()
     })
+    this.select.on('move', (x, y, e) => {
+      if (!e.ctrlKey) {
+        this.calculateSelectedArea()
+      }
+    })
     this.select.on('stop', (e) => {
       if (e && e.ctrlKey) {
-        let tile = this.map.map[this.selectStartX + 10 * this.selectStartY]
+        let tile = new Tile(this.map.map[this.selectStartX + 10 * this.selectStartY])
         if (tile) {
+          tile.flipped = this.isHFlipping
+          tile.vflipped = this.isVFlipping
           vent.publish('anim.addframe', tile)
         }
         return
@@ -174,6 +203,7 @@ class TilesetPanel {
   }
 
   view ({fluid, oncreate, active}) {
+    this.isActive = active
     return m('#tilesetpanel.panel', {class: ((fluid ? 'flexfluid' : '') + ' ' + (active ? 'active' : '')).trim(), oncreate, onmouseover: this.activate.bind(this)}, [
       m('.toolbar', [
         m('.title', 'Tileset'),

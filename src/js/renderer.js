@@ -7,6 +7,7 @@ const app = require('./app')
 const settings = require('./settings')
 const mod = require('./util/helpers').mod
 const events = require('./events')
+const Tile = require('./Tile')
 
 const rectShader = [
   require('../shaders/rect.vert.glsl'),
@@ -417,11 +418,19 @@ r.drawEventmap = function (info) {
   r.drawTilemap(info)
 }
 
-r.calculateAnimTile = (id) => {
+r.calculateAnimTile = (animId, flipped = false, vflipped = false, counter = 0) => {
+  if (counter > 10) return new Tile()
   let currentFrame = 0
-  let anim = app.j2l.anims[id]
+  let anim = app.j2l.anims[animId]
+  if (!anim) return new Tile()
   currentFrame = Math.floor(anim.speed * (Date.now() / 1000) % anim.frames.length)
   let tile = anim.frames[currentFrame]
+  if (tile.animated) {
+    tile = r.calculateAnimTile(tile.id, tile.flipped ^ flipped, tile.vflipped ^ vflipped, ++counter)
+  }
+  tile = new Tile(tile)
+  tile.flipped = tile.flipped ^ flipped
+  tile.vflipped = tile.vflipped ^ vflipped
   return tile
 }
 

@@ -21,18 +21,15 @@ class AnimPanel {
     this.selectStartY = 0
     this.selectedArea = [0, 0, 0, 0]
     this.hasSelection = false
+    this.isHFlipping = false
+    this.isVFlipping = false
 
     vent.subscribe('window.keydown', (ev, {e, key, accel, modalOpen, hasActiveElement}) => {
-      console.log(this.isActive)
       if (!this.isActive || modalOpen) return
-      const isMacOS = navigator.platform.includes('Mac')
-      const ctrlKey = isMacOS ? e.metaKey : e.ctrlKey
       let prevent = true
-      console.log(accel, key)
       if (accel === 'Delete' && this.hasSelection) {
         let animId = this.selectStartY
         let anim = app.j2l.anims[animId]
-        console.log(anim, animId)
         if (anim) {
           if (!this.selectingFrame) {
             app.j2l.anims.splice(animId, 1)
@@ -43,17 +40,25 @@ class AnimPanel {
               anim.frames.splice(frame, 1)
               this.updateAnimMap()
             }
-            if (this.selectStartX === anim.frames.length) {
-              this.selectStartX--
-              this.calculateSelectedArea()
-            }
           }
         }
+      } else if (key === 'f') {
+        this.isHFlipping = true
+      } else if (key === 'i') {
+        this.isVFlipping = true
       } else {
         prevent = false
       }
       if (prevent) {
         e.preventDefault()
+      }
+    })
+    vent.subscribe('window.keyup', (ev, {e, key, accel, modalOpen, hasActiveElement}) => {
+      if (!this.isActive || modalOpen) return
+      if (key === 'f') {
+        this.isHFlipping = false
+      } else if (key === 'i') {
+        this.isVFlipping = false
       }
     })
   }
@@ -132,7 +137,27 @@ class AnimPanel {
     vent.subscribe('panel.resize', () => this.scrollbars.update())
 
     this.select = new Drag(dom.parentNode)
-    this.select.on('start', (x, y) => {
+    this.select.on('start', (x, y, e) => {
+      if (e && e.ctrlKey) {
+        this.select.stop(true)
+        if (!this.hasSelection) return
+        let animId = Math.floor((y - this.scrollbars.smoothScroller.offsetTop) / 32)
+        let anim = app.j2l.anims[animId]
+        if (!anim) return
+        let tile
+        if (x >= 32 + 4) {
+          let frame = anim.frames[Math.floor((x - this.scrollbars.smoothScroller.offsetLeft - (32 + 4)) / 32)]
+          if (frame) tile = new Tile(frame)
+        } else if (x < 32) {
+          tile = new Tile({id: animId, animated: true})
+        }
+        if (tile) {
+          tile.flipped = tile.flipped ^ this.isHFlipping
+          tile.vflipped = tile.vflipped ^ this.isVFlipping
+          vent.publish('anim.addframe', tile)
+        }
+        return
+      }
       if (x >= 32 + 4) {
         this.selectingFrame = true
         this.selectStartX = Math.floor((x - this.scrollbars.smoothScroller.offsetLeft - (32 + 4)) / 32)
