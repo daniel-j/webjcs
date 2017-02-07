@@ -377,13 +377,21 @@ r.drawTilemap = (info) => {
     }
   }
   if (info.invertArea) {
-    let x = (info.viewport[0] - info.viewOffset[0] + info.invertArea[0] * 32) * info.scale
-    let y = (info.viewport[1] - info.viewOffset[1] + info.invertArea[1] * 32) * info.scale
-    let w = (info.invertArea[2] - info.invertArea[0]) * 32 * info.scale
-    let h = (info.invertArea[3] - info.invertArea[1]) * 32 * info.scale
+    let x1 = (info.viewport[0] - info.viewOffset[0] + info.invertArea[0] * 32) * info.scale
+    let y1 = (info.viewport[1] - info.viewOffset[1] + info.invertArea[1] * 32) * info.scale
+    let x2 = (info.viewport[0] - info.viewOffset[0] + info.invertArea[2] * 32) * info.scale
+    let y2 = (info.viewport[1] - info.viewOffset[1] + info.invertArea[3] * 32) * info.scale
+
+    x1 = Math.max(x1, info.viewport[0])
+    y1 = Math.max(y1, info.viewport[1])
+    x2 = Math.min(x2, info.viewport[0] + info.viewport[2])
+    y2 = Math.min(y2, info.viewport[1] + info.viewport[3])
+
+    let w = x2 - x1
+    let h = y2 - y1
 
     if (w > 0 && h > 0) {
-      let imageData = ctx.getImageData(x, y, w, h)
+      let imageData = ctx.getImageData(x1, y1, w, h)
       let data = imageData.data
 
       for (let i = 0; i < data.length; i += 4) {
@@ -396,7 +404,7 @@ r.drawTilemap = (info) => {
       }
 
       // overwrite original image
-      ctx.putImageData(imageData, x, y)
+      ctx.putImageData(imageData, x1, y1)
     }
   }
 
