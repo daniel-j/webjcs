@@ -40,9 +40,8 @@ const columns = [
   }
 ]
 
-const Main = {
-  view: ({attrs}) => {
-    vent.publish('session.id', attrs.session)
+m.mount(document.getElementById('app'), {
+  view: () => {
     const R = m(
       '#editor',
       m(Renderer, m(panels, {columns: columns})),
@@ -58,11 +57,6 @@ const Main = {
       return m(require('./components/menu'), R)
     }
   }
-}
-
-m.route(document.getElementById('app'), '/', {
-  '/': Main,
-  '/:session': Main
 })
 
 require.ensure([], () => {

@@ -14,76 +14,91 @@ const sessions = new Map()
 
 io.origins('*:*')
 
+io.on('connection', (socket) => {
+  console.log('a user connected')
+  const user = {
+    socket,
+    session: null
+  }
 
-
-  io.on('connection', (socket) => {
-    console.log('a user connected')
-    const user = {
-      socket,
-      session: null
+  socket.on('session', (sessionId) => {
+    if (user.session) {
+      // Can only be in one session
+      socket.emit('session', user.session.id)
+      return
     }
-    socket.on('session', (sessionId) => {
-      if (user.session) {
-        // Can only be in one session
-        socket.emit('session', user.session.id)
-        return
-      }
-      let session = sessions.get(sessionId)
-      let j2l
-      if (!session) {
-        j2l = new J2L()
-        j2l.newLevel()
-        session = {
-          j2l,
-          tileset: '',
-          id: sessionId
-        }
-        sessions.set(sessionId, session)
-      } else {
-        j2l = session.j2l
+    if (!sessionId) sessionId = uuidV4()
+    let session = sessions.get(sessionId)
+    let j2l
+    let isNew = false
+    if (!session) {
+      isNew = true
+      j2l = new J2L()
+      j2l.newLevel()
+      session = {
+        j2l,
+        tileset: '',
+        id: sessionId
       }
       sessions.set(sessionId, session)
-      user.session = session
+    } else {
+      j2l = session.j2l
+    }
+    sessions.set(sessionId, session)
+    user.session = session
 
-      session.id = sessionId
-      session.users = session.users || []
-      session.users.push(user)
+    session.id = sessionId
+    session.users = session.users || []
+    session.users.push(user)
 
-      io.sockets.in(sessionId).emit('join', 'a user joined room')
-      socket.join(sessionId)
+    io.sockets.in(sessionId).emit('join', 'a user joined room')
+    socket.join(sessionId)
 
-      socket.emit('session', sessionId)
-      j2l.export(J2L.VERSION_TSF).then((data) => {
-        socket.emit('j2l', data)
-      })
+    socket.emit('session', sessionId, isNew)
 
-      socket.on('disconnect', () => {
-        console.log('a user left room ' + sessionId)
-        session.users.splice(session.users.indexOf(user), 1)
-        io.sockets.in(sessionId).emit('leave', 'a user left room')
-        if (session.users.length === 0) {
-          // GameManager.removeSession(sessionId)
-          sessions.delete(sessionId)
-        }
-      })
-    })
     socket.on('disconnect', () => {
-      console.log('a user disconnected')
-    })
-
-    socket.on('send', (data) => {
-      const session = user.session
-      console.log('got update', data.type)
-      if (!session) return
-      const j2l = session.j2l
-      switch (data.type) {
-        case 'layer.settiles':
-          j2l.layers[data.layer].setTiles(data.x, data.y, data.tiles, data.layer !== 3)
-          break
+      console.log('a user left room ' + sessionId)
+      session.users.splice(session.users.indexOf(user), 1)
+      io.sockets.in(sessionId).emit('leave', 'a user left room')
+      if (session.users.length === 0) {
+        // GameManager.removeSession(sessionId)
+        sessions.delete(sessionId)
       }
-      socket.broadcast.to(session.id).emit('update', data)
     })
   })
+
+  socket.on('disconnect', () => {
+    console.log('a user disconnected')
+  })
+
+  socket.on('upload.level', (data) => {
+    const session = user.session
+    if (!session) return
+    session.j2l.loadFromBuffer(Buffer.from(data)).then(() => {
+      socket.broadcast.to(session.id).emit('j2l', data)
+    })
+  })
+  socket.on('download.level', () => {
+    const session = user.session
+    if (!session) return
+    session.j2l.export(J2L.VERSION_TSF).then((data) => {
+      socket.emit('j2l', data)
+    })
+  })
+
+  socket.on('send', (data) => {
+    const session = user.session
+    console.log('got update', data.type)
+    if (!session) return
+    const j2l = session.j2l
+    switch (data.type) {
+      case 'layer.settiles':
+        j2l.layers[data.layer].setTiles(data.x, data.y, data.tiles, data.layer !== 3)
+        break
+    }
+    socket.broadcast.to(session.id).emit('update', data)
+  })
+})
 /*GameManager.initAll().then(() => {
   const fs = require('fs')
   let level = fs.readFileSync(__dirname + '/../data/ab17btl06.j2l')

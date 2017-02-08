@@ -30,5 +30,7 @@ module.exports = new Settings({
   paths: IS_ELECTRON && os.platform() === 'win32' ? ['C:\\Games\\Jazz2\\'] : [],
   jj2_exe: IS_ELECTRON && os.platform() === 'win32' ? 'C:\\Games\\Jazz2\\Jazz2+.exe' : '',
   jj2_args: IS_ELECTRON ? '-windowed -nolog' + (os.platform() !== 'win32' ? ' -noddrawmemcheck -nocpucheck' : '') : '',
-  wine_prefix: IS_ELECTRON && os.platform() !== 'win32' && process.env.HOME ? process.env.HOME + '/.wine' : ''
+  wine_prefix: IS_ELECTRON && os.platform() !== 'win32' && process.env.HOME ? process.env.HOME + '/.wine' : '',
+
+  socket_server: ''
 })

@@ -49,6 +49,13 @@ module.exports = [
     ]
   },
   {
+    label: '&Collab',
+    submenu: [
+      {label: '&Join/create session', command: 'sessionstart', click},
+      {label: '&Disconnect', command: 'sessionstop', click, enabled: false}
+    ]
+  },
+  {
     label: '&Help',
     role: 'help',
     submenu: [

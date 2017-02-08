@@ -7,9 +7,8 @@ const J2T = require('./J2T')
 
 const j2l = new J2L({renderable: true})
 const j2t = new J2T()
-const socket = window.io ? window.io() : null
 
-const app = { vent, settings, j2l, j2t, socket }
+const app = { vent, settings, j2l, j2t }
 
 window.app = app
 
