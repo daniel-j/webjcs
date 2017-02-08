@@ -244,7 +244,7 @@ class LayerPanel {
       if (x === this.lastPaintX && y === this.lastPaintY) return
     }
 
-    if (x < this.layers[this.currentLayer].width && y < this.layers[this.currentLayer].height) {
+    if (this.layers[this.currentLayer] && x < this.layers[this.currentLayer].width && y < this.layers[this.currentLayer].height) {
       vent.publish('session.send', {
         type: 'layer.settiles',
         layer: this.currentLayer,
@@ -283,6 +283,7 @@ class LayerPanel {
 
   calculateSelectedArea () {
     let layer = this.layers[this.currentLayer]
+    if (!layer) return
     this.selectedArea[0] = Math.max(0, Math.min(Math.floor(this.selectStartX / 32), Math.floor((this.select.x - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel)))
     this.selectedArea[1] = Math.max(0, Math.min(Math.floor(this.selectStartY / 32), Math.floor((this.select.y - this.scrollbars.smoothScroller.offsetTop) / 32 / this.zoomLevel)))
     this.selectedArea[2] = Math.min(layer.width, Math.max(Math.ceil(this.selectStartX / 32), Math.ceil((this.select.x - this.scrollbars.smoothScroller.offsetLeft) / 32 / this.zoomLevel)))
@@ -341,6 +342,7 @@ class LayerPanel {
       vent.publish('selectedtiles', selection)
     })
     vent.subscribe('selectedtiles', (ev, selection) => {
+      if (!selection || selection.length === 0) return
       this.selection = selection
       this.selectionMap.setTexture(this.selection.length, this.selection[0].length)
       this.selectionMap.setTiles(0, 0, this.selection)

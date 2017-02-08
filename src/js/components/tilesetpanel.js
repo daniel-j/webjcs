@@ -105,7 +105,7 @@ class TilesetPanel {
       revealDistance: 64
     })
     this.scrollbars.contentWidth = 10 * 32
-    this.scrollbars.contentHeight = 100 * 32
+    this.scrollbars.contentHeight = 0 * 32
     this.scrollbars.update()
     vent.subscribe('panel.resize', () => this.scrollbars.update())
     this.scrollbars.on('scroll', () => this.calculateSelectedArea())
@@ -123,8 +123,9 @@ class TilesetPanel {
     })
     this.select.on('stop', (e) => {
       if (e && e.ctrlKey) {
-        let tile = new Tile(this.map.map[this.selectStartX + 10 * this.selectStartY])
+        let tile = this.map.map[this.selectStartX + 10 * this.selectStartY]
         if (tile) {
+          tile = new Tile(tile)
           tile.flipped = this.isHFlipping
           tile.vflipped = this.isVFlipping
           vent.publish('anim.addframe', tile)
