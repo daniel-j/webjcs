@@ -37,7 +37,6 @@ function joinSession (id) {
   socket.on('session', (id, isNew) => {
     currentSession = id
     console.log('Joined session', id)
-    alert((isNew ? 'Created' : 'Joined') + ' session ' + id)
     if (isNew) {
       console.log('Uploading J2L')
       vent.publish('j2l.preexport')
