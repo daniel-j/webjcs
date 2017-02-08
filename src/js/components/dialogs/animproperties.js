@@ -109,7 +109,6 @@ const AnimPropertiesDialog = {
     state.prefs = {}
   },
   oncreate ({dom, state}) {
-    console.log('create')
     vent.subscribe('animpanel.openproperties', (ev, animId) => {
       state.animId = animId
       reset(state.prefs, state.animId)
