@@ -4,7 +4,7 @@ const vent = require('./vent')
 const settings = require('./settings')
 const J2L = require('./J2L')
 
-const io = require('socket.io-client')
+const io = require('socket.io-client/dist/socket.io')
 
 let currentServer = settings.get('socket_server')
 let currentSession = null
