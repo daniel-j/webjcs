@@ -62,12 +62,12 @@ function joinSession (id) {
   })
 }
 
-vent.subscribe('session.send', (ev, data) => {
-  vent.publish('session.update.' + data.type, data)
+vent.subscribe('session.update', (ev, data) => {
+  vent.publish('session.' + data.type, data)
   if (!currentSession) return
   if (!socket) return
   console.log('sending update', data)
-  socket.emit('send', data)
+  socket.emit('update', data)
 })
 
 vent.subscribe('menuclick.sessionstart', () => {

@@ -86,7 +86,7 @@ io.on('connection', (socket) => {
     })
   })
 
-  socket.on('send', (data) => {
+  socket.on('update', (data) => {
     const session = user.session
     console.log('got update', data.type)
     if (!session) return

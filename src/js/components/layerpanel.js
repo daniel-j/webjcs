@@ -32,11 +32,13 @@ class LayerPanel {
     this.mouseY = 0
     this.lastPaintX = 0
     this.lastPaintY = 0
+    this.eventClipboard = 0
 
     vent.subscribe('window.keydown', (ev, {e, key, accel, modalOpen, hasActiveElement}) => {
       if (!this.isActive || modalOpen) return
       const isMacOS = navigator.platform.includes('Mac')
       const ctrlKey = isMacOS ? e.metaKey : e.ctrlKey
+      const shiftKey = e.shiftKey
       let prevent = true
       if (!e.shiftKey && key >= 1 && key <= 8) { // Number 1-8
         let l = key - 1
@@ -47,6 +49,22 @@ class LayerPanel {
         }
       } else if (accel === 'Backspace') {
         vent.publish('selectedtiles', [[new Tile()]])
+      } else if (key === 'e' && this.currentLayer === 3) {
+        let layer = this.layers[3]
+        if (this.mouseX >= 0 && this.mouseY >= 0 && this.mouseX < layer.width && this.mouseY < layer.height) {
+          if (ctrlKey) {
+            this.eventClipboard = layer.map[this.mouseX + layer.width * this.mouseY].event
+          } else if (shiftKey) {
+            vent.publish('session.update', {
+              type: 'layer.event',
+              x: this.mouseX,
+              y: this.mouseY,
+              event: this.eventClipboard
+            })
+          } else {
+            // select event
+          }
+        }
       } else {
         prevent = false
         // console.log(kc, c)
@@ -245,7 +263,7 @@ class LayerPanel {
     }
 
     if (this.layers[this.currentLayer] && x < this.layers[this.currentLayer].width && y < this.layers[this.currentLayer].height) {
-      vent.publish('session.send', {
+      vent.publish('session.update', {
         type: 'layer.settiles',
         layer: this.currentLayer,
         x,
@@ -401,9 +419,21 @@ class LayerPanel {
       this.fboCtx.imageSmoothingEnabled = false
     }
 
-    vent.subscribe('session.update.layer.settiles', (ev, data) => {
+    vent.subscribe('session.layer.settiles', (ev, data) => {
       this.layers[data.layer].setTiles(data.x, data.y, data.tiles, data.layer !== 3)
       if (data.layer === 3 && this.eventMap) this.eventMap.setEvents(data.x, data.y, data.tiles)
+    })
+
+    vent.subscribe('session.layer.event', (ev, data) => {
+      let layer = this.layers[3]
+      let tile = layer.map[data.x + layer.width * data.y]
+      tile.event = data.event
+      vent.publish('session.layer.settiles', {
+        layer: 3,
+        x: data.x,
+        y: data.y,
+        tiles: [[tile]]
+      })
     })
 
     vent.subscribe('renderer.draw', () => this.redraw())
