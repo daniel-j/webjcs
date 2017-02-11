@@ -55,7 +55,7 @@ function joinSession (id) {
   })
   socket.on('update', (data) => {
     console.log('got update', data)
-    vent.publish('session.update.' + data.type, data)
+    vent.publish('session.' + data.type, data)
   })
   socket.on('disconnect', () => {
     console.log('socket disconnected')
